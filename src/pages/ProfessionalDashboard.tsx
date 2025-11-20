@@ -168,6 +168,22 @@ const ProfessionalDashboard = () => {
     }
   };
 
+  const handleDeleteService = async (serviceId: string) => {
+    if (!confirm('Vai tiešām vēlaties dzēst šo pakalpojumu?')) return;
+    
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', serviceId);
+
+    if (error) {
+      toast.error(t.error);
+    } else {
+      toast.success('Pakalpojums dzēsts!');
+      loadServices();
+    }
+  };
+
   useEffect(() => {
     if (profile) {
       loadServices();
@@ -425,7 +441,7 @@ const ProfessionalDashboard = () => {
                       <Card key={service.id} className="border">
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
-                            <div>
+                            <div className="flex-1">
                               <h4 className="font-semibold">{service.name}</h4>
                               {service.description && (
                                 <p className="text-sm text-muted-foreground mt-1">
@@ -443,6 +459,14 @@ const ProfessionalDashboard = () => {
                                 </span>
                               </div>
                             </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteService(service.id)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
