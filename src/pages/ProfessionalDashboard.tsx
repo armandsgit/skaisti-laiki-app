@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import LocationMap from '@/components/LocationMap';
 import { AddressAutocomplete } from '@/components/AddressAutocomplete';
+import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
 
@@ -626,14 +627,17 @@ const ProfessionalDashboard = () => {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="city">Pilsēta</Label>
-                          <Input
-                            id="city"
+                          <CityAutocomplete
                             value={editedProfInfo.city}
-                            onChange={(e) => setEditedProfInfo({...editedProfInfo, city: e.target.value})}
+                            onChange={(value) => setEditedProfInfo({...editedProfInfo, city: value})}
+                            placeholder="Sāciet rakstīt pilsētas nosaukumu..."
                           />
+                          <p className="text-xs text-muted-foreground">
+                            Izvēlieties pilsētu no ieteikumiem
+                          </p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="address">Adrese</Label>
+                          <Label htmlFor="address">Ielas adrese</Label>
                           <AddressAutocomplete
                             value={editedProfInfo.address}
                             city={editedProfInfo.city}
@@ -646,10 +650,10 @@ const ProfessionalDashboard = () => {
                                 longitude: lng
                               });
                             }}
-                            placeholder="Sāciet rakstīt adresi un izvēlieties no saraksta..."
+                            placeholder="Ievadiet ielas nosaukumu un numuru..."
                           />
                           <p className="text-xs text-muted-foreground">
-                            Izvēlieties adresi no ieteikumiem, lai klientiem parādītu precīzu atrašanās vietu kartē
+                            Pēc pilsētas izvēles, šeit ievadiet tikai ielas nosaukumu un numuru
                           </p>
                         </div>
                         <div className="space-y-2">

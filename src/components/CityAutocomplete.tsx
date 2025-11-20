@@ -4,37 +4,33 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MapPin } from 'lucide-react';
 import { MAPBOX_TOKEN } from '@/lib/mapbox-config';
-import { toast } from 'sonner';
 
-interface AddressSuggestion {
+interface CitySuggestion {
   place_name: string;
+  text: string;
   center: [number, number]; // [lng, lat]
 }
 
-interface AddressAutocompleteProps {
+interface CityAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
-  onSelect?: (address: string, lat: number, lng: number) => void;
   placeholder?: string;
   disabled?: boolean;
-  city?: string; // Add city context for better results
 }
 
-export const AddressAutocomplete = ({ 
+export const CityAutocomplete = ({ 
   value, 
   onChange, 
-  onSelect,
-  placeholder = "Ievadiet adresi",
-  disabled = false,
-  city = ''
-}: AddressAutocompleteProps) => {
-  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  placeholder = "Ievadiet pilsētu",
+  disabled = false 
+}: CityAutocompleteProps) => {
+  const [suggestions, setSuggestions] = useState<CitySuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (value.length < 3) {
+    if (value.length < 2) {
       setSuggestions([]);
       return;
     }
@@ -47,28 +43,9 @@ export const AddressAutocomplete = ({
     debounceTimer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        // Search only within the specified city for better accuracy
-        let searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=5&language=lv&types=address`;
-        
-        // If city is specified, add it to the query for better results
-        if (city) {
-          searchUrl += `&proximity=auto`;
-          // First get city coordinates to use as proximity
-          const cityResponse = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(city)}.json?access_token=${MAPBOX_TOKEN}&country=LV&types=place&limit=1&language=lv`
-          );
-          
-          if (cityResponse.ok) {
-            const cityData = await cityResponse.json();
-            if (cityData.features && cityData.features.length > 0) {
-              const [lng, lat] = cityData.features[0].center;
-              // Add city name to search and use proximity
-              searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value + ', ' + city)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=5&language=lv&types=address&proximity=${lng},${lat}`;
-            }
-          }
-        }
-        
-        const response = await fetch(searchUrl);
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&country=LV&types=place&limit=10&language=lv`
+        );
         
         if (response.ok) {
           const data = await response.json();
@@ -76,7 +53,7 @@ export const AddressAutocomplete = ({
           setOpen(data.features?.length > 0);
         }
       } catch (error) {
-        console.error('Address search error:', error);
+        console.error('City search error:', error);
       } finally {
         setLoading(false);
       }
@@ -89,15 +66,10 @@ export const AddressAutocomplete = ({
     };
   }, [value]);
 
-  const handleSelect = (suggestion: AddressSuggestion) => {
-    const [lng, lat] = suggestion.center;
-    onChange(suggestion.place_name);
+  const handleSelect = (suggestion: CitySuggestion) => {
+    onChange(suggestion.text);
     setOpen(false);
     setSuggestions([]);
-    
-    if (onSelect) {
-      onSelect(suggestion.place_name, lat, lng);
-    }
   };
 
   return (
@@ -122,13 +94,13 @@ export const AddressAutocomplete = ({
           <Command>
             <CommandList>
               {loading ? (
-                <CommandEmpty>Meklē adreses...</CommandEmpty>
+                <CommandEmpty>Meklē pilsētas...</CommandEmpty>
               ) : (
                 <CommandGroup>
                   {suggestions.map((suggestion, index) => (
                     <CommandItem
                       key={index}
-                      value={suggestion.place_name}
+                      value={suggestion.text}
                       onSelect={() => handleSelect(suggestion)}
                       className="cursor-pointer"
                     >
