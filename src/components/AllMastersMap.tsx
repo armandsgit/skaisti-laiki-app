@@ -183,32 +183,72 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         markerEl.addEventListener('click', (e) => {
           e.stopPropagation();
           
-          // On mobile, show hover popup on first tap
-          if (window.innerWidth < 768) {
-            // Check if this popup is already showing
-            const isShowing = hoverPopup.isOpen();
+          if (!map.current) return;
+
+          // Remove all existing popups
+          hoverPopup.remove();
+          clickPopup.remove();
+
+          // Fly to marker with animation
+          map.current.flyTo({
+            center: [master.longitude, master.latitude],
+            zoom: 16,
+            duration: 1500,
+            essential: true
+          });
+
+          // Add bounce animation to marker
+          markerEl.classList.add('marker-bounce');
+          setTimeout(() => {
+            markerEl.classList.remove('marker-bounce');
+          }, 1000);
+
+          // Show popup after animation
+          setTimeout(() => {
+            if (!map.current) return;
+
+            const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
+            const shortAddress = master.address ? (master.address.length > 40 ? master.address.substring(0, 40) + '...' : master.address) : master.city;
             
-            // Remove all popups first
-            hoverPopup.remove();
-            clickPopup.remove();
-            
-            if (!isShowing) {
-              // Show hover popup (with avatar, name, rating)
-              if (map.current) {
-                hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
-              }
-            } else {
-              // Second tap - navigate to profile
-              navigate(`/professional/${master.id}`);
-            }
-          } else {
-            // Desktop - always navigate
-            hoverPopup.remove();
-            if (map.current) {
-              clickPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
-            }
-            navigate(`/professional/${master.id}`);
-          }
+            const selectedPopup = new mapboxgl.Popup({ 
+              offset: 25,
+              closeButton: true,
+              closeOnClick: false,
+              className: 'selected-master-popup',
+              maxWidth: '280px'
+            }).setHTML(
+              `<div style="padding: 12px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                  <img 
+                    src="${avatarUrl}" 
+                    alt="${master.profiles.name}"
+                    style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                  />
+                  <div style="min-width: 0; flex: 1;">
+                    <h3 style="font-weight: 600; margin: 0 0 4px 0; font-size: 15px; color: #1a1a1a; line-height: 1.3;">${master.profiles.name}</h3>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                      <span style="color: #f59e0b; font-size: 13px;">⭐</span>
+                      <span style="color: #666; font-weight: 500; font-size: 13px;">${master.rating || 0}</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: start; gap: 6px; font-size: 12px; color: #666; line-height: 1.4; margin-bottom: 10px;">
+                  <span style="font-size: 13px; margin-top: 1px;">📍</span>
+                  <span>${shortAddress}</span>
+                </div>
+                <button 
+                  onclick="window.location.href='/professional/${master.id}'" 
+                  style="width: 100%; padding: 8px; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;"
+                  onmouseover="this.style.opacity='0.9'"
+                  onmouseout="this.style.opacity='1'"
+                >
+                  Skatīt profilu
+                </button>
+              </div>`
+            )
+            .setLngLat([master.longitude, master.latitude])
+            .addTo(map.current);
+          }, 1600);
         });
       });
 
