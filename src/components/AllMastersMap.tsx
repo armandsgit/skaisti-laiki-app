@@ -187,11 +187,13 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
             essential: true
           });
 
-          // Add bounce animation to marker
-          markerEl.classList.add('marker-bounce');
+          // Add bounce animation AFTER fly animation completes
           setTimeout(() => {
-            markerEl.classList.remove('marker-bounce');
-          }, 1000);
+            markerEl.classList.add('marker-bounce');
+            setTimeout(() => {
+              markerEl.classList.remove('marker-bounce');
+            }, 1000);
+          }, 1500);
 
           // Show popup after animation
           setTimeout(() => {
