@@ -28,7 +28,8 @@ const AllMastersMap = () => {
   }, []);
 
   const loadMasters = async () => {
-    const { data } = await supabase
+    console.log('Loading masters...');
+    const { data, error } = await supabase
       .from('professional_profiles')
       .select(`
         id,
@@ -44,14 +45,22 @@ const AllMastersMap = () => {
       .not('latitude', 'is', null)
       .not('longitude', 'is', null);
 
+    console.log('Masters data:', data);
+    console.log('Masters error:', error);
+
     if (data) {
       setMasters(data as any);
     }
   };
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    console.log('Map useEffect triggered, masters:', masters);
+    if (!mapContainer.current) {
+      console.log('No map container');
+      return;
+    }
 
+    console.log('Mapbox token:', MAPBOX_TOKEN);
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
     // Noteikt kartes centru
@@ -64,17 +73,21 @@ const AllMastersMap = () => {
       const avgLng = masters.reduce((sum, m) => sum + m.longitude, 0) / masters.length;
       center = [avgLng, avgLat];
       zoom = 10;
+      console.log('Map center from masters:', center, 'zoom:', zoom);
     } else {
       // Latvijas centrs, ja nav meistaru
       center = [24.6032, 56.8796];
       zoom = 7;
+      console.log('Map center default (Latvia):', center, 'zoom:', zoom);
     }
 
     // Dzēš veco karti, ja tāda eksistē
     if (map.current) {
+      console.log('Removing old map');
       map.current.remove();
     }
 
+    console.log('Creating new map...');
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
@@ -82,10 +95,13 @@ const AllMastersMap = () => {
       zoom: zoom,
     });
 
+    console.log('Map created');
+
     // Pievienot navigācijas kontroles
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     // Pievienot marķierus katram meistaram
+    console.log('Adding markers for', masters.length, 'masters');
     masters.forEach((master) => {
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
         `<div style="padding: 8px;">
@@ -104,6 +120,8 @@ const AllMastersMap = () => {
         .setPopup(popup)
         .addTo(map.current!);
 
+      console.log('Added marker for', master.profiles.name, 'at', [master.longitude, master.latitude]);
+
       // Klikšķis uz marķiera atver profilu
       marker.getElement().addEventListener('click', () => {
         navigate(`/professional/${master.id}`);
@@ -112,6 +130,7 @@ const AllMastersMap = () => {
 
     return () => {
       if (map.current) {
+        console.log('Cleanup: removing map');
         map.current.remove();
         map.current = null;
       }
