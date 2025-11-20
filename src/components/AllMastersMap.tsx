@@ -359,7 +359,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
     : masters.filter(m => m.category === selectedCategory);
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div className="relative w-full h-[calc(100vh-12rem)] sm:h-full overflow-hidden">
       {/* Category filter - moved to bottom */}
       <div className="absolute bottom-3 left-3 right-3 z-10 bg-card/95 backdrop-blur-sm rounded-xl shadow-lg border p-2">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
