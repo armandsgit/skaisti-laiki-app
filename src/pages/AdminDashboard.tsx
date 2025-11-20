@@ -305,7 +305,12 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   {professionals.map((prof) => (
-                    <Card key={prof.id} className="border">
+                    <Card 
+                      key={prof.id} 
+                      className={prof.is_blocked 
+                        ? "border-2 border-destructive bg-destructive/5" 
+                        : "border"}
+                    >
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           <div className="flex justify-between items-start">
