@@ -214,14 +214,19 @@ const AllMastersMap = () => {
     <div className="relative w-full h-full overflow-hidden">
       <div 
         ref={mapContainer} 
-        className="absolute inset-0 sm:rounded-lg overflow-hidden border-0 sm:border shadow-sm"
-        style={{ minHeight: '400px', touchAction: 'pan-x pan-y' }}
+        className="absolute inset-0 rounded-lg sm:rounded-2xl overflow-hidden border shadow-sm"
+        style={{ 
+          minHeight: '300px',
+          maxHeight: 'calc(100vh - 120px)',
+          touchAction: 'pan-x pan-y',
+          width: '100%'
+        }}
       />
       {masters.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-card/95 backdrop-blur-sm p-6 rounded-lg shadow-lg border max-w-sm text-center">
-            <p className="text-lg font-semibold mb-2">Nav pieejamu meistaru</p>
-            <p className="text-sm text-muted-foreground">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
+          <div className="bg-card/95 backdrop-blur-sm p-4 sm:p-6 rounded-lg shadow-lg border max-w-sm text-center">
+            <p className="text-base sm:text-lg font-semibold mb-2">Nav pieejamu meistaru</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Pašlaik sistēmā nav reģistrētu meistaru ar adresi vai viņi gaida administratora apstiprinājumu.
             </p>
           </div>

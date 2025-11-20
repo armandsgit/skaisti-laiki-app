@@ -179,30 +179,30 @@ const ClientDashboard = () => {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {filteredProfessionals.map((prof) => (
                 <Card 
                   key={prof.id} 
-                  className={`hover:shadow-soft transition-all cursor-pointer border-0 overflow-hidden group ${
+                  className={`touch-ripple tap-feedback cursor-pointer border-0 overflow-hidden ${
                     prof.plan === 'premium' ? 'ring-2 ring-amber-400' : ''
                   }`}
                   onClick={() => navigate(`/professional/${prof.id}`)}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <Avatar className="w-16 h-16 border-2 border-primary/20">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-start gap-3 mb-3">
+                      <Avatar className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-primary/20 flex-shrink-0">
                         <AvatarImage src={prof.profiles?.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
+                        <AvatarFallback className="bg-primary/10 text-primary text-base sm:text-lg">
                           {prof.profiles?.name?.charAt(0) || '?'}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                        <h3 className="font-semibold text-base sm:text-lg truncate">
                           {prof.profiles?.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs whitespace-nowrap">
                             {prof.category}
                           </Badge>
                           <PlanBadge 
@@ -215,21 +215,21 @@ const ClientDashboard = () => {
                     
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span>{prof.city}</span>
+                        <MapPin className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{prof.city}</span>
                         {prof.distance < 9999 && (
-                          <span className="text-xs">• {prof.distance} km</span>
+                          <span className="text-xs whitespace-nowrap flex-shrink-0">• {prof.distance} km</span>
                         )}
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 fill-accent text-accent" />
-                        <span>{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
+                        <Star className="w-4 h-4 fill-accent text-accent flex-shrink-0" />
+                        <span className="truncate">{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
                       </div>
                     </div>
                     
                     {prof.bio && (
-                      <p className="mt-4 text-sm text-muted-foreground line-clamp-2">
+                      <p className="mt-3 text-xs sm:text-sm text-muted-foreground line-clamp-2">
                         {prof.bio}
                       </p>
                     )}
@@ -239,30 +239,30 @@ const ClientDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="bookings" className="space-y-4">
+          <TabsContent value="bookings" className="space-y-3 sm:space-y-4">
             <Card className="shadow-card border-0">
-              <CardHeader>
-                <CardTitle>{t.bookings}</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl">{t.bookings}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {bookings.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
+                  <p className="text-center text-muted-foreground py-8 text-sm sm:text-base">
                     Jums vēl nav nevienas rezervācijas
                   </p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {bookings.map((booking) => (
                       <Card key={booking.id} className="border">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-semibold">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm sm:text-base truncate">
                                 {booking.professional_profiles?.profiles?.name}
                               </h4>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                 {booking.services?.name}
                               </p>
-                              <p className="text-sm mt-2">
+                              <p className="text-xs sm:text-sm mt-2">
                                 {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
                               </p>
                             </div>
@@ -273,6 +273,7 @@ const ClientDashboard = () => {
                                 booking.status === 'completed' ? 'secondary' :
                                 booking.status === 'canceled' ? 'destructive' : 'outline'
                               }
+                              className="text-xs whitespace-nowrap self-start"
                             >
                               {t[booking.status as keyof typeof t] || booking.status}
                             </Badge>

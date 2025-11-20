@@ -46,19 +46,24 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3 w-full">
       <div 
         ref={mapContainer} 
-        className={`rounded-lg overflow-hidden border shadow-sm ${className}`}
-        style={{ height: '300px' }}
+        className={`rounded-lg overflow-hidden border shadow-sm w-full ${className}`}
+        style={{ 
+          height: '200px', 
+          maxHeight: '220px',
+          maxWidth: '100%',
+          touchAction: 'pan-x pan-y'
+        }}
       />
       {showOpenButton && (
         <button
           onClick={openInGoogleMaps}
-          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+          className="flex items-center gap-2 text-xs sm:text-sm text-primary tap-feedback whitespace-nowrap"
         >
-          <MapPin className="w-4 h-4" />
-          Atvērt Google Maps
+          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+          Skatīt kartē →
         </button>
       )}
     </div>

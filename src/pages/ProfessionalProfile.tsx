@@ -144,37 +144,33 @@ const ProfessionalProfile = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-4xl">
-        <Card className="shadow-card border-0 mb-4 sm:mb-6">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-4 sm:mb-6">
-              <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-primary/20 flex-shrink-0 mx-auto sm:mx-0">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl overflow-x-hidden">
+        <Card className="shadow-card border-0 mb-4 overflow-hidden">
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 mb-4">
+              <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-primary/20 flex-shrink-0">
                 <AvatarImage src={professional.profiles?.avatar} />
                 <AvatarFallback className="bg-primary/10 text-primary text-xl sm:text-2xl">
                   {professional.profiles?.name?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               
-              <div className="flex-1 min-w-0 w-full">
-                <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
-                  <div className="w-full">
-                    <h1 className="text-2xl sm:text-3xl font-bold mb-2 break-words">
-                      {professional.profiles?.name}
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap">{professional.category}</Badge>
-                      {professional.is_verified && (
-                        <Badge variant="default" className="text-xs sm:text-sm whitespace-nowrap">{t.verified}</Badge>
-                      )}
-                    </div>
-                  </div>
+              <div className="flex-1 min-w-0 w-full text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 break-words px-2 sm:px-0">
+                  {professional.profiles?.name}
+                </h1>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-3">
+                  <Badge variant="secondary" className="text-xs whitespace-nowrap">{professional.category}</Badge>
+                  {professional.is_verified && (
+                    <Badge variant="default" className="text-xs whitespace-nowrap">{t.verified}</Badge>
+                  )}
                 </div>
                 
-                <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="space-y-2 text-xs sm:text-sm text-muted-foreground">
                   {(professional.address || professional.city) && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
                       <MapPin className="w-4 h-4 flex-shrink-0" />
-                      <span className="break-words">
+                      <span className="break-words max-w-full">
                         {professional.address && professional.city 
                           ? `${professional.address}, ${professional.city}`
                           : professional.address || professional.city
@@ -183,8 +179,8 @@ const ProfessionalProfile = () => {
                     </div>
                   )}
                   
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 fill-accent text-accent" />
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <Star className="w-4 h-4 fill-accent text-accent flex-shrink-0" />
                     <span>
                       {professional.rating || 0} ({professional.total_reviews || 0} {t.reviews})
                     </span>
@@ -194,16 +190,16 @@ const ProfessionalProfile = () => {
             </div>
             
             {professional.bio && (
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-2 text-base sm:text-lg">{t.bio}</h3>
-                <p className="text-muted-foreground text-sm sm:text-base break-words">{professional.bio}</p>
+              <div className="border-t pt-3 sm:pt-4">
+                <h3 className="font-semibold mb-2 text-sm sm:text-base">{t.bio}</h3>
+                <p className="text-muted-foreground text-xs sm:text-sm break-words">{professional.bio}</p>
               </div>
             )}
             
             {professional.latitude && professional.longitude && (
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3 text-base sm:text-lg">Atrašanās vieta</h3>
-                <div className="w-full overflow-hidden rounded-lg">
+              <div className="border-t pt-3 sm:pt-4">
+                <h3 className="font-semibold mb-2 sm:mb-3 text-sm sm:text-base">Atrašanās vieta</h3>
+                <div className="w-full overflow-hidden rounded-lg border" style={{ maxHeight: '220px' }}>
                   <LocationMap
                     latitude={professional.latitude}
                     longitude={professional.longitude}
@@ -215,41 +211,43 @@ const ProfessionalProfile = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card border-0 mb-4 sm:mb-6">
-          <CardHeader className="px-4 sm:px-6">
-            <CardTitle className="text-lg sm:text-xl">{t.services}</CardTitle>
+        <Card className="shadow-card border-0 mb-4 overflow-hidden">
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">{t.services}</CardTitle>
           </CardHeader>
-          <CardContent className="px-4 sm:px-6">
+          <CardContent className="p-3 sm:p-6 pt-0">
             {services.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
+              <p className="text-center text-muted-foreground py-6 text-sm">
                 Nav pieejamu pakalpojumu
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {services.map((service) => (
-                  <Card key={service.id} className="border">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-semibold mb-1">{service.name}</h4>
+                  <Card key={service.id} className="border touch-ripple">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold mb-1 text-sm sm:text-base break-words">{service.name}</h4>
                           {service.description && (
-                            <p className="text-sm text-muted-foreground mb-3">
+                            <p className="text-xs sm:text-sm text-muted-foreground mb-2 break-words">
                               {service.description}
                             </p>
                           )}
-                          <div className="flex gap-4 text-sm">
-                            <span className="flex items-center gap-1 text-primary font-medium">
-                              <Euro className="w-4 h-4" />
+                          <div className="flex gap-3 sm:gap-4 text-xs sm:text-sm flex-wrap">
+                            <span className="flex items-center gap-1 text-primary font-medium whitespace-nowrap">
+                              <Euro className="w-3 h-3 sm:w-4 sm:h-4" />
                               {service.price}
                             </span>
-                            <span className="flex items-center gap-1 text-muted-foreground">
-                              <Clock className="w-4 h-4" />
+                            <span className="flex items-center gap-1 text-muted-foreground whitespace-nowrap">
+                              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                               {service.duration} min
                             </span>
                           </div>
                         </div>
                         
                         <Button
+                          size="sm"
+                          className="w-full sm:w-auto flex-shrink-0"
                           onClick={() => {
                             setSelectedService(service);
                             setBookingDialogOpen(true);
@@ -266,28 +264,28 @@ const ProfessionalProfile = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card border-0">
-          <CardHeader>
-            <CardTitle>{t.reviews}</CardTitle>
+        <Card className="shadow-card border-0 overflow-hidden">
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">{t.reviews}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 sm:p-6 pt-0">
             {reviews.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
+              <p className="text-center text-muted-foreground py-6 text-sm">
                 Nav atsauksmju
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {reviews.map((review) => (
                   <Card key={review.id} className="border">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="font-semibold">{review.profiles?.name}</p>
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row items-start justify-between gap-2 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm sm:text-base truncate">{review.profiles?.name}</p>
                           <div className="flex items-center gap-1 mt-1">
                             {Array.from({ length: 5 }).map((_, i) => (
                               <Star
                                 key={i}
-                                className={`w-4 h-4 ${
+                                className={`w-3 h-3 sm:w-4 sm:h-4 ${
                                   i < review.rating
                                     ? 'fill-accent text-accent'
                                     : 'text-muted'
@@ -296,12 +294,12 @@ const ProfessionalProfile = () => {
                             ))}
                           </div>
                         </div>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
                           {new Date(review.created_at).toLocaleDateString('lv-LV')}
                         </span>
                       </div>
                       {review.comment && (
-                        <p className="text-sm text-muted-foreground">{review.comment}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground break-words">{review.comment}</p>
                       )}
                     </CardContent>
                   </Card>
@@ -313,45 +311,48 @@ const ProfessionalProfile = () => {
       </main>
 
       <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>{t.bookNow}</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">{t.bookNow}</DialogTitle>
           </DialogHeader>
           
           {selectedService && (
-            <div className="space-y-4">
-              <div className="p-4 bg-primary-soft rounded-lg">
-                <h4 className="font-semibold">{selectedService.name}</h4>
-                <div className="flex gap-4 mt-2 text-sm">
-                  <span className="flex items-center gap-1">
-                    <Euro className="w-4 h-4" />
+            <div className="space-y-3 sm:space-y-4">
+              <div className="p-3 sm:p-4 bg-primary-soft rounded-lg">
+                <h4 className="font-semibold text-sm sm:text-base break-words">{selectedService.name}</h4>
+                <div className="flex gap-3 sm:gap-4 mt-2 text-xs sm:text-sm flex-wrap">
+                  <span className="flex items-center gap-1 whitespace-nowrap">
+                    <Euro className="w-3 h-3 sm:w-4 sm:h-4" />
                     {selectedService.price}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
+                  <span className="flex items-center gap-1 whitespace-nowrap">
+                    <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                     {selectedService.duration} min
                   </span>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label>{t.date}</Label>
-                <Calendar
-                  mode="single"
-                  selected={bookingDate}
-                  onSelect={setBookingDate}
-                  disabled={(date) => date < new Date()}
-                  className="rounded-md border"
-                />
+                <Label className="text-sm">{t.date}</Label>
+                <div className="w-full overflow-x-auto">
+                  <Calendar
+                    mode="single"
+                    selected={bookingDate}
+                    onSelect={setBookingDate}
+                    disabled={(date) => date < new Date()}
+                    className="rounded-md border mx-auto"
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="time">{t.time}</Label>
+                <Label htmlFor="time" className="text-sm">{t.time}</Label>
                 <Input
                   id="time"
                   type="time"
                   value={bookingTime}
                   onChange={(e) => setBookingTime(e.target.value)}
+                  className="w-full text-base"
                   required
                 />
               </div>
