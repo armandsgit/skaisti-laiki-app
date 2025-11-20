@@ -39,13 +39,35 @@ const ProfessionalDashboard = () => {
   }, [user]);
 
   const loadProfile = async () => {
-    const { data } = await supabase
+    if (!user?.id) return;
+    
+    const { data, error } = await supabase
       .from('professional_profiles')
       .select('*')
-      .eq('user_id', user?.id)
-      .single();
+      .eq('user_id', user.id)
+      .maybeSingle();
     
-    setProfile(data);
+    if (!data && !error) {
+      // Create professional profile if it doesn't exist
+      const { data: newProfile, error: insertError } = await supabase
+        .from('professional_profiles')
+        .insert({
+          user_id: user.id,
+          category: 'Manikīrs',
+          city: 'Rīga',
+          bio: ''
+        })
+        .select()
+        .single();
+      
+      if (!insertError && newProfile) {
+        setProfile(newProfile);
+        toast.success('Profesionālais profils izveidots! Lūdzu, atjauniniet savu informāciju.');
+      }
+    } else {
+      setProfile(data);
+    }
+    
     setLoading(false);
   };
 
