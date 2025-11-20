@@ -50,10 +50,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (error) return { error };
+
+    // Check if user is suspended
+    if (data.user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', data.user.id)
+        .single();
+
+      if (!profileError && profile?.status === 'suspended') {
+        await supabase.auth.signOut();
+        return { 
+          error: { 
+            message: 'Tavs konts ir bloķēts. Sazinies ar atbalstu.' 
+          } 
+        };
+      }
+    }
+
     return { error };
   };
 
