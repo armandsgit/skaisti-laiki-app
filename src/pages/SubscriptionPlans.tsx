@@ -91,6 +91,7 @@ export default function SubscriptionPlans() {
         .update({
           plan: planId,
           subscription_status: 'active',
+          subscription_last_changed: new Date().toISOString(),
         })
         .eq('id', profile.id);
 

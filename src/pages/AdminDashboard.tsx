@@ -18,7 +18,11 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalProfessionals: 0,
-    totalBookings: 0
+    totalBookings: 0,
+    starterPlan: 0,
+    proPlan: 0,
+    premiumPlan: 0,
+    activeSubscriptions: 0,
   });
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
@@ -45,10 +49,21 @@ const AdminDashboard = () => {
       `).order('created_at', { ascending: false })
     ]);
 
+    const subscriptionStats = {
+      starter: profsData.data?.filter(p => p.plan === 'starter').length || 0,
+      pro: profsData.data?.filter(p => p.plan === 'pro').length || 0,
+      premium: profsData.data?.filter(p => p.plan === 'premium').length || 0,
+      active: profsData.data?.filter(p => p.subscription_status === 'active').length || 0,
+    };
+
     setStats({
       totalUsers: usersData.count || 0,
       totalProfessionals: profsData.data?.length || 0,
-      totalBookings: bookingsData.data?.length || 0
+      totalBookings: bookingsData.data?.length || 0,
+      starterPlan: subscriptionStats.starter,
+      proPlan: subscriptionStats.pro,
+      premiumPlan: subscriptionStats.premium,
+      activeSubscriptions: subscriptionStats.active,
     });
 
     setProfessionals(profsData.data || []);
@@ -180,7 +195,7 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -220,6 +235,52 @@ const AdminDashboard = () => {
                 <Calendar className="w-5 h-5 text-primary" />
                 <span className="text-3xl font-bold">{stats.totalBookings}</span>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border-0 bg-gradient-to-br from-green-500/10 to-green-600/10">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Aktīvie abonēšanas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-3xl font-bold">{stats.activeSubscriptions}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="shadow-card border-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Starter plāns</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <span className="text-2xl font-bold">{stats.starterPlan}</span>
+              <p className="text-xs text-muted-foreground mt-1">meistari</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Pro plāns</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <span className="text-2xl font-bold">{stats.proPlan}</span>
+              <p className="text-xs text-muted-foreground mt-1">meistari</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Premium plāns</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <span className="text-2xl font-bold">{stats.premiumPlan}</span>
+              <p className="text-xs text-muted-foreground mt-1">meistari</p>
             </CardContent>
           </Card>
         </div>
