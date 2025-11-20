@@ -6,7 +6,7 @@ import { MAPBOX_TOKEN } from '@/lib/mapbox-config';
 interface EditableLocationMapProps {
   latitude: number | null;
   longitude: number | null;
-  onLocationChange: (lat: number, lng: number) => void;
+  onLocationChange: (lat: number, lng: number, address: string, city: string) => void;
   className?: string;
 }
 
@@ -39,6 +39,37 @@ const EditableLocationMap = ({
     // Add navigation controls
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
+    // Reverse geocode function
+    const reverseGeocode = async (lat: number, lng: number) => {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&country=LV&types=address`
+        );
+        const data = await response.json();
+        
+        if (data.features && data.features.length > 0) {
+          const feature = data.features[0];
+          const place = feature.place_name;
+          
+          // Extract street address (first part before comma)
+          const addressParts = place.split(',');
+          const streetAddress = addressParts[0] || '';
+          
+          // Extract city from context
+          let city = '';
+          if (feature.context) {
+            const cityContext = feature.context.find((c: any) => c.id.startsWith('place'));
+            city = cityContext?.text || '';
+          }
+          
+          return { address: streetAddress, city };
+        }
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+      }
+      return { address: '', city: '' };
+    };
+
     // Add initial marker if coordinates exist
     if (latitude && longitude) {
       marker.current = new mapboxgl.Marker({ 
@@ -49,16 +80,17 @@ const EditableLocationMap = ({
         .addTo(map.current);
 
       // Handle marker drag
-      marker.current.on('dragend', () => {
+      marker.current.on('dragend', async () => {
         if (marker.current) {
           const lngLat = marker.current.getLngLat();
-          onLocationChange(lngLat.lat, lngLat.lng);
+          const { address, city } = await reverseGeocode(lngLat.lat, lngLat.lng);
+          onLocationChange(lngLat.lat, lngLat.lng, address, city);
         }
       });
     }
 
     // Handle map click to set/move marker
-    map.current.on('click', (e) => {
+    map.current.on('click', async (e) => {
       if (!map.current) return;
 
       const { lng, lat } = e.lngLat;
@@ -76,15 +108,17 @@ const EditableLocationMap = ({
           .addTo(map.current);
 
         // Handle marker drag for newly created marker
-        marker.current.on('dragend', () => {
+        marker.current.on('dragend', async () => {
           if (marker.current) {
             const lngLat = marker.current.getLngLat();
-            onLocationChange(lngLat.lat, lngLat.lng);
+            const { address, city } = await reverseGeocode(lngLat.lat, lngLat.lng);
+            onLocationChange(lngLat.lat, lngLat.lng, address, city);
           }
         });
       }
 
-      onLocationChange(lat, lng);
+      const { address, city } = await reverseGeocode(lat, lng);
+      onLocationChange(lat, lng, address, city);
     });
 
     return () => {
@@ -94,6 +128,36 @@ const EditableLocationMap = ({
 
   // Update marker position when coordinates change externally
   useEffect(() => {
+    const reverseGeocode = async (lat: number, lng: number) => {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&country=LV&types=address`
+        );
+        const data = await response.json();
+        
+        if (data.features && data.features.length > 0) {
+          const feature = data.features[0];
+          const place = feature.place_name;
+          
+          // Extract street address (first part before comma)
+          const addressParts = place.split(',');
+          const streetAddress = addressParts[0] || '';
+          
+          // Extract city from context
+          let city = '';
+          if (feature.context) {
+            const cityContext = feature.context.find((c: any) => c.id.startsWith('place'));
+            city = cityContext?.text || '';
+          }
+          
+          return { address: streetAddress, city };
+        }
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+      }
+      return { address: '', city: '' };
+    };
+
     if (map.current && latitude && longitude) {
       if (marker.current) {
         marker.current.setLngLat([longitude, latitude]);
@@ -105,10 +169,11 @@ const EditableLocationMap = ({
           .setLngLat([longitude, latitude])
           .addTo(map.current);
 
-        marker.current.on('dragend', () => {
+        marker.current.on('dragend', async () => {
           if (marker.current) {
             const lngLat = marker.current.getLngLat();
-            onLocationChange(lngLat.lat, lngLat.lng);
+            const { address, city } = await reverseGeocode(lngLat.lat, lngLat.lng);
+            onLocationChange(lngLat.lat, lngLat.lng, address, city);
           }
         });
       }

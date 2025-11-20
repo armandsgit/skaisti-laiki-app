@@ -647,11 +647,13 @@ const ProfessionalDashboard = () => {
                           <EditableLocationMap
                             latitude={editedProfInfo.latitude}
                             longitude={editedProfInfo.longitude}
-                            onLocationChange={(lat, lng) => {
+                            onLocationChange={(lat, lng, address, city) => {
                               setEditedProfInfo({
                                 ...editedProfInfo,
                                 latitude: lat,
-                                longitude: lng
+                                longitude: lng,
+                                address: address,
+                                city: city
                               });
                             }}
                           />
