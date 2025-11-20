@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, LogOut, Search, Star, MapPin, Sparkles, Map } from 'lucide-react';
+import { Calendar, LogOut, Search, Star, MapPin, Sparkles, Map, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -121,6 +121,9 @@ const ClientDashboard = () => {
             <Button variant="outline" size="sm" onClick={() => navigate('/map')}>
               <Map className="w-4 h-4 mr-2" />
               Skatīt kartē
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/client/settings')}>
+              <Settings className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="w-4 h-4 mr-2" />

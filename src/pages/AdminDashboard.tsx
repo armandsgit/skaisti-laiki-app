@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2 } from 'lucide-react';
+import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2, UserX, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PlanBadge from '@/components/PlanBadge';
 import DeleteProfessionalModal from '@/components/DeleteProfessionalModal';
+import DeleteClientModal from '@/components/DeleteClientModal';
 
 const AdminDashboard = () => {
   const t = useTranslation('lv');
@@ -26,22 +27,29 @@ const AdminDashboard = () => {
     activeSubscriptions: 0,
   });
   const [professionals, setProfessionals] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
+  const [deleteClientModalOpen, setDeleteClientModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    const [usersData, profsData, bookingsData] = await Promise.all([
+    const [usersData, profsData, clientsData, bookingsData] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact' }),
       supabase.from('professional_profiles').select(`
         *,
         profiles!professional_profiles_user_id_fkey(name, phone)
       `),
+      supabase.from('profiles').select(`
+        *,
+        user_roles!inner(role)
+      `).eq('user_roles.role', 'CLIENT'),
       supabase.from('bookings').select(`
         *,
         services(name),
@@ -70,6 +78,7 @@ const AdminDashboard = () => {
     });
 
     setProfessionals(profsData.data || []);
+    setClients(clientsData.data || []);
     setBookings(bookingsData.data || []);
     setLoading(false);
   };
@@ -236,6 +245,78 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSuspendClient = async (clientId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: newStatus })
+      .eq('id', clientId);
+
+    if (error) {
+      toast.error(t.error);
+    } else {
+      toast.success(newStatus === 'suspended' ? 'Klients suspendēts' : 'Klients atjaunots');
+      loadData();
+    }
+  };
+
+  const handleOpenDeleteClientModal = (client: any) => {
+    setSelectedClient(client);
+    setDeleteClientModalOpen(true);
+  };
+
+  const handleDeleteClient = async () => {
+    if (!selectedClient) return;
+
+    try {
+      // Delete in correct order to respect foreign key constraints
+
+      // 1. Delete reviews written by this client
+      const { error: reviewsError } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('client_id', selectedClient.id);
+
+      if (reviewsError) throw reviewsError;
+
+      // 2. Delete bookings
+      const { error: bookingsError } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('client_id', selectedClient.id);
+
+      if (bookingsError) throw bookingsError;
+
+      // 3. Delete user roles
+      const { error: rolesError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', selectedClient.id);
+
+      if (rolesError) throw rolesError;
+
+      // 4. Delete profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', selectedClient.id);
+
+      if (profileError) throw profileError;
+
+      // 5. Delete auth user
+      const { error: authError } = await supabase.auth.admin.deleteUser(
+        selectedClient.id
+      );
+
+      if (authError) throw authError;
+
+      toast.success('Klienta profils dzēsts.');
+      loadData();
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast.error('Neizdevās izdzēst klienta profilu. Lūdzu, mēģiniet vēlreiz.');
+    }
+  };
 
   if (loading) {
     return (
@@ -363,7 +444,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-card/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-card/80 backdrop-blur-sm">
             <TabsTrigger value="pending">
               <CheckCircle className="w-4 h-4 mr-2" />
               Gaida apstiprināšanu
@@ -371,6 +452,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="professionals">
               <Briefcase className="w-4 h-4 mr-2" />
               {t.manageProfessionals}
+            </TabsTrigger>
+            <TabsTrigger value="clients">
+              <Users className="w-4 h-4 mr-2" />
+              Klienti
             </TabsTrigger>
             <TabsTrigger value="bookings">
               <Calendar className="w-4 h-4 mr-2" />
@@ -602,6 +687,73 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="clients" className="space-y-4">
+            <Card className="shadow-card border-0">
+              <CardHeader>
+                <CardTitle>Klienti</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {clients.map((client) => (
+                    <Card 
+                      key={client.id}
+                      className={client.status === 'suspended' 
+                        ? "border-2 border-destructive bg-destructive/5" 
+                        : "border"}
+                    >
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg">{client.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {client.phone || 'Nav telefona'}
+                              </p>
+                              <div className="flex gap-2 mt-2">
+                                {client.status === 'suspended' ? (
+                                  <Badge variant="destructive">Suspendēts</Badge>
+                                ) : (
+                                  <Badge variant="success">Aktīvs</Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 flex-wrap border-t pt-3">
+                            <Button
+                              variant={client.status === 'suspended' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => handleSuspendClient(client.id, client.status || 'active')}
+                            >
+                              {client.status === 'suspended' ? (
+                                <>
+                                  <UserCheck className="w-4 h-4 mr-2" />
+                                  Atjaunot
+                                </>
+                              ) : (
+                                <>
+                                  <UserX className="w-4 h-4 mr-2" />
+                                  Suspendēt
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleOpenDeleteClientModal(client)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="bookings" className="space-y-4">
             <Card className="shadow-card border-0">
               <CardHeader>
@@ -650,6 +802,13 @@ const AdminDashboard = () => {
         onOpenChange={setDeleteModalOpen}
         professionalName={selectedProfessional?.profiles?.name || ''}
         onConfirmDelete={handleDeleteProfessional}
+      />
+
+      <DeleteClientModal
+        open={deleteClientModalOpen}
+        onOpenChange={setDeleteClientModalOpen}
+        clientName={selectedClient?.name || ''}
+        onConfirmDelete={handleDeleteClient}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ClientDashboard from "./pages/ClientDashboard";
+import ClientSettings from "./pages/ClientSettings";
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -39,6 +40,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="CLIENT">
                   <ClientDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/client/settings" 
+              element={
+                <ProtectedRoute requiredRole="CLIENT">
+                  <ClientSettings />
                 </ProtectedRoute>
               } 
             />
