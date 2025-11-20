@@ -88,14 +88,14 @@ const ClientDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
-      <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-primary-soft to-secondary">
+      <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm z-20">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft">
+              <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               BeautyOn
             </h1>
           </div>
@@ -106,43 +106,88 @@ const ClientDashboard = () => {
         </div>
       </header>
 
-      {/* Map Section - Full width at the top */}
-      <div className="w-full h-[400px] md:h-[500px]">
+      {/* Full Screen Map */}
+      <div className="flex-1 relative">
         <AllMastersMap />
       </div>
 
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-card/80 backdrop-blur-sm">
-            <TabsTrigger value="search">
-              <Search className="w-4 h-4 mr-2" />
-              {t.searchProfessionals}
-            </TabsTrigger>
-            <TabsTrigger value="bookings">
-              <Calendar className="w-4 h-4 mr-2" />
-              {t.bookings}
-            </TabsTrigger>
-          </TabsList>
+      {/* Bottom Navigation */}
+      <nav className="bg-card/95 backdrop-blur-sm border-t shadow-lg z-20">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-around">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex-col h-auto py-2"
+            onClick={() => {
+              const searchSection = document.getElementById('search-section');
+              if (searchSection) searchSection.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            <Search className="w-5 h-5 mb-1 text-primary" />
+            <span className="text-xs">Meklēt</span>
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex-col h-auto py-2"
+            onClick={() => navigate('/bookings')}
+          >
+            <Calendar className="w-5 h-5 mb-1" />
+            <span className="text-xs">Rezervācija</span>
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex-col h-auto py-2"
+            onClick={() => navigate('/profile')}
+          >
+            <Avatar className="w-5 h-5 mb-1">
+              <AvatarImage src={user?.user_metadata?.avatar} />
+              <AvatarFallback>
+                {user?.user_metadata?.name?.[0] || user?.email?.[0] || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs">Izvēlne</span>
+          </Button>
+        </div>
+      </nav>
 
-          <TabsContent value="search" className="space-y-6">
-            <Card className="shadow-card border-0">
-              <CardHeader>
-                <CardTitle>{t.searchProfessionals}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-4 flex-wrap">
-                  <div className="flex-1 min-w-[200px]">
-                    <Input
-                      placeholder={t.search}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full"
-                    />
-                  </div>
+      {/* Hidden Search & Bookings Section - Scrollable */}
+      <div className="hidden" id="search-section">
+        <div className="container mx-auto px-4 py-6 space-y-6">
+          <Tabs defaultValue="search" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-card/80 backdrop-blur-sm">
+              <TabsTrigger value="search">
+                <Search className="w-4 h-4 mr-2" />
+                {t.searchProfessionals}
+              </TabsTrigger>
+              <TabsTrigger value="bookings">
+                <Calendar className="w-4 h-4 mr-2" />
+                {t.bookings}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="search" className="space-y-6">
+              <Card className="shadow-card border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="w-5 h-5 text-primary" />
+                    {t.searchProfessionals}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Input
+                    placeholder={t.searchByName}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full"
+                  />
                   
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder={t.filterByCategory} />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={t.selectCategory} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t.allCategories}</SelectItem>
@@ -151,116 +196,131 @@ const ClientDashboard = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProfessionals.map((prof) => (
-                <Card 
-                  key={prof.id} 
-                  className="hover:shadow-soft transition-all cursor-pointer border-0 overflow-hidden group"
-                  onClick={() => navigate(`/professional/${prof.id}`)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <Avatar className="w-16 h-16 border-2 border-primary/20">
-                        <AvatarImage src={prof.profiles?.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {prof.profiles?.name?.charAt(0) || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
-                          {prof.profiles?.name}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProfessionals.map((prof) => (
+                  <Card 
+                    key={prof.id} 
+                    className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group border-0 shadow-card"
+                    onClick={() => navigate(`/professional/${prof.id}`)}
+                  >
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="w-16 h-16 border-2 border-primary/20 shadow-soft">
+                          <AvatarImage src={prof.profiles?.avatar} />
+                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-lg font-semibold">
+                            {prof.profiles?.name?.[0] || 'M'}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-lg group-hover:text-primary transition-colors truncate">
+                            {prof.profiles?.name}
+                          </h3>
+                          <Badge variant="secondary" className="mt-1">
                             {prof.category}
                           </Badge>
-                          {prof.is_verified && (
-                            <Badge variant="default" className="text-xs">
-                              {t.verified}
-                            </Badge>
-                          )}
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      {prof.city && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" />
-                          <span>{prof.city}</span>
-                        </div>
+
+                      {prof.bio && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {prof.bio}
+                        </p>
                       )}
-                      
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 fill-accent text-accent" />
-                        <span>{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
+
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1 text-amber-500">
+                          <Star className="w-4 h-4 fill-current" />
+                          <span className="font-medium">{prof.rating || 0}</span>
+                        </div>
+                        
+                        {prof.address && (
+                          <div className="flex items-center gap-1 text-muted-foreground truncate flex-1">
+                            <MapPin className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-xs truncate">{prof.address}</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    
-                    {prof.bio && (
-                      <p className="mt-4 text-sm text-muted-foreground line-clamp-2">
-                        {prof.bio}
-                      </p>
-                    )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {filteredProfessionals.length === 0 && (
+                <Card className="border-0 shadow-card">
+                  <CardContent className="p-12 text-center">
+                    <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">{t.noProfessionalsFound}</p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </TabsContent>
+              )}
+            </TabsContent>
 
-          <TabsContent value="bookings" className="space-y-4">
-            <Card className="shadow-card border-0">
-              <CardHeader>
-                <CardTitle>{t.bookings}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {bookings.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    Jums vēl nav nevienas rezervācijas
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {bookings.map((booking) => (
-                      <Card key={booking.id} className="border">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-semibold">
-                                {booking.professional_profiles?.profiles?.name}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {booking.services?.name}
-                              </p>
-                              <p className="text-sm mt-2">
-                                {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
-                              </p>
+            <TabsContent value="bookings" className="space-y-6">
+              {bookings.length === 0 ? (
+                <Card className="border-0 shadow-card">
+                  <CardContent className="p-12 text-center">
+                    <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">{t.noBookingsYet}</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {bookings.map((booking) => (
+                    <Card key={booking.id} className="border-0 shadow-card hover:shadow-lg transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <Avatar className="w-12 h-12 border-2 border-primary/20">
+                            <AvatarImage src={booking.professional_profiles?.profiles?.avatar} />
+                            <AvatarFallback>
+                              {booking.professional_profiles?.profiles?.name?.[0] || 'M'}
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <h3 className="font-semibold truncate">
+                                  {booking.professional_profiles?.profiles?.name}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.services?.name}
+                                </p>
+                              </div>
+                              <Badge 
+                                variant={
+                                  booking.status === 'confirmed' ? 'default' :
+                                  booking.status === 'completed' ? 'secondary' :
+                                  booking.status === 'canceled' ? 'destructive' :
+                                  'outline'
+                                }
+                              >
+                                {booking.status}
+                              </Badge>
                             </div>
                             
-                            <Badge 
-                              variant={
-                                booking.status === 'confirmed' ? 'default' :
-                                booking.status === 'completed' ? 'secondary' :
-                                booking.status === 'canceled' ? 'destructive' : 'outline'
-                              }
-                            >
-                              {t[booking.status as keyof typeof t] || booking.status}
-                            </Badge>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {booking.booking_date}
+                              </div>
+                              <span>{booking.booking_time}</span>
+                              <span className="font-medium">€{booking.services?.price}</span>
+                            </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 };
