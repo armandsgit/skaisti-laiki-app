@@ -62,9 +62,9 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
       {showOpenButton && (
         <button
           onClick={openInGoogleMaps}
-          className="hidden sm:flex items-center gap-2 text-xs sm:text-sm text-primary tap-feedback whitespace-nowrap"
+          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
         >
-          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+          <MapPin className="w-4 h-4" />
           Skatīt kartē →
         </button>
       )}
