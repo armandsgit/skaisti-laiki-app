@@ -9,13 +9,18 @@ import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 
 // Izmanto SortedMaster no master-sorting.ts
 
-const AllMastersMap = () => {
+interface AllMastersMapProps {
+  selectedMasterId?: string;
+}
+
+const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [masters, setMasters] = useState<SortedMaster[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
 
   useEffect(() => {
     initializeMap();
@@ -155,9 +160,11 @@ const AllMastersMap = () => {
           .setLngLat([master.longitude, master.latitude])
           .addTo(map.current);
 
-        // Store marker reference for zoom handler
+        // Store marker reference for zoom handler and selected master handling
         (marker as any).masterData = master;
         (marker as any).hoverPopup = hoverPopup;
+        (marker as any).clickPopup = clickPopup;
+        markersRef.current.set(master.id, marker);
 
         // Hover popup - desktop only
         if (window.innerWidth >= 768) {
@@ -296,6 +303,75 @@ const AllMastersMap = () => {
           }
         }, 300);
       });
+
+      // Handle selected master
+      if (selectedMasterId && masters.length > 0) {
+        const selectedMaster = masters.find(m => m.id === selectedMasterId);
+        if (selectedMaster && map.current) {
+          // Fly to the selected master with smooth animation
+          setTimeout(() => {
+            if (!map.current) return;
+            
+            map.current.flyTo({
+              center: [selectedMaster.longitude, selectedMaster.latitude],
+              zoom: 16,
+              duration: 2000,
+              essential: true
+            });
+
+            // Add bounce animation to marker
+            const selectedMarker = markersRef.current.get(selectedMasterId);
+            if (selectedMarker) {
+              const markerEl = selectedMarker.getElement();
+              markerEl.classList.add('marker-bounce');
+              
+              // Remove bounce class after animation
+              setTimeout(() => {
+                markerEl.classList.remove('marker-bounce');
+              }, 1000);
+            }
+
+            // Show popup after fly animation completes
+            setTimeout(() => {
+              if (!map.current) return;
+              
+              const avatarUrl = selectedMaster.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedMaster.profiles.name;
+              const shortAddress = selectedMaster.address ? (selectedMaster.address.length > 40 ? selectedMaster.address.substring(0, 40) + '...' : selectedMaster.address) : selectedMaster.city;
+              
+              const selectedPopup = new mapboxgl.Popup({ 
+                offset: 25,
+                closeButton: true,
+                closeOnClick: false,
+                className: 'selected-master-popup',
+                maxWidth: '280px'
+              }).setHTML(
+                `<div style="padding: 12px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 16px;">
+                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                    <img 
+                      src="${avatarUrl}" 
+                      alt="${selectedMaster.profiles.name}"
+                      style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                    />
+                    <div style="min-width: 0; flex: 1;">
+                      <h3 style="font-weight: 600; margin: 0 0 4px 0; font-size: 15px; color: #1a1a1a; line-height: 1.3;">${selectedMaster.profiles.name}</h3>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: #f59e0b; font-size: 13px;">⭐</span>
+                        <span style="color: #666; font-weight: 500; font-size: 13px;">${selectedMaster.rating || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: start; gap: 6px; font-size: 12px; color: #666; line-height: 1.4;">
+                    <span style="font-size: 13px; margin-top: 1px;">📍</span>
+                    <span>${shortAddress}</span>
+                  </div>
+                </div>`
+              )
+              .setLngLat([selectedMaster.longitude, selectedMaster.latitude])
+              .addTo(map.current);
+            }, 2100);
+          }, 100);
+        }
+      }
     } catch (error) {
       console.error('Error creating map:', error);
     }
@@ -305,8 +381,9 @@ const AllMastersMap = () => {
         map.current.remove();
         map.current = null;
       }
+      markersRef.current.clear();
     };
-  }, [masters, loading, navigate]);
+  }, [masters, loading, navigate, selectedMasterId]);
 
   if (loading) {
     return (
