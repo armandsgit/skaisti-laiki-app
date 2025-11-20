@@ -43,7 +43,6 @@ const AllMastersMap = () => {
         `)
         .eq('approved', true)
         .eq('is_blocked', false)
-        .eq('city', 'Rīga')
         .not('latitude', 'is', null)
         .not('longitude', 'is', null);
 
@@ -72,19 +71,9 @@ const AllMastersMap = () => {
     // Set access token
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    // Calculate center
-    let center: [number, number];
-    let zoom: number;
-
-    if (masters.length > 0) {
-      const avgLat = masters.reduce((sum, m) => sum + m.latitude, 0) / masters.length;
-      const avgLng = masters.reduce((sum, m) => sum + m.longitude, 0) / masters.length;
-      center = [avgLng, avgLat];
-      zoom = 12;
-    } else {
-      center = [24.1052, 56.9496]; // Rīga
-      zoom = 12;
-    }
+    // Calculate center - always center on Rīga with zoom to see the whole city
+    const center: [number, number] = [24.1052, 56.9496]; // Rīga
+    const zoom = 11;
 
     // Create map
     try {
