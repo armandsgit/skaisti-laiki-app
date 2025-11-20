@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2, Ban, Power, ShieldCheck, ShieldOff, Lock, Unlock, Tags } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import LocationMap from '@/components/LocationMap';
@@ -44,6 +43,7 @@ const AdminDashboard = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedUserType, setSelectedUserType] = useState<'professional' | 'client'>('professional');
   const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedTab, setSelectedTab] = useState<'pending' | 'professionals' | 'clients' | 'bookings' | 'categories'>('pending');
 
   useEffect(() => {
     loadData();
@@ -498,39 +498,95 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="pending" className="w-full">
-          <div className="w-full mb-4 sm:mb-6 overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5 bg-card/80 backdrop-blur-sm">
-              <TabsTrigger value="pending" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
-                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden xs:inline sm:hidden">Gaida</span>
-                <span className="hidden sm:inline">Gaida apstiprināšanu</span>
-                <span className="xs:hidden">Gaida</span>
-              </TabsTrigger>
-              <TabsTrigger value="professionals" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
-                <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden xs:inline sm:hidden">Meistari</span>
-                <span className="hidden sm:inline">{t.manageProfessionals}</span>
-                <span className="xs:hidden">Meistari</span>
-              </TabsTrigger>
-              <TabsTrigger value="clients" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
-                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span>Klienti</span>
-              </TabsTrigger>
-              <TabsTrigger value="bookings" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
-                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden xs:inline sm:hidden">Rezerv.</span>
-                <span className="hidden sm:inline">{t.manageBookings}</span>
-                <span className="xs:hidden">Rezerv.</span>
-              </TabsTrigger>
-              <TabsTrigger value="categories" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
-                <Tags className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span>Kategorijas</span>
-              </TabsTrigger>
-            </TabsList>
+        {/* Modern grid navigation */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+            <button
+              onClick={() => setSelectedTab('pending')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                selectedTab === 'pending'
+                  ? 'border-primary bg-primary/10 shadow-lg'
+                  : 'border-border hover:border-primary/50 hover:shadow-md'
+              }`}
+            >
+              <CheckCircle className={`w-6 h-6 mx-auto mb-2 ${selectedTab === 'pending' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className={`text-xs sm:text-sm font-medium text-center ${selectedTab === 'pending' ? 'text-primary' : 'text-foreground'}`}>
+                Gaida
+              </p>
+              <p className="text-xs text-muted-foreground text-center hidden sm:block">
+                apstiprināšanu
+              </p>
+            </button>
+
+            <button
+              onClick={() => setSelectedTab('professionals')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                selectedTab === 'professionals'
+                  ? 'border-primary bg-primary/10 shadow-lg'
+                  : 'border-border hover:border-primary/50 hover:shadow-md'
+              }`}
+            >
+              <Briefcase className={`w-6 h-6 mx-auto mb-2 ${selectedTab === 'professionals' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className={`text-xs sm:text-sm font-medium text-center ${selectedTab === 'professionals' ? 'text-primary' : 'text-foreground'}`}>
+                Meistari
+              </p>
+              <p className="text-xs text-muted-foreground text-center hidden sm:block">
+                pārvaldīt
+              </p>
+            </button>
+
+            <button
+              onClick={() => setSelectedTab('clients')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                selectedTab === 'clients'
+                  ? 'border-primary bg-primary/10 shadow-lg'
+                  : 'border-border hover:border-primary/50 hover:shadow-md'
+              }`}
+            >
+              <Users className={`w-6 h-6 mx-auto mb-2 ${selectedTab === 'clients' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className={`text-xs sm:text-sm font-medium text-center ${selectedTab === 'clients' ? 'text-primary' : 'text-foreground'}`}>
+                Klienti
+              </p>
+              <p className="text-xs text-muted-foreground text-center hidden sm:block">
+                pārvaldīt
+              </p>
+            </button>
+
+            <button
+              onClick={() => setSelectedTab('bookings')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                selectedTab === 'bookings'
+                  ? 'border-primary bg-primary/10 shadow-lg'
+                  : 'border-border hover:border-primary/50 hover:shadow-md'
+              }`}
+            >
+              <Calendar className={`w-6 h-6 mx-auto mb-2 ${selectedTab === 'bookings' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className={`text-xs sm:text-sm font-medium text-center ${selectedTab === 'bookings' ? 'text-primary' : 'text-foreground'}`}>
+                Rezervācijas
+              </p>
+              <p className="text-xs text-muted-foreground text-center hidden sm:block">
+                pārvaldīt
+              </p>
+            </button>
+
+            <button
+              onClick={() => setSelectedTab('categories')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                selectedTab === 'categories'
+                  ? 'border-primary bg-primary/10 shadow-lg'
+                  : 'border-border hover:border-primary/50 hover:shadow-md'
+              }`}
+            >
+              <Tags className={`w-6 h-6 mx-auto mb-2 ${selectedTab === 'categories' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className={`text-xs sm:text-sm font-medium text-center ${selectedTab === 'categories' ? 'text-primary' : 'text-foreground'}`}>
+                Kategorijas
+              </p>
+              <p className="text-xs text-muted-foreground text-center hidden sm:block">
+                pārvaldīt
+              </p>
+            </button>
           </div>
 
-          <TabsContent value="pending" className="space-y-4">
+          {selectedTab === 'pending' && (
             <Card className="shadow-card border-0">
               <CardHeader>
                 <CardTitle>Meistari, kas gaida apstiprināšanu</CardTitle>
@@ -633,9 +689,9 @@ const AdminDashboard = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="professionals" className="space-y-4">
+          {selectedTab === 'professionals' && (
             <Card className="shadow-card border-0">
               <CardHeader>
                 <CardTitle>{t.manageProfessionals}</CardTitle>
@@ -829,9 +885,9 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="clients" className="space-y-4">
+          {selectedTab === 'clients' && (
             <Card className="shadow-card border-0">
               <CardHeader>
                 <CardTitle>Klienti</CardTitle>
@@ -895,9 +951,9 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="bookings" className="space-y-4">
+          {selectedTab === 'bookings' && (
             <Card className="shadow-card border-0">
               <CardHeader>
                 <CardTitle>{t.manageBookings}</CardTitle>
@@ -936,12 +992,11 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="categories" className="space-y-4">
+          {selectedTab === 'categories' && (
             <CategoryManager />
-          </TabsContent>
-        </Tabs>
+          )}
       </main>
 
       <DeleteProfessionalModal
