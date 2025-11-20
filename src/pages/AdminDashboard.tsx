@@ -269,19 +269,27 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteClient = async () => {
-    if (!selectedClient) return;
+    if (!selectedClient) {
+      console.log('No selected client');
+      return;
+    }
 
     const clientId = selectedClient.id;
+    const clientName = selectedClient.name;
+    
+    console.log('Starting delete for client:', clientId, clientName);
     const loadingToast = toast.loading('Dzēš klienta profilu...');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        console.error('No session found');
         toast.dismiss(loadingToast);
         toast.error('Nav autentifikācijas');
         return;
       }
 
+      console.log('Calling delete-user edge function...');
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
         {
@@ -294,28 +302,34 @@ const AdminDashboard = () => {
         }
       );
 
+      console.log('Response status:', response.status);
       const result = await response.json();
+      console.log('Response result:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to delete user');
       }
 
+      console.log('Deletion successful, updating UI');
       // Immediately remove from local state
       setClients(prev => prev.filter(c => c.id !== clientId));
       
       toast.dismiss(loadingToast);
-      toast.success('Klienta profils dzēsts');
+      toast.success(`Klienta profils "${clientName}" dzēsts`);
       
       // Close modal and clear selected client
       setDeleteClientModalOpen(false);
       setSelectedClient(null);
       
       // Reload data in background to ensure consistency
-      setTimeout(() => loadData(), 500);
+      setTimeout(() => {
+        console.log('Reloading data...');
+        loadData();
+      }, 500);
     } catch (error) {
       console.error('Error deleting client:', error);
       toast.dismiss(loadingToast);
-      toast.error('Neizdevās izdzēst profilu. Lūdzu, mēģiniet vēlreiz.');
+      toast.error(`Neizdevās izdzēst profilu: ${error.message}`);
     }
   };
 
