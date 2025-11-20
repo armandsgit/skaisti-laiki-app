@@ -21,6 +21,7 @@ const AllMastersMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [masters, setMasters] = useState<Master[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,120 +29,125 @@ const AllMastersMap = () => {
   }, []);
 
   const loadMasters = async () => {
-    console.log('Loading masters...');
-    const { data, error } = await supabase
-      .from('professional_profiles')
-      .select(`
-        id,
-        latitude,
-        longitude,
-        address,
-        category,
-        rating,
-        profiles!professional_profiles_user_id_fkey(name)
-      `)
-      .eq('approved', true)
-      .eq('is_blocked', false)
-      .not('latitude', 'is', null)
-      .not('longitude', 'is', null);
+    try {
+      const { data, error } = await supabase
+        .from('professional_profiles')
+        .select(`
+          id,
+          latitude,
+          longitude,
+          address,
+          category,
+          rating,
+          profiles!professional_profiles_user_id_fkey(name)
+        `)
+        .eq('approved', true)
+        .eq('is_blocked', false)
+        .not('latitude', 'is', null)
+        .not('longitude', 'is', null);
 
-    console.log('Masters data:', data);
-    console.log('Masters error:', error);
+      if (error) {
+        console.error('Error loading masters:', error);
+        return;
+      }
 
-    if (data) {
       setMasters(data as any);
+    } catch (error) {
+      console.error('Exception loading masters:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log('Map useEffect triggered, masters:', masters);
-    if (!mapContainer.current) {
-      console.log('No map container');
-      return;
+    if (!mapContainer.current || loading) return;
+
+    // Cleanup previous map
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
     }
 
-    console.log('Mapbox token:', MAPBOX_TOKEN);
+    // Set access token
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    // Noteikt kartes centru
+    // Calculate center
     let center: [number, number];
     let zoom: number;
 
     if (masters.length > 0) {
-      // Vidējās koordinātes, ja ir meistari
       const avgLat = masters.reduce((sum, m) => sum + m.latitude, 0) / masters.length;
       const avgLng = masters.reduce((sum, m) => sum + m.longitude, 0) / masters.length;
       center = [avgLng, avgLat];
-      zoom = 10;
-      console.log('Map center from masters:', center, 'zoom:', zoom);
+      zoom = 11;
     } else {
-      // Latvijas centrs, ja nav meistaru
-      center = [24.6032, 56.8796];
-      zoom = 7;
-      console.log('Map center default (Latvia):', center, 'zoom:', zoom);
+      center = [24.1052, 56.9496]; // Rīga
+      zoom = 12;
     }
 
-    // Dzēš veco karti, ja tāda eksistē
-    if (map.current) {
-      console.log('Removing old map');
-      map.current.remove();
-    }
-
-    console.log('Creating new map...');
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: center,
-      zoom: zoom,
-    });
-
-    console.log('Map created');
-
-    // Pievienot navigācijas kontroles
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    // Pievienot marķierus katram meistaram
-    console.log('Adding markers for', masters.length, 'masters');
-    masters.forEach((master) => {
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
-        `<div style="padding: 8px;">
-          <h3 style="font-weight: bold; margin-bottom: 4px;">${master.profiles.name}</h3>
-          <p style="color: #666; font-size: 14px; margin-bottom: 4px;">${master.category}</p>
-          <p style="color: #666; font-size: 12px; margin-bottom: 8px;">${master.address || ''}</p>
-          <div style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
-            <span style="color: #f59e0b;">⭐</span>
-            <span>${master.rating || 0}</span>
-          </div>
-        </div>`
-      );
-
-      const marker = new mapboxgl.Marker({ color: '#ec4899' })
-        .setLngLat([master.longitude, master.latitude])
-        .setPopup(popup)
-        .addTo(map.current!);
-
-      console.log('Added marker for', master.profiles.name, 'at', [master.longitude, master.latitude]);
-
-      // Klikšķis uz marķiera atver profilu
-      marker.getElement().addEventListener('click', () => {
-        navigate(`/professional/${master.id}`);
+    // Create map
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: center,
+        zoom: zoom,
       });
-    });
+
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      // Add markers
+      masters.forEach((master) => {
+        if (!map.current) return;
+
+        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+          `<div style="padding: 8px;">
+            <h3 style="font-weight: bold; margin-bottom: 4px;">${master.profiles.name}</h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 4px;">${master.category}</p>
+            <p style="color: #666; font-size: 12px; margin-bottom: 8px;">${master.address || ''}</p>
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+              <span style="color: #f59e0b;">⭐</span>
+              <span>${master.rating || 0}</span>
+            </div>
+          </div>`
+        );
+
+        const marker = new mapboxgl.Marker({ color: '#ec4899' })
+          .setLngLat([master.longitude, master.latitude])
+          .setPopup(popup)
+          .addTo(map.current);
+
+        marker.getElement().addEventListener('click', () => {
+          navigate(`/professional/${master.id}`);
+        });
+      });
+    } catch (error) {
+      console.error('Error creating map:', error);
+    }
 
     return () => {
       if (map.current) {
-        console.log('Cleanup: removing map');
         map.current.remove();
         map.current = null;
       }
     };
-  }, [masters, navigate]);
+  }, [masters, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-muted/20 rounded-lg">
+        <p className="text-muted-foreground">Ielādē kartes datus...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full">
       <div 
         ref={mapContainer} 
         className="absolute inset-0 rounded-lg overflow-hidden border shadow-sm"
+        style={{ minHeight: '600px' }}
       />
       {masters.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
