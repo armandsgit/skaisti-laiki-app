@@ -559,6 +559,41 @@ const ProfessionalDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Approval Status Alert */}
+        {!profile.approved ? (
+          <Card className="shadow-card border-0 mb-4 sm:mb-6 bg-warning/10 border-warning/20">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 text-warning" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-base mb-1">Profils gaida apstiprināšanu</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Tavs profils tiek pārbaudīts. Pēc administratora apstiprināšanas tu būsi redzams klientiem kartē un meklēšanas rezultātos.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="shadow-card border-0 mb-4 sm:mb-6 bg-success/10 border-success/20">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-5 h-5 text-success" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-base mb-1">Profils apstiprināts</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Tavs profils ir aktīvs un redzams klientiem.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
           <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
             <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
