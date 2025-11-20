@@ -240,6 +240,41 @@ const ProfessionalDashboard = () => {
     setServiceDialogOpen(true);
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error('Attēls ir par lielu. Maksimālais izmērs: 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user?.id}-avatar-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('gallery')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('gallery')
+        .getPublicUrl(filePath);
+
+      setEditedProfile({ ...editedProfile, avatar: data.publicUrl });
+      toast.success('Attēls augšupielādēts!');
+    } catch (error: any) {
+      toast.error('Kļūda augšupielādējot attēlu: ' + error.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleUpdateProfile = async () => {
     if (!user?.id) return;
 
@@ -426,24 +461,24 @@ const ProfessionalDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
       <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft flex-shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">
               BeautyOn
             </h1>
           </div>
           
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            {t.logout}
+          <Button variant="ghost" size="sm" onClick={signOut} className="flex-shrink-0">
+            <LogOut className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t.logout}</span>
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-x-hidden">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
             <CardHeader className="pb-3">
@@ -495,8 +530,8 @@ const ProfessionalDashboard = () => {
         </div>
 
         <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6 bg-card/80 backdrop-blur-sm">
-            <TabsTrigger value="profile">
+          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm text-xs sm:text-sm">
+            <TabsTrigger value="profile" className="px-2 sm:px-4">
               <User className="w-4 h-4 mr-2" />
               Profils
             </TabsTrigger>
@@ -548,15 +583,21 @@ const ProfessionalDashboard = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="avatar">Avatara URL</Label>
+                          <Label htmlFor="avatar">Profila attēls</Label>
                           <Input
                             id="avatar"
-                            value={editedProfile.avatar}
-                            onChange={(e) => setEditedProfile({...editedProfile, avatar: e.target.value})}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
                           />
+                          {editedProfile.avatar && (
+                            <div className="mt-2">
+                              <img src={editedProfile.avatar} alt="Avatar preview" className="w-24 h-24 rounded-full object-cover" />
+                            </div>
+                          )}
                         </div>
-                        <Button onClick={handleUpdateProfile} className="w-full">
-                          Saglabāt izmaiņas
+                        <Button onClick={handleUpdateProfile} className="w-full" disabled={uploadingImage}>
+                          {uploadingImage ? 'Augšupielādē...' : 'Saglabāt izmaiņas'}
                         </Button>
                       </div>
                     </DialogContent>

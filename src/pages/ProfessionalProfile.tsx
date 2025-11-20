@@ -134,47 +134,52 @@ const ProfessionalProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary overflow-x-hidden">
       <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Atpakaļ
+            <span className="truncate">Atpakaļ</span>
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <Card className="shadow-card border-0 mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-6 mb-6">
-              <Avatar className="w-24 h-24 border-4 border-primary/20">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-4xl">
+        <Card className="shadow-card border-0 mb-4 sm:mb-6">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-4 sm:mb-6">
+              <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-primary/20 flex-shrink-0 mx-auto sm:mx-0">
                 <AvatarImage src={professional.profiles?.avatar} />
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                <AvatarFallback className="bg-primary/10 text-primary text-xl sm:text-2xl">
                   {professional.profiles?.name?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h1 className="text-3xl font-bold mb-2">
+              <div className="flex-1 min-w-0 w-full">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                  <div className="w-full">
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-2 break-words">
                       {professional.profiles?.name}
                     </h1>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="secondary">{professional.category}</Badge>
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap">{professional.category}</Badge>
                       {professional.is_verified && (
-                        <Badge variant="default">{t.verified}</Badge>
+                        <Badge variant="default" className="text-xs sm:text-sm whitespace-nowrap">{t.verified}</Badge>
                       )}
                     </div>
                   </div>
                 </div>
                 
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  {professional.city && (
+                  {(professional.address || professional.city) && (
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>{professional.city}</span>
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span className="break-words">
+                        {professional.address && professional.city 
+                          ? `${professional.address}, ${professional.city}`
+                          : professional.address || professional.city
+                        }
+                      </span>
                     </div>
                   )}
                   
@@ -190,29 +195,31 @@ const ProfessionalProfile = () => {
             
             {professional.bio && (
               <div className="border-t pt-4">
-                <h3 className="font-semibold mb-2">{t.bio}</h3>
-                <p className="text-muted-foreground">{professional.bio}</p>
+                <h3 className="font-semibold mb-2 text-base sm:text-lg">{t.bio}</h3>
+                <p className="text-muted-foreground text-sm sm:text-base break-words">{professional.bio}</p>
               </div>
             )}
             
             {professional.latitude && professional.longitude && (
               <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Atrašanās vieta</h3>
-                <LocationMap
-                  latitude={professional.latitude}
-                  longitude={professional.longitude}
-                  address={professional.address}
-                />
+                <h3 className="font-semibold mb-3 text-base sm:text-lg">Atrašanās vieta</h3>
+                <div className="w-full overflow-hidden rounded-lg">
+                  <LocationMap
+                    latitude={professional.latitude}
+                    longitude={professional.longitude}
+                    address={professional.address}
+                  />
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="shadow-card border-0 mb-6">
-          <CardHeader>
-            <CardTitle>{t.services}</CardTitle>
+        <Card className="shadow-card border-0 mb-4 sm:mb-6">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="text-lg sm:text-xl">{t.services}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             {services.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 Nav pieejamu pakalpojumu
