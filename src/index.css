@@ -266,6 +266,13 @@
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
   
+  /* Exclude Mapbox markers from global transitions */
+  .mapboxgl-marker,
+  .mapboxgl-marker *,
+  .custom-map-marker {
+    transition: none !important;
+  }
+  
   /* Mobile Responsive Grid Fix */
   .mobile-single-column > * {
     @apply w-full;
@@ -377,12 +384,10 @@
      CUSTOM MAP MARKERS
      ======================================== */
   .custom-map-marker {
-    width: 36px !important;
-    height: 36px !important;
+    width: 36px;
+    height: 36px;
     min-width: 36px;
     min-height: 36px;
-    max-width: 36px;
-    max-height: 36px;
     background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
     border-radius: 50%;
     border: 3px solid white;
@@ -391,8 +396,6 @@
     align-items: center;
     justify-content: center;
     font-size: 18px;
-    transform: none !important;
-    transition: none !important;
   }
   
   .draggable-marker {
@@ -410,12 +413,8 @@
   
   @media (max-width: 639px) {
     .custom-map-marker {
-      width: 44px !important;
-      height: 44px !important;
-      min-width: 44px;
-      min-height: 44px;
-      max-width: 44px;
-      max-height: 44px;
+      width: 44px;
+      height: 44px;
       font-size: 22px;
       border-width: 4px;
     }
