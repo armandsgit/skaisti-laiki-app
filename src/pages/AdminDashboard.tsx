@@ -177,62 +177,26 @@ const AdminDashboard = () => {
     if (!selectedProfessional) return;
 
     try {
-      // Delete in correct order to respect foreign key constraints
-      
-      // 1. Delete reviews
-      const { error: reviewsError } = await supabase
-        .from('reviews')
-        .delete()
-        .eq('professional_id', selectedProfessional.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
 
-      if (reviewsError) throw reviewsError;
-
-      // 2. Delete bookings
-      const { error: bookingsError } = await supabase
-        .from('bookings')
-        .delete()
-        .eq('professional_id', selectedProfessional.id);
-
-      if (bookingsError) throw bookingsError;
-
-      // 3. Delete services
-      const { error: servicesError } = await supabase
-        .from('services')
-        .delete()
-        .eq('professional_id', selectedProfessional.id);
-
-      if (servicesError) throw servicesError;
-
-      // 4. Delete professional profile
-      const { error: profileError } = await supabase
-        .from('professional_profiles')
-        .delete()
-        .eq('id', selectedProfessional.id);
-
-      if (profileError) throw profileError;
-
-      // 5. Delete user roles
-      const { error: rolesError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', selectedProfessional.user_id);
-
-      if (rolesError) throw rolesError;
-
-      // 6. Delete user profile
-      const { error: userProfileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', selectedProfessional.user_id);
-
-      if (userProfileError) throw userProfileError;
-
-      // 7. Delete auth user (using admin API)
-      const { error: authError } = await supabase.auth.admin.deleteUser(
-        selectedProfessional.user_id
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: selectedProfessional.user_id }),
+        }
       );
 
-      if (authError) throw authError;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
+      }
 
       toast.success('Profils veiksmīgi izdzēsts.');
       loadData();
@@ -266,46 +230,26 @@ const AdminDashboard = () => {
     if (!selectedClient) return;
 
     try {
-      // Delete in correct order to respect foreign key constraints
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
 
-      // 1. Delete reviews written by this client
-      const { error: reviewsError } = await supabase
-        .from('reviews')
-        .delete()
-        .eq('client_id', selectedClient.id);
-
-      if (reviewsError) throw reviewsError;
-
-      // 2. Delete bookings
-      const { error: bookingsError } = await supabase
-        .from('bookings')
-        .delete()
-        .eq('client_id', selectedClient.id);
-
-      if (bookingsError) throw bookingsError;
-
-      // 3. Delete user roles
-      const { error: rolesError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', selectedClient.id);
-
-      if (rolesError) throw rolesError;
-
-      // 4. Delete profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', selectedClient.id);
-
-      if (profileError) throw profileError;
-
-      // 5. Delete auth user
-      const { error: authError } = await supabase.auth.admin.deleteUser(
-        selectedClient.id
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: selectedClient.id }),
+        }
       );
 
-      if (authError) throw authError;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
+      }
 
       toast.success('Klienta profils dzēsts.');
       loadData();

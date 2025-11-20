@@ -19,44 +19,26 @@ export default function ClientSettings() {
 
     setDeleting(true);
     try {
-      // Delete in correct order to respect foreign key constraints
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
 
-      // 1. Delete reviews written by this client
-      const { error: reviewsError } = await supabase
-        .from('reviews')
-        .delete()
-        .eq('client_id', user.id);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: user.id }),
+        }
+      );
 
-      if (reviewsError) throw reviewsError;
+      const result = await response.json();
 
-      // 2. Delete bookings
-      const { error: bookingsError } = await supabase
-        .from('bookings')
-        .delete()
-        .eq('client_id', user.id);
-
-      if (bookingsError) throw bookingsError;
-
-      // 3. Delete user roles
-      const { error: rolesError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (rolesError) throw rolesError;
-
-      // 4. Delete profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // 5. Delete auth user
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
-
-      if (authError) throw authError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete account');
+      }
 
       toast.success('Tavs profils ir veiksmīgi dzēsts.');
       
