@@ -34,9 +34,10 @@ export const AddressAutocomplete = ({
   const debounceTimer = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    // Require at least 5 characters and city to be selected
-    if (value.length < 5 || !city) {
+    // Only show suggestions if we have at least 3 characters and city is selected
+    if (value.length < 3 || !city) {
       setSuggestions([]);
+      setOpen(false);
       return;
     }
 
@@ -77,18 +78,14 @@ export const AddressAutocomplete = ({
             feature.place_name.toLowerCase().includes(city.toLowerCase())
           );
           setSuggestions(filteredFeatures);
-          // Only open if we have filtered results
-          if (filteredFeatures.length > 0) {
-            setOpen(true);
-          }
+          // Show suggestions only if available, but don't prevent typing
         }
       } catch (error) {
         console.error('Address search error:', error);
-        toast.error('Kļūda meklējot adresi');
       } finally {
         setLoading(false);
       }
-    }, 500);
+    }, 600);
 
     return () => {
       if (debounceTimer.current) {
@@ -117,15 +114,22 @@ export const AddressAutocomplete = ({
             value={value}
             onChange={(e) => {
               onChange(e.target.value);
-              // Don't force open - let the useEffect handle it based on results
-            }}
-            onFocus={() => {
-              // Only open if we already have suggestions
-              if (suggestions.length > 0) {
+              // Show suggestions if available
+              if (suggestions.length > 0 && e.target.value.length >= 3) {
                 setOpen(true);
               }
             }}
-            placeholder={!city ? "Vispirms izvēlieties pilsētu" : placeholder}
+            onFocus={() => {
+              // Show suggestions on focus if available
+              if (suggestions.length > 0 && value.length >= 3) {
+                setOpen(true);
+              }
+            }}
+            onBlur={() => {
+              // Close suggestions after a short delay to allow clicking
+              setTimeout(() => setOpen(false), 200);
+            }}
+            placeholder={!city ? "Vispirms izvēlieties pilsētu" : "Piemēram: Latgales iela 245"}
             disabled={disabled || !city}
             className="pl-9"
           />
