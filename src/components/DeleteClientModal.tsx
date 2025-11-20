@@ -35,7 +35,7 @@ export default function DeleteClientModal({
   const handleFinalDelete = () => {
     if (confirmText === 'DZĒST') {
       onConfirmDelete();
-      handleClose();
+      // Don't close immediately - let parent handle closing after deletion
     }
   };
 
