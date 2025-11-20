@@ -14,6 +14,7 @@ import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Ed
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import LocationMap from '@/components/LocationMap';
+import EditableLocationMap from '@/components/EditableLocationMap';
 import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { toast } from 'sonner';
@@ -265,47 +266,38 @@ const ProfessionalDashboard = () => {
 
     const fullAddress = editedProfInfo.address.trim();
 
-    // Validate that we have address and city
+    // Validate required fields
     if (!fullAddress || !editedProfInfo.city) {
       toast.error('Lūdzu, aizpildiet pilsētu un adresi');
       return;
     }
 
-    // Always geocode the address
-    try {
-      const response = await supabase.functions.invoke('geocode-address', {
-        body: { address: `${fullAddress}, ${editedProfInfo.city}, Latvija` }
-      });
+    // Validate coordinates
+    if (!editedProfInfo.latitude || !editedProfInfo.longitude) {
+      toast.error('Lūdzu, atzīmējiet atrašanās vietu kartē');
+      return;
+    }
 
-      if (response.error || !response.data?.latitude || !response.data?.longitude) {
-        toast.error('Neizdevās noteikt adreses koordinātes. Lūdzu, pārbaudiet ievadīto adresi.');
-        return;
-      }
+    // Update with manually selected coordinates
+    const { error } = await supabase
+      .from('professional_profiles')
+      .update({
+        bio: editedProfInfo.bio,
+        category: editedProfInfo.category as any,
+        city: editedProfInfo.city,
+        address: fullAddress,
+        latitude: editedProfInfo.latitude,
+        longitude: editedProfInfo.longitude
+      })
+      .eq('id', profile.id);
 
-      // Update with geocoded coordinates
-      const { error } = await supabase
-        .from('professional_profiles')
-        .update({
-          bio: editedProfInfo.bio,
-          category: editedProfInfo.category as any,
-          city: editedProfInfo.city,
-          address: fullAddress,
-          latitude: response.data.latitude,
-          longitude: response.data.longitude
-        })
-        .eq('id', profile.id);
-
-      if (error) {
-        console.error('Update error:', error);
-        toast.error(`Kļūda atjauninot informāciju: ${error.message}`);
-      } else {
-        toast.success('Informācija atjaunināta!');
-        setEditProfessionalInfoOpen(false);
-        await loadProfile();
-      }
-    } catch (error: any) {
-      console.error('Geocoding error:', error);
-      toast.error('Kļūda noteikt koordinātes');
+    if (error) {
+      console.error('Update error:', error);
+      toast.error(`Kļūda atjauninot informāciju: ${error.message}`);
+    } else {
+      toast.success('Informācija atjaunināta!');
+      setEditProfessionalInfoOpen(false);
+      await loadProfile();
     }
   };
 
@@ -648,6 +640,20 @@ const ProfessionalDashboard = () => {
                             value={editedProfInfo.bio}
                             onChange={(e) => setEditedProfInfo({...editedProfInfo, bio: e.target.value})}
                             rows={4}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Atzīmējiet atrašanās vietu kartē</Label>
+                          <EditableLocationMap
+                            latitude={editedProfInfo.latitude}
+                            longitude={editedProfInfo.longitude}
+                            onLocationChange={(lat, lng) => {
+                              setEditedProfInfo({
+                                ...editedProfInfo,
+                                latitude: lat,
+                                longitude: lng
+                              });
+                            }}
                           />
                         </div>
                         <Button onClick={handleUpdateProfessionalInfo} className="w-full">
