@@ -14,6 +14,8 @@ import { Calendar, LogOut, Search, Star, MapPin, Sparkles, Map } from 'lucide-re
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
+import PlanBadge from '@/components/PlanBadge';
+
 
 const ClientDashboard = () => {
   const t = useTranslation('lv');
@@ -176,7 +178,9 @@ const ClientDashboard = () => {
               {filteredProfessionals.map((prof) => (
                 <Card 
                   key={prof.id} 
-                  className="hover:shadow-soft transition-all cursor-pointer border-0 overflow-hidden group"
+                  className={`hover:shadow-soft transition-all cursor-pointer border-0 overflow-hidden group ${
+                    prof.plan === 'premium' ? 'ring-2 ring-amber-400' : ''
+                  }`}
                   onClick={() => navigate(`/professional/${prof.id}`)}
                 >
                   <CardContent className="p-6">
@@ -192,15 +196,14 @@ const ClientDashboard = () => {
                         <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
                           {prof.profiles?.name}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Badge variant="secondary" className="text-xs">
                             {prof.category}
                           </Badge>
-                          {prof.is_verified && (
-                            <Badge variant="default" className="text-xs">
-                              {t.verified}
-                            </Badge>
-                          )}
+                          <PlanBadge 
+                            plan={prof.plan} 
+                            isVerified={prof.is_verified || false}
+                          />
                         </div>
                       </div>
                     </div>
@@ -218,12 +221,6 @@ const ClientDashboard = () => {
                         <Star className="w-4 h-4 fill-accent text-accent" />
                         <span>{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
                       </div>
-                      
-                      {prof.plan !== 'free' && (
-                        <Badge variant="outline" className="text-xs">
-                          {prof.plan === 'pro' ? 'PRO' : 'BASIC'}
-                        </Badge>
-                      )}
                     </div>
                     
                     {prof.bio && (

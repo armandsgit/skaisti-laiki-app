@@ -458,6 +458,39 @@ const ProfessionalDashboard = () => {
     );
   }
 
+  // Check if professional needs to choose subscription plan
+  if (profile && profile.subscription_status !== 'active') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full shadow-xl border-0">
+          <CardHeader className="text-center pb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-primary-foreground" />
+            </div>
+            <CardTitle className="text-3xl mb-2">
+              Lai turpinātu un kļūtu redzams klientiem
+            </CardTitle>
+            <p className="text-muted-foreground text-lg">
+              Izvēlies sev piemērotu abonēšanas plānu
+            </p>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button 
+              size="lg"
+              onClick={() => window.location.href = '/subscription-plans'}
+              className="w-full max-w-md mx-auto"
+            >
+              Izvēlēties plānu
+            </Button>
+            <p className="text-sm text-muted-foreground mt-4">
+              Bez aktīva abonēšanas plāna tavs profils nav redzams klientiem
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
       <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">

@@ -11,6 +11,7 @@ import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import AdminDashboard from "./pages/AdminDashboard";
 import MapView from "./pages/MapView";
+import SubscriptionPlans from "./pages/SubscriptionPlans";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -70,6 +71,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <MapView />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/subscription-plans" 
+              element={
+                <ProtectedRoute requiredRole="PROFESSIONAL">
+                  <SubscriptionPlans />
                 </ProtectedRoute>
               } 
             />
