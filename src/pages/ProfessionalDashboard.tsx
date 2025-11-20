@@ -252,8 +252,8 @@ const ProfessionalDashboard = () => {
 
     setUploadingImage(true);
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user?.id}-avatar-${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const fileName = `avatar-${Date.now()}.${fileExt}`;
+    const filePath = `${user?.id}/${fileName}`;
 
     try {
       const { error: uploadError } = await supabase.storage
