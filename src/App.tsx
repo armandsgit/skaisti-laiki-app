@@ -7,7 +7,8 @@ import { AuthProvider } from "@/lib/auth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ClientDashboard from "./pages/ClientDashboard";
-import ClientSettings from "./pages/ClientSettings";
+import ClientSettings from './pages/ClientSettings';
+import ProfessionalSettings from './pages/ProfessionalSettings';
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -56,6 +57,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="PROFESSIONAL">
                   <ProfessionalDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/professional/settings" 
+              element={
+                <ProtectedRoute requiredRole="PROFESSIONAL">
+                  <ProfessionalSettings />
                 </ProtectedRoute>
               } 
             />

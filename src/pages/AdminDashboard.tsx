@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2, UserX, UserCheck } from 'lucide-react';
+import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PlanBadge from '@/components/PlanBadge';
 import DeleteProfessionalModal from '@/components/DeleteProfessionalModal';
 import DeleteClientModal from '@/components/DeleteClientModal';
+import SuspendUserModal from '@/components/SuspendUserModal';
+import RestoreUserModal from '@/components/RestoreUserModal';
+import StatusBadge from '@/components/StatusBadge';
 
 const AdminDashboard = () => {
   const t = useTranslation('lv');
@@ -33,6 +36,10 @@ const AdminDashboard = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
   const [deleteClientModalOpen, setDeleteClientModalOpen] = useState(false);
+  const [suspendModalOpen, setSuspendModalOpen] = useState(false);
+  const [restoreModalOpen, setRestoreModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUserType, setSelectedUserType] = useState<'professional' | 'client'>('professional');
   const [selectedClient, setSelectedClient] = useState<any>(null);
 
   useEffect(() => {
@@ -206,19 +213,54 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleSuspendClient = async (clientId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+  const handleOpenSuspendModal = (user: any, type: 'professional' | 'client') => {
+    setSelectedUser(user);
+    setSelectedUserType(type);
+    setSuspendModalOpen(true);
+  };
+
+  const handleOpenRestoreModal = (user: any, type: 'professional' | 'client') => {
+    setSelectedUser(user);
+    setSelectedUserType(type);
+    setRestoreModalOpen(true);
+  };
+
+  const handleSuspendUser = async () => {
+    if (!selectedUser) return;
+
     const { error } = await supabase
       .from('profiles')
-      .update({ status: newStatus })
-      .eq('id', clientId);
+      .update({ status: 'suspended' })
+      .eq('id', selectedUser.id);
 
     if (error) {
-      toast.error(t.error);
-    } else {
-      toast.success(newStatus === 'suspended' ? 'Klients suspendēts' : 'Klients atjaunots');
-      loadData();
+      toast.error('Kļūda apturot lietotāju');
+      return;
     }
+
+    toast.success('Lietotājs apturēts');
+    setSuspendModalOpen(false);
+    setSelectedUser(null);
+    loadData();
+  };
+
+  const handleRestoreUser = async () => {
+    if (!selectedUser) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: 'active' })
+      .eq('id', selectedUser.id);
+
+    if (error) {
+      toast.error('Kļūda atjaunojot lietotāju');
+      return;
+    }
+
+    toast.success('Lietotājs atjaunots');
+    setRestoreModalOpen(false);
+    setSelectedUser(null);
+    loadData();
   };
 
   const handleOpenDeleteClientModal = (client: any) => {
@@ -651,41 +693,40 @@ const AdminDashboard = () => {
                                 {client.phone || 'Nav telefona'}
                               </p>
                               <div className="flex gap-2 mt-2">
-                                {client.status === 'suspended' ? (
-                                  <Badge variant="destructive">Suspendēts</Badge>
-                                ) : (
-                                  <Badge variant="success">Aktīvs</Badge>
-                                )}
-                              </div>
+                              <StatusBadge status={client.status} />
                             </div>
                           </div>
+                        </div>
 
-                          <div className="flex gap-2 flex-wrap border-t pt-3">
+                        <div className="flex gap-2 flex-wrap border-t pt-3">
+                          {client.status === 'suspended' ? (
                             <Button
-                              variant={client.status === 'suspended' ? 'default' : 'outline'}
+                              variant="outline"
                               size="sm"
-                              onClick={() => handleSuspendClient(client.id, client.status || 'active')}
+                              onClick={() => handleOpenRestoreModal(client, 'client')}
                             >
-                              {client.status === 'suspended' ? (
-                                <>
-                                  <UserCheck className="w-4 h-4 mr-2" />
-                                  Atjaunot
-                                </>
-                              ) : (
-                                <>
-                                  <UserX className="w-4 h-4 mr-2" />
-                                  Suspendēt
-                                </>
-                              )}
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Atjaunot
                             </Button>
+                          ) : (
                             <Button
-                              variant="destructive"
+                              variant="outline"
                               size="sm"
-                              onClick={() => handleOpenDeleteClientModal(client)}
+                              onClick={() => handleOpenSuspendModal(client, 'client')}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Ban className="w-4 h-4 mr-2" />
+                              Apturēt
                             </Button>
-                          </div>
+                          )}
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleOpenDeleteClientModal(client)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Dzēst profilu
+                          </Button>
+                        </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -750,6 +791,20 @@ const AdminDashboard = () => {
         onOpenChange={setDeleteClientModalOpen}
         clientName={selectedClient?.name || ''}
         onConfirmDelete={handleDeleteClient}
+      />
+
+      <SuspendUserModal
+        open={suspendModalOpen}
+        onOpenChange={setSuspendModalOpen}
+        userName={selectedUser?.name || ''}
+        onConfirmSuspend={handleSuspendUser}
+      />
+
+      <RestoreUserModal
+        open={restoreModalOpen}
+        onOpenChange={setRestoreModalOpen}
+        userName={selectedUser?.name || ''}
+        onConfirmRestore={handleRestoreUser}
       />
     </div>
   );

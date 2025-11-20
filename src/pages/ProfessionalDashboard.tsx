@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin } from 'lucide-react';
+import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import LocationMap from '@/components/LocationMap';
@@ -24,6 +25,7 @@ import SubscriptionStatusIndicator from '@/components/SubscriptionStatusIndicato
 const ProfessionalDashboard = () => {
   const t = useTranslation('lv');
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
   const [profile, setProfile] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
@@ -515,6 +517,10 @@ const ProfessionalDashboard = () => {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={() => navigate('/professional/settings')}>
+              <Settings className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Iestatījumi</span>
+            </Button>
             <SubscriptionStatusIndicator 
               plan={profile.plan || 'starter'} 
               status={profile.subscription_status || 'inactive'} 
