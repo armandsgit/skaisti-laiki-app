@@ -107,35 +107,37 @@ const ClientDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
       <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft flex-shrink-0">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+              </div>
+              <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">
+                BeautyOn
+              </h1>
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              BeautyOn
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/map')}>
-              <Map className="w-4 h-4 mr-2" />
-              Skatīt kartē
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/client/settings')}>
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              {t.logout}
-            </Button>
+            
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <Button variant="outline" size="sm" onClick={() => navigate('/map')} className="px-2 sm:px-4">
+                <Map className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline text-xs sm:text-sm">Skatīt kartē</span>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/client/settings')} className="px-2 sm:px-3">
+                <Settings className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={signOut} className="px-2 sm:px-3">
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline text-xs sm:text-sm">{t.logout}</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
         <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-card/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
               {t.searchProfessionals}
@@ -151,9 +153,9 @@ const ClientDashboard = () => {
               <CardHeader>
                 <CardTitle>{t.searchProfessionals}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-4 flex-wrap">
-                  <div className="flex-1 min-w-[200px]">
+              <CardContent className="space-y-3 sm:space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div className="flex-1 w-full">
                     <Input
                       placeholder={t.search}
                       value={searchTerm}
@@ -163,7 +165,7 @@ const ClientDashboard = () => {
                   </div>
                   
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-full sm:w-[200px]">
                       <SelectValue placeholder={t.filterByCategory} />
                     </SelectTrigger>
                     <SelectContent>
@@ -177,7 +179,7 @@ const ClientDashboard = () => {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredProfessionals.map((prof) => (
                 <Card 
                   key={prof.id} 
