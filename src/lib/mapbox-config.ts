@@ -1,6 +1,5 @@
-// Ievietojiet savu Mapbox publisko tokenu šeit
-// Iegūstiet to no: https://account.mapbox.com/access-tokens/
-export const MAPBOX_TOKEN = 'YOUR_MAPBOX_PUBLIC_TOKEN';
+// Mapbox public token from environment variable
+export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN || '';
 
 // Mapbox Geocoding API
 export const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
