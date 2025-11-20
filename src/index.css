@@ -200,7 +200,7 @@
   }
   
   .card-premium:active {
-    @apply shadow-[var(--shadow-hover)] -translate-y-0.5 scale-[1.01];
+    @apply shadow-[var(--shadow-hover)];
   }
   
   /* Touch Ripple Effect */
@@ -249,7 +249,7 @@
   }
   
   .tap-feedback:active {
-    @apply scale-[0.98] opacity-90;
+    @apply opacity-90;
   }
   
   /* Icon Tap Animation */
@@ -258,7 +258,7 @@
   }
   
   .icon-tap:active {
-    @apply scale-95 opacity-80;
+    @apply opacity-80;
   }
   
   /* Dark Mode Transition */
