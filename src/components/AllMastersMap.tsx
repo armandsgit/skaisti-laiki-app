@@ -78,9 +78,8 @@ const AllMastersMap = () => {
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
     // Calculate center - always center on Rīga with zoom to see the whole city
-    const isMobile = window.innerWidth < 640;
     const center: [number, number] = [24.1052, 56.9496]; // Rīga
-    const zoom = isMobile ? 11.5 : 11;
+    const zoom = 11.5;
 
     // Create map
     try {
@@ -137,24 +136,9 @@ const AllMastersMap = () => {
           </div>`
         );
 
-        // Create custom marker with gradient - larger on mobile
-        const isMobile = window.innerWidth < 640;
+        // Create custom marker with gradient
         const markerEl = document.createElement('div');
-        markerEl.style.cssText = `
-          width: ${isMobile ? '40px' : '32px'};
-          height: ${isMobile ? '40px' : '32px'};
-          background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
-          border-radius: 50%;
-          border: 3px solid white;
-          box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: ${isMobile ? '20px' : '16px'};
-          transition: all 0.2s ease;
-          pointer-events: auto;
-        `;
+        markerEl.className = 'custom-map-marker clickable-marker';
         markerEl.innerHTML = '✨';
 
         const marker = new mapboxgl.Marker({ 
@@ -166,9 +150,7 @@ const AllMastersMap = () => {
 
         // Hover effects - directly on markerEl
         markerEl.addEventListener('mouseenter', () => {
-          markerEl.style.width = '38px';
-          markerEl.style.height = '38px';
-          markerEl.style.fontSize = '18px';
+          markerEl.style.transform = 'scale(1.15)';
           markerEl.style.boxShadow = '0 6px 16px rgba(236, 72, 153, 0.7)';
           if (map.current) {
             hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
@@ -176,9 +158,7 @@ const AllMastersMap = () => {
         });
 
         markerEl.addEventListener('mouseleave', () => {
-          markerEl.style.width = '32px';
-          markerEl.style.height = '32px';
-          markerEl.style.fontSize = '16px';
+          markerEl.style.transform = 'scale(1)';
           markerEl.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.5)';
           hoverPopup.remove();
         });
@@ -212,8 +192,6 @@ const AllMastersMap = () => {
     );
   }
 
-  const isMobile = window.innerWidth < 640;
-  
   return (
     <div className="relative w-full h-full overflow-hidden">
       <div 
@@ -222,7 +200,7 @@ const AllMastersMap = () => {
         style={{ 
           width: '100%',
           height: '100%',
-          minHeight: isMobile ? '380px' : '280px',
+          minHeight: '380px',
           maxWidth: '100%',
           touchAction: 'pan-x pan-y'
         }}
