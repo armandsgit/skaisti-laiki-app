@@ -49,19 +49,31 @@ const AllMastersMap = () => {
   };
 
   useEffect(() => {
-    if (!mapContainer.current || !masters.length || map.current) return;
+    if (!mapContainer.current || map.current) return;
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    // Noteikt kartes centru (vidējās koordinātes)
-    const avgLat = masters.reduce((sum, m) => sum + m.latitude, 0) / masters.length;
-    const avgLng = masters.reduce((sum, m) => sum + m.longitude, 0) / masters.length;
+    // Noteikt kartes centru
+    let center: [number, number];
+    let zoom: number;
+
+    if (masters.length > 0) {
+      // Vidējās koordinātes, ja ir meistari
+      const avgLat = masters.reduce((sum, m) => sum + m.latitude, 0) / masters.length;
+      const avgLng = masters.reduce((sum, m) => sum + m.longitude, 0) / masters.length;
+      center = [avgLng, avgLat];
+      zoom = 10;
+    } else {
+      // Latvijas centrs, ja nav meistaru
+      center = [24.6032, 56.8796];
+      zoom = 7;
+    }
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [avgLng, avgLat],
-      zoom: 10,
+      center: center,
+      zoom: zoom,
     });
 
     // Pievienot navigācijas kontroles
@@ -98,11 +110,22 @@ const AllMastersMap = () => {
   }, [masters, navigate]);
 
   return (
-    <div 
-      ref={mapContainer} 
-      className="w-full h-full rounded-lg overflow-hidden border shadow-sm"
-      style={{ minHeight: '500px' }}
-    />
+    <div className="relative w-full h-full" style={{ minHeight: '500px' }}>
+      <div 
+        ref={mapContainer} 
+        className="w-full h-full rounded-lg overflow-hidden border shadow-sm"
+      />
+      {masters.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="bg-card/95 backdrop-blur-sm p-6 rounded-lg shadow-lg border max-w-sm text-center">
+            <p className="text-lg font-semibold mb-2">Nav pieejamu meistaru</p>
+            <p className="text-sm text-muted-foreground">
+              Pašlaik sistēmā nav reģistrētu meistaru ar adresi vai viņi gaida administratora apstiprinājumu.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
