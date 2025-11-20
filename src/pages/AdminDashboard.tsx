@@ -639,15 +639,15 @@ const AdminDashboard = () => {
                     <Card 
                       key={prof.id} 
                       className={prof.is_blocked 
-                        ? "border-2 border-destructive bg-destructive/5" 
-                        : "border"}
+                        ? "border-2 border-destructive bg-destructive/5 rounded-[20px]" 
+                        : "border rounded-[20px]"}
                     >
                       <CardContent className="p-4">
-                        {/* HEADER - Kompakts */}
-                        <div className="flex items-start gap-3 mb-4">
-                          <Avatar className="h-14 w-14 sm:h-16 sm:w-16 flex-shrink-0">
+                        {/* Avatar + Vārds + Mobilais nr */}
+                        <div className="flex items-start gap-3 mb-3">
+                          <Avatar className="h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0">
                             <AvatarImage src={prof.profiles?.avatar || ""} />
-                            <AvatarFallback className="text-lg">
+                            <AvatarFallback className="text-base sm:text-lg">
                               {prof.profiles?.name?.[0] || "M"}
                             </AvatarFallback>
                           </Avatar>
@@ -660,143 +660,146 @@ const AdminDashboard = () => {
                                 {prof.profiles?.phone}
                               </p>
                             )}
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              <Badge variant="outline" className="text-[10px] h-5">
-                                {prof.category}
-                              </Badge>
-                              <Badge variant="outline" className="text-[10px] h-5">
-                                {prof.city}
-                              </Badge>
-                              <PlanBadge 
-                                plan={prof.plan || 'free'} 
-                                isVerified={prof.is_verified || false}
-                              />
-                              {prof.is_blocked && (
-                                <Badge variant="destructive" className="text-[10px] h-5">Bloķēts</Badge>
-                              )}
-                              {!prof.approved && (
-                                <Badge variant="outline" className="border-amber-500 text-amber-600 text-[10px] h-5">
-                                  Gaida
-                                </Badge>
-                              )}
-                              {prof.subscription_status === 'inactive' && (
-                                <Badge variant="outline" className="border-red-500 text-red-600 text-[10px] h-5">
-                                  Neaktīvs
-                                </Badge>
-                              )}
-                              <StatusBadge status={prof.profiles?.status || "active"} />
-                            </div>
                           </div>
                         </div>
 
-                        {/* MAZA KARTE */}
-                        <div className="mb-4">
-                          {prof.latitude && prof.longitude ? (
-                            <div className="w-full h-[180px] sm:h-[200px] rounded-xl overflow-hidden border shadow-sm">
-                              <LocationMap
-                                latitude={prof.latitude}
-                                longitude={prof.longitude}
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-full h-[180px] sm:h-[200px] rounded-xl border bg-muted/30 flex items-center justify-center">
-                              <p className="text-sm text-muted-foreground">Nav norādīta adrese</p>
-                            </div>
+                        {/* Tagu rinda: kategorija | pilsēta | statuss */}
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          <Badge variant="outline" className="text-[10px] sm:text-xs h-6">
+                            {prof.category}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] sm:text-xs h-6">
+                            {prof.city}
+                          </Badge>
+                          <PlanBadge 
+                            plan={prof.plan || 'free'} 
+                            isVerified={prof.is_verified || false}
+                          />
+                          {prof.is_blocked && (
+                            <Badge variant="destructive" className="text-[10px] sm:text-xs h-6">Bloķēts</Badge>
                           )}
+                          {!prof.approved && (
+                            <Badge variant="outline" className="border-amber-500 text-amber-600 text-[10px] sm:text-xs h-6">
+                              Gaida
+                            </Badge>
+                          )}
+                          {prof.subscription_status === 'inactive' && (
+                            <Badge variant="outline" className="border-red-500 text-red-600 text-[10px] sm:text-xs h-6">
+                              Neaktīvs
+                            </Badge>
+                          )}
+                          <StatusBadge status={prof.profiles?.status || "active"} />
                         </div>
 
-                        {/* INFO BLOKS */}
-                        <div className="space-y-3 mb-4">
-                          {prof.address && (
-                            <div className="flex items-start gap-2 text-xs sm:text-sm">
-                              <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-muted-foreground break-words">{prof.address}</p>
-                                {prof.latitude && prof.longitude && (
-                                  <a
-                                    href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:underline text-xs mt-1 inline-block"
-                                  >
-                                    Skatīt kartē →
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-                          )}
+                        {/* Karte (kompakta) */}
+                        {prof.latitude && prof.longitude && (
+                          <div className="w-full h-[180px] sm:h-[200px] rounded-2xl overflow-hidden border shadow-sm mb-3 max-w-full">
+                            <LocationMap
+                              latitude={prof.latitude}
+                              longitude={prof.longitude}
+                            />
+                          </div>
+                        )}
 
-                          {prof.bio && (
-                            <div className="pt-2 border-t">
-                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                                <span className="font-medium">Bio:</span> {prof.bio}
-                              </p>
-                            </div>
-                          )}
+                        {/* Adrese */}
+                        {prof.address && (
+                          <div className="mb-3">
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2" style={{ whiteSpace: 'normal', lineHeight: '1.4' }}>
+                              {prof.address}
+                            </p>
+                          </div>
+                        )}
 
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t">
-                            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                              Pašreizējais plāns:
-                            </span>
-                            <Select
-                              value={prof.plan || 'starter'}
-                              onValueChange={(value) => handleUpdatePlan(prof.id, value)}
+                        {/* Poga "Skatīt kartē →" */}
+                        {prof.latitude && prof.longitude && (
+                          <div className="mb-4 flex justify-end">
+                            <a
+                              href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline text-sm font-medium"
                             >
-                              <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="starter">Starter (€0)</SelectItem>
-                                <SelectItem value="pro">Pro (€14.99)</SelectItem>
-                                <SelectItem value="premium">Premium (€24.99)</SelectItem>
-                              </SelectContent>
-                            </Select>
+                              Skatīt kartē →
+                            </a>
                           </div>
+                        )}
+
+                        {/* Bio (ja ir) */}
+                        {prof.bio && (
+                          <div className="mb-4 pt-3 border-t">
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                              <span className="font-medium">Bio:</span> {prof.bio}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Plāns (dropdown) */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4 pt-3 border-t">
+                          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                            Pašreizējais plāns:
+                          </span>
+                          <Select
+                            value={prof.plan || 'starter'}
+                            onValueChange={(value) => handleUpdatePlan(prof.id, value)}
+                          >
+                            <SelectTrigger className="w-full sm:w-[200px] h-9 text-sm rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                              <SelectItem value="starter">Starter (€0)</SelectItem>
+                              <SelectItem value="pro">Pro (€14.99)</SelectItem>
+                              <SelectItem value="premium">Premium (€24.99)</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
 
-                        {/* POGAS - 2 kolonnu grid */}
-                        <div className="grid grid-cols-2 gap-2 pt-3 border-t">
+                        {/* Paziņojumu pogas: Deaktivizēt | Atcelt verifikāciju */}
+                        <div className="grid grid-cols-2 gap-2 mb-2">
                           <Button
                             variant={prof.subscription_status === 'active' ? 'outline' : 'default'}
                             size="sm"
                             onClick={() => handleToggleSubscriptionStatus(prof.id, prof.subscription_status || 'inactive')}
-                            className="w-full text-xs h-9"
+                            className="w-full text-xs h-9 rounded-xl"
                           >
-                            <Power className="mr-1.5 h-3.5 w-3.5" />
+                            <Power className="mr-1.5 h-4 w-4" />
                             <span className="truncate">{prof.subscription_status === 'active' ? 'Deaktivizēt' : 'Aktivizēt'}</span>
                           </Button>
                           <Button
                             variant={prof.is_verified ? 'outline' : 'default'}
                             size="sm"
                             onClick={() => handleVerifyProfessional(prof.id, prof.is_verified)}
-                            className="w-full text-xs h-9"
+                            className="w-full text-xs h-9 rounded-xl"
                           >
                             {prof.is_verified ? (
                               <>
-                                <ShieldOff className="mr-1.5 h-3.5 w-3.5" />
+                                <ShieldOff className="mr-1.5 h-4 w-4" />
                                 <span className="truncate">Atcelt verif.</span>
                               </>
                             ) : (
                               <>
-                                <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+                                <ShieldCheck className="mr-1.5 h-4 w-4" />
                                 <span className="truncate">Verificēt</span>
                               </>
                             )}
                           </Button>
+                        </div>
+
+                        {/* Apakšā: Blokēt un Dzēst */}
+                        <div className="grid grid-cols-2 gap-2">
                           <Button
                             variant={prof.is_blocked ? 'default' : 'destructive'}
                             size="sm"
                             onClick={() => handleBlockProfessional(prof.id, prof.is_blocked)}
-                            className="w-full text-xs h-9"
+                            className="w-full text-xs h-9 rounded-xl"
                           >
                             {prof.is_blocked ? (
                               <>
-                                <Unlock className="mr-1.5 h-3.5 w-3.5" />
+                                <Unlock className="mr-1.5 h-4 w-4" />
                                 <span className="truncate">Atbloķēt</span>
                               </>
                             ) : (
                               <>
-                                <Lock className="mr-1.5 h-3.5 w-3.5" />
+                                <Lock className="mr-1.5 h-4 w-4" />
                                 <span className="truncate">Bloķēt</span>
                               </>
                             )}
@@ -805,9 +808,9 @@ const AdminDashboard = () => {
                             variant="destructive"
                             size="sm"
                             onClick={() => handleOpenDeleteModal(prof)}
-                            className="w-full text-xs h-9"
+                            className="w-full text-xs h-9 rounded-xl"
                           >
-                            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                            <Trash2 className="mr-1.5 h-4 w-4" />
                             <span className="truncate">Dzēst</span>
                           </Button>
                         </div>
