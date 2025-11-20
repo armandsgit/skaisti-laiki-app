@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { serviceSchema } from '@/lib/validation';
 
 const ProfessionalDashboard = () => {
   const t = useTranslation('lv');
@@ -112,24 +113,40 @@ const ProfessionalDashboard = () => {
     e.preventDefault();
     
     if (!profile?.id) return;
-    
-    const { error } = await supabase
-      .from('services')
-      .insert({
-        professional_id: profile.id,
+
+    try {
+      // Validate service data
+      const validatedData = serviceSchema.parse({
         name: newService.name,
         price: parseFloat(newService.price),
         duration: parseInt(newService.duration),
-        description: newService.description
+        description: newService.description || undefined
       });
-    
-    if (error) {
-      toast.error(t.error);
-    } else {
-      toast.success(t.serviceAdded);
-      setServiceDialogOpen(false);
-      setNewService({ name: '', price: '', duration: '', description: '' });
-      loadServices();
+
+      const { error } = await supabase
+        .from('services')
+        .insert({
+          professional_id: profile.id,
+          name: validatedData.name,
+          price: validatedData.price,
+          duration: validatedData.duration,
+          description: validatedData.description
+        });
+      
+      if (error) {
+        toast.error(t.error);
+      } else {
+        toast.success(t.serviceAdded);
+        setServiceDialogOpen(false);
+        setNewService({ name: '', price: '', duration: '', description: '' });
+        loadServices();
+      }
+    } catch (error: any) {
+      if (error.errors) {
+        toast.error(error.errors[0]?.message || 'Validācijas kļūda');
+      } else {
+        toast.error(t.error);
+      }
     }
   };
 

@@ -14,6 +14,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { ArrowLeft, Star, MapPin, Clock, Euro } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationMap from '@/components/LocationMap';
+import { bookingSchema } from '@/lib/validation';
 
 const ProfessionalProfile = () => {
   const { id } = useParams();
@@ -80,23 +81,39 @@ const ProfessionalProfile = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from('bookings')
-      .insert({
-        client_id: user.id,
-        professional_id: id,
+    try {
+      // Validate booking data
+      const validatedData = bookingSchema.parse({
         service_id: selectedService.id,
         booking_date: bookingDate.toISOString().split('T')[0],
         booking_time: bookingTime,
-        status: 'pending'
+        notes: ''
       });
 
-    if (error) {
-      toast.error(t.error);
-    } else {
-      toast.success(t.bookingCreated);
-      setBookingDialogOpen(false);
-      navigate('/');
+      const { error } = await supabase
+        .from('bookings')
+        .insert({
+          client_id: user.id,
+          professional_id: id,
+          service_id: validatedData.service_id,
+          booking_date: validatedData.booking_date,
+          booking_time: validatedData.booking_time,
+          status: 'pending'
+        });
+
+      if (error) {
+        toast.error(t.error);
+      } else {
+        toast.success(t.bookingCreated);
+        setBookingDialogOpen(false);
+        navigate('/');
+      }
+    } catch (error: any) {
+      if (error.errors) {
+        toast.error(error.errors[0]?.message || 'Validācijas kļūda');
+      } else {
+        toast.error(t.error);
+      }
     }
   };
 
