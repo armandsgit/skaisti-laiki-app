@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Sparkles, MapPin } from 'lucide-react';
-import { geocodeAddress } from '@/lib/mapbox-config';
 import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
@@ -55,18 +54,35 @@ const Auth = () => {
       setGeocoding(true);
       toast.loading('Notiek adreses noteikšana...');
       
-      const coords = await geocodeAddress(registerAddress);
-      setGeocoding(false);
-      toast.dismiss();
-      
-      if (!coords) {
-        toast.error('Nederīga adrese. Lūdzu pārbaudiet ievadīto informāciju.');
+      try {
+        const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('geocode-address', {
+          body: { address: registerAddress }
+        });
+
+        setGeocoding(false);
+        toast.dismiss();
+        
+        if (geocodeError || !geocodeData) {
+          toast.error('Nederīga adrese. Lūdzu pārbaudiet ievadīto informāciju.');
+          setLoading(false);
+          return;
+        }
+        
+        if (geocodeData.error) {
+          toast.error(geocodeData.error);
+          setLoading(false);
+          return;
+        }
+        
+        latitude = geocodeData.latitude;
+        longitude = geocodeData.longitude;
+      } catch (err) {
+        setGeocoding(false);
+        toast.dismiss();
+        toast.error('Kļūda adreses noteikšanā. Lūdzu mēģiniet vēlreiz.');
         setLoading(false);
         return;
       }
-      
-      latitude = coords.lat;
-      longitude = coords.lng;
     }
     
     const { error, data } = await signUp(registerEmail, registerPassword, registerName, registerRole);
