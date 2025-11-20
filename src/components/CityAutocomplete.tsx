@@ -50,7 +50,6 @@ export const CityAutocomplete = ({
         if (response.ok) {
           const data = await response.json();
           setSuggestions(data.features || []);
-          setOpen(data.features?.length > 0);
         }
       } catch (error) {
         console.error('City search error:', error);
@@ -72,6 +71,12 @@ export const CityAutocomplete = ({
     setSuggestions([]);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -81,8 +86,14 @@ export const CityAutocomplete = ({
             value={value}
             onChange={(e) => {
               onChange(e.target.value);
-              setOpen(true);
             }}
+            onFocus={() => {
+              // Only show suggestions if we have them
+              if (suggestions.length > 0 && value.length >= 2) {
+                setOpen(true);
+              }
+            }}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
             className="pl-9"
@@ -90,7 +101,11 @@ export const CityAutocomplete = ({
         </div>
       </PopoverTrigger>
       {suggestions.length > 0 && (
-        <PopoverContent className="p-0 w-[400px]" align="start">
+        <PopoverContent 
+          className="p-0 w-[400px]" 
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <Command>
             <CommandList>
               {loading ? (
