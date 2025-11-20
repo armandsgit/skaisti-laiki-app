@@ -37,7 +37,6 @@ export const AddressAutocomplete = ({
     // Only show suggestions if we have at least 3 characters and city is selected
     if (value.length < 3 || !city) {
       setSuggestions([]);
-      setOpen(false);
       return;
     }
 
@@ -55,12 +54,14 @@ export const AddressAutocomplete = ({
         );
         
         if (!cityResponse.ok) {
-          throw new Error('Neizdevās atrast pilsētu');
+          setSuggestions([]);
+          return;
         }
 
         const cityData = await cityResponse.json();
         if (!cityData.features || cityData.features.length === 0) {
-          throw new Error('Pilsēta nav atrasta');
+          setSuggestions([]);
+          return;
         }
 
         const [lng, lat] = cityData.features[0].center;
@@ -73,15 +74,22 @@ export const AddressAutocomplete = ({
         
         if (response.ok) {
           const data = await response.json();
-          // Filter results to only include addresses from the selected city
-          const filteredFeatures = (data.features || []).filter((feature: AddressSuggestion) => 
-            feature.place_name.toLowerCase().includes(city.toLowerCase())
-          );
+          // Strict filtering - check if city is in the context
+          const filteredFeatures = (data.features || []).filter((feature: any) => {
+            // Check if the address context includes our selected city
+            const contexts = feature.context || [];
+            return contexts.some((ctx: any) => 
+              ctx.text_lv?.toLowerCase() === city.toLowerCase() || 
+              ctx.text?.toLowerCase() === city.toLowerCase()
+            );
+          });
           setSuggestions(filteredFeatures);
-          // Show suggestions only if available, but don't prevent typing
+        } else {
+          setSuggestions([]);
         }
       } catch (error) {
         console.error('Address search error:', error);
+        setSuggestions([]);
       } finally {
         setLoading(false);
       }
@@ -105,6 +113,12 @@ export const AddressAutocomplete = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -114,21 +128,14 @@ export const AddressAutocomplete = ({
             value={value}
             onChange={(e) => {
               onChange(e.target.value);
-              // Show suggestions if available
-              if (suggestions.length > 0 && e.target.value.length >= 3) {
-                setOpen(true);
-              }
             }}
             onFocus={() => {
-              // Show suggestions on focus if available
+              // Only show suggestions if we have them and not empty input
               if (suggestions.length > 0 && value.length >= 3) {
                 setOpen(true);
               }
             }}
-            onBlur={() => {
-              // Close suggestions after a short delay to allow clicking
-              setTimeout(() => setOpen(false), 200);
-            }}
+            onKeyDown={handleKeyDown}
             placeholder={!city ? "Vispirms izvēlieties pilsētu" : "Piemēram: Latgales iela 245"}
             disabled={disabled || !city}
             className="pl-9"
@@ -136,7 +143,11 @@ export const AddressAutocomplete = ({
         </div>
       </PopoverTrigger>
       {suggestions.length > 0 && (
-        <PopoverContent className="p-0 w-[400px]" align="start">
+        <PopoverContent 
+          className="p-0 w-[400px]" 
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <Command>
             <CommandList>
               {loading ? (
