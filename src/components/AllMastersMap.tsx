@@ -6,12 +6,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
+import { Button } from '@/components/ui/button';
 
 // Izmanto SortedMaster no master-sorting.ts
 
 interface AllMastersMapProps {
   selectedMasterId?: string;
 }
+
+type CategoryFilter = 'all' | 'Frizieris' | 'Manikīrs' | 'Skropstas' | 'Kosmetoloģija';
 
 const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -21,6 +24,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
 
   useEffect(() => {
     initializeMap();
@@ -79,12 +83,34 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       map.current = null;
     }
 
+    // Clear previous markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.clear();
+
+    // Filter masters by category
+    const filteredMasters = selectedCategory === 'all' 
+      ? masters 
+      : masters.filter(m => m.category === selectedCategory);
+
     // Set access token
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    // Calculate center - always center on Rīga with zoom to see the whole city
-    const center: [number, number] = [24.1052, 56.9496]; // Rīga
-    const zoom = 11.5;
+    // Calculate center and zoom based on filtered masters
+    let center: [number, number] = [24.1052, 56.9496]; // Rīga default
+    let zoom = 11.5;
+
+    if (filteredMasters.length > 0 && selectedCategory !== 'all') {
+      // Calculate bounds for filtered markers
+      const bounds = new mapboxgl.LngLatBounds();
+      filteredMasters.forEach(master => {
+        bounds.extend([master.longitude, master.latitude]);
+      });
+      
+      // Use bounds center
+      const boundsCenter = bounds.getCenter();
+      center = [boundsCenter.lng, boundsCenter.lat];
+      zoom = 12;
+    }
 
     // Create map
     try {
@@ -98,8 +124,8 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-      // Add markers
-      masters.forEach((master) => {
+      // Add markers for filtered masters
+      filteredMasters.forEach((master) => {
 
         // Create custom marker with gradient
         const markerEl = document.createElement('div');
@@ -287,7 +313,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       }
       markersRef.current.clear();
     };
-  }, [masters, loading, navigate, selectedMasterId]);
+  }, [masters, loading, navigate, selectedMasterId, selectedCategory]);
 
   if (loading) {
     return (
@@ -297,8 +323,58 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
     );
   }
 
+  const filteredMasters = selectedCategory === 'all' 
+    ? masters 
+    : masters.filter(m => m.category === selectedCategory);
+
   return (
     <div className="relative w-full h-full overflow-hidden">
+      {/* Category filter */}
+      <div className="absolute top-3 left-3 right-3 z-10 bg-card/95 backdrop-blur-sm rounded-xl shadow-lg border p-2">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          <Button
+            size="sm"
+            variant={selectedCategory === 'all' ? 'default' : 'outline'}
+            onClick={() => setSelectedCategory('all')}
+            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+          >
+            Visas kategorijas
+          </Button>
+          <Button
+            size="sm"
+            variant={selectedCategory === 'Frizieris' ? 'default' : 'outline'}
+            onClick={() => setSelectedCategory('Frizieris')}
+            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+          >
+            Frizieri
+          </Button>
+          <Button
+            size="sm"
+            variant={selectedCategory === 'Manikīrs' ? 'default' : 'outline'}
+            onClick={() => setSelectedCategory('Manikīrs')}
+            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+          >
+            Manikīrs
+          </Button>
+          <Button
+            size="sm"
+            variant={selectedCategory === 'Skropstas' ? 'default' : 'outline'}
+            onClick={() => setSelectedCategory('Skropstas')}
+            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+          >
+            Skropstas
+          </Button>
+          <Button
+            size="sm"
+            variant={selectedCategory === 'Kosmetoloģija' ? 'default' : 'outline'}
+            onClick={() => setSelectedCategory('Kosmetoloģija')}
+            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+          >
+            Kosmetoloģija
+          </Button>
+        </div>
+      </div>
+      
       <div 
         ref={mapContainer} 
         className="map-container absolute inset-0 rounded-2xl overflow-hidden border shadow-sm"
@@ -310,12 +386,15 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           touchAction: 'pan-x pan-y'
         }}
       />
-      {masters.length === 0 && !loading && (
+      {filteredMasters.length === 0 && !loading && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-3 sm:p-4">
           <div className="bg-card/95 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg border max-w-sm text-center">
             <p className="text-sm sm:text-base font-semibold mb-2">Nav pieejamu meistaru</p>
             <p className="text-xs text-muted-foreground">
-              Pašlaik sistēmā nav reģistrētu meistaru ar adresi vai viņi gaida administratora apstiprinājumu.
+              {selectedCategory === 'all' 
+                ? 'Pašlaik sistēmā nav reģistrētu meistaru ar adresi vai viņi gaida administratora apstiprinājumu.'
+                : `Pašlaik nav pieejamu meistaru kategorijā "${selectedCategory}".`
+              }
             </p>
           </div>
         </div>

@@ -229,6 +229,16 @@
     opacity: 0.3;
   }
   
+  /* Hide scrollbar for category filter */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   /* Skeleton Loaders */
   .skeleton {
     @apply animate-shimmer rounded-xl bg-muted/70;
@@ -521,20 +531,20 @@
   
   @media (max-width: 639px) {
     .custom-map-marker {
-      width: 44px !important;
-      height: 44px !important;
-      min-width: 44px !important;
-      min-height: 44px !important;
-      max-width: 44px !important;
-      max-height: 44px !important;
-      font-size: 22px !important;
-      border-width: 4px !important;
+      width: 28px !important;
+      height: 28px !important;
+      min-width: 28px !important;
+      min-height: 28px !important;
+      max-width: 28px !important;
+      max-height: 28px !important;
+      font-size: 16px !important;
+      border-width: 2px !important;
     }
     
     /* Force Mapbox marker container size on mobile */
     .mapboxgl-marker {
-      width: 44px !important;
-      height: 44px !important;
+      width: 28px !important;
+      height: 28px !important;
     }
   }
   
