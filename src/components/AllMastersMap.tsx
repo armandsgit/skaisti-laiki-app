@@ -100,52 +100,6 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
 
       // Add markers
       masters.forEach((master) => {
-        if (!map.current) return;
-
-        // Popup for click (detailed info)
-        const clickPopup = new mapboxgl.Popup({ offset: 25 }).setHTML(
-          `<div style="padding: 8px;">
-            <h3 style="font-weight: bold; margin-bottom: 4px;">${master.profiles.name}</h3>
-            <p style="color: #666; font-size: 14px; margin-bottom: 4px;">${master.category}</p>
-            <p style="color: #666; font-size: 12px; margin-bottom: 8px;">${master.address || ''}</p>
-            <div style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
-              <span style="color: #f59e0b;">⭐</span>
-              <span>${master.rating || 0}</span>
-            </div>
-          </div>`
-        );
-
-        // Compact hover popup for mobile zoom (name, avatar, rating, and address)
-        const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
-        const shortAddress = master.address ? (master.address.length > 25 ? master.address.substring(0, 25) + '...' : master.address) : master.city;
-        
-        const hoverPopup = new mapboxgl.Popup({ 
-          offset: 25,
-          closeButton: false,
-          closeOnClick: false,
-          className: 'compact-marker-popup'
-        }).setHTML(
-          `<div style="padding: 8px 10px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 14px; box-shadow: 0 8px 24px rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.1);">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <img 
-                src="${avatarUrl}" 
-                alt="${master.profiles.name}"
-                style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
-              />
-              <div style="min-width: 0; flex: 1;">
-                <h3 style="font-weight: 600; margin: 0 0 2px 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${master.profiles.name}</h3>
-                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
-                  <span style="color: #f59e0b; font-size: 11px;">⭐</span>
-                  <span style="color: #666; font-weight: 500; font-size: 11px;">${master.rating || 0}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 3px; font-size: 10px; color: #888;">
-                  <span style="font-size: 10px;">📍</span>
-                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${shortAddress}</span>
-                </div>
-              </div>
-            </div>
-          </div>`
-        );
 
         // Create custom marker with gradient
         const markerEl = document.createElement('div');
@@ -160,22 +114,56 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           .setLngLat([master.longitude, master.latitude])
           .addTo(map.current);
 
-        // Store marker reference for zoom handler and selected master handling
+        // Store marker reference for selected master handling
         (marker as any).masterData = master;
-        (marker as any).hoverPopup = hoverPopup;
-        (marker as any).clickPopup = clickPopup;
         markersRef.current.set(master.id, marker);
 
         // Hover popup - desktop only
         if (window.innerWidth >= 768) {
           markerEl.addEventListener('mouseenter', () => {
             if (map.current) {
-              hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
+              const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
+              const shortAddress = master.address ? (master.address.length > 25 ? master.address.substring(0, 25) + '...' : master.address) : master.city;
+              
+              const hoverPopup = new mapboxgl.Popup({ 
+                offset: 25,
+                closeButton: false,
+                closeOnClick: false,
+                className: 'compact-marker-popup'
+              }).setHTML(
+                `<div style="padding: 8px 10px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 14px; box-shadow: 0 8px 24px rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.1);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <img 
+                      src="${avatarUrl}" 
+                      alt="${master.profiles.name}"
+                      style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                    />
+                    <div style="min-width: 0; flex: 1;">
+                      <h3 style="font-weight: 600; margin: 0 0 2px 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${master.profiles.name}</h3>
+                      <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                        <span style="color: #f59e0b; font-size: 11px;">⭐</span>
+                        <span style="color: #666; font-weight: 500; font-size: 11px;">${master.rating || 0}</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 3px; font-size: 10px; color: #888;">
+                        <span style="font-size: 10px;">📍</span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${shortAddress}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>`
+              )
+              .setLngLat([master.longitude, master.latitude])
+              .addTo(map.current);
+              
+              (marker as any).hoverPopup = hoverPopup;
             }
           });
 
           markerEl.addEventListener('mouseleave', () => {
-            hoverPopup.remove();
+            const popup = (marker as any).hoverPopup;
+            if (popup) {
+              popup.remove();
+            }
           });
         }
 
@@ -185,9 +173,11 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           
           if (!map.current) return;
 
-          // Remove all existing popups
-          hoverPopup.remove();
-          clickPopup.remove();
+          // Remove any existing hover popup
+          const existingHoverPopup = (marker as any).hoverPopup;
+          if (existingHoverPopup) {
+            existingHoverPopup.remove();
+          }
 
           // Fly to marker with animation
           map.current.flyTo({
@@ -250,98 +240,6 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
             .addTo(map.current);
           }, 1600);
         });
-      });
-
-      // Auto-show popup on zoom for nearby markers with debounce
-      let activePopup: mapboxgl.Popup | null = null;
-      let zoomTimeout: NodeJS.Timeout | null = null;
-      let lastShownMasterId: string | null = null;
-      
-      map.current.on('zoom', () => {
-        if (!map.current) return;
-        
-        // Clear previous timeout
-        if (zoomTimeout) {
-          clearTimeout(zoomTimeout);
-        }
-        
-        // Debounce: wait 300ms after zoom stops
-        zoomTimeout = setTimeout(() => {
-          if (!map.current) return;
-          
-          const zoom = map.current.getZoom();
-          const center = map.current.getCenter();
-          
-          // Show popup when zoomed in enough (zoom > 14)
-          if (zoom > 14) {
-            // Find closest marker to center
-            let closestMarker: any = null;
-            let minDistance = Infinity;
-            
-            masters.forEach((master) => {
-              const dx = master.longitude - center.lng;
-              const dy = master.latitude - center.lat;
-              const distance = Math.sqrt(dx * dx + dy * dy);
-              
-              if (distance < minDistance) {
-                minDistance = distance;
-                closestMarker = master;
-              }
-            });
-            
-            // Show popup for closest marker if within reasonable distance and different from last shown
-            if (closestMarker && minDistance < 0.005 && closestMarker.id !== lastShownMasterId && map.current) {
-              const avatarUrl = closestMarker.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + closestMarker.profiles.name;
-              const shortAddress = closestMarker.address ? (closestMarker.address.length > 25 ? closestMarker.address.substring(0, 25) + '...' : closestMarker.address) : closestMarker.city;
-              
-              // Remove previous popup with fade
-              if (activePopup) {
-                activePopup.remove();
-              }
-              
-              // Create and show new popup with fade-in
-              activePopup = new mapboxgl.Popup({ 
-                offset: 25,
-                closeButton: false,
-                closeOnClick: false,
-                className: 'compact-marker-popup zoom-popup',
-                maxWidth: '240px'
-              }).setHTML(
-                `<div class="popup-content-fade">
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                    <img 
-                      src="${avatarUrl}" 
-                      alt="${closestMarker.profiles.name}"
-                      style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
-                    />
-                    <div style="min-width: 0; flex: 1;">
-                      <h3 style="font-weight: 600; margin: 0 0 2px 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${closestMarker.profiles.name}</h3>
-                      <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
-                        <span style="color: #f59e0b; font-size: 11px;">⭐</span>
-                        <span style="color: #666; font-weight: 500; font-size: 11px;">${closestMarker.rating || 0}</span>
-                      </div>
-                      <div style="display: flex; align-items: center; gap: 3px; font-size: 10px; color: #888;">
-                        <span style="font-size: 10px;">📍</span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${shortAddress}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>`
-              )
-              .setLngLat([closestMarker.longitude, closestMarker.latitude])
-              .addTo(map.current);
-              
-              lastShownMasterId = closestMarker.id;
-            }
-          } else {
-            // Remove popup when zoomed out
-            if (activePopup) {
-              activePopup.remove();
-              activePopup = null;
-              lastShownMasterId = null;
-            }
-          }
-        }, 300);
       });
 
       // Handle selected master
