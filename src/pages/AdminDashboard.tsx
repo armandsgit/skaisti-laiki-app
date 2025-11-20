@@ -271,9 +271,15 @@ const AdminDashboard = () => {
   const handleDeleteClient = async () => {
     if (!selectedClient) return;
 
+    const loadingToast = toast.loading('Dzēš klienta profilu...');
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No session');
+      if (!session) {
+        toast.dismiss(loadingToast);
+        toast.error('Nav autentifikācijas');
+        return;
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
@@ -293,13 +299,20 @@ const AdminDashboard = () => {
         throw new Error(result.error || 'Failed to delete user');
       }
 
-      toast.success('Klienta profils dzēsts.');
+      // Immediately remove from local state
+      setClients(prev => prev.filter(c => c.id !== selectedClient.id));
+      
+      toast.dismiss(loadingToast);
+      toast.success('Klienta profils dzēsts');
       setDeleteClientModalOpen(false);
       setSelectedClient(null);
+      
+      // Reload data in background
       loadData();
     } catch (error) {
       console.error('Error deleting client:', error);
-      toast.error('Neizdevās izdzēst klienta profilu. Lūdzu, mēģiniet vēlreiz.');
+      toast.dismiss(loadingToast);
+      toast.error('Neizdevās izdzēst profilu. Lūdzu, mēģiniet vēlreiz.');
     }
   };
 
