@@ -46,10 +46,7 @@ const AdminDashboard = () => {
         *,
         profiles!professional_profiles_user_id_fkey(name, phone)
       `),
-      supabase.from('profiles').select(`
-        *,
-        user_roles!inner(role)
-      `).eq('user_roles.role', 'CLIENT'),
+      supabase.from('profiles').select('*').eq('role', 'CLIENT'),
       supabase.from('bookings').select(`
         *,
         services(name),
