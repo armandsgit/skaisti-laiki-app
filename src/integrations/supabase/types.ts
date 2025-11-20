@@ -77,6 +77,7 @@ export type Database = {
       }
       professional_profiles: {
         Row: {
+          active: boolean | null
           address: string | null
           approved: boolean | null
           bio: string | null
@@ -87,14 +88,17 @@ export type Database = {
           id: string
           is_blocked: boolean | null
           is_verified: boolean | null
+          last_active: string | null
           latitude: number | null
           longitude: number | null
+          plan: string | null
           rating: number | null
           total_reviews: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          active?: boolean | null
           address?: string | null
           approved?: boolean | null
           bio?: string | null
@@ -105,14 +109,17 @@ export type Database = {
           id?: string
           is_blocked?: boolean | null
           is_verified?: boolean | null
+          last_active?: string | null
           latitude?: number | null
           longitude?: number | null
+          plan?: string | null
           rating?: number | null
           total_reviews?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          active?: boolean | null
           address?: string | null
           approved?: boolean | null
           bio?: string | null
@@ -123,8 +130,10 @@ export type Database = {
           id?: string
           is_blocked?: boolean | null
           is_verified?: boolean | null
+          last_active?: string | null
           latitude?: number | null
           longitude?: number | null
+          plan?: string | null
           rating?: number | null
           total_reviews?: number | null
           updated_at?: string

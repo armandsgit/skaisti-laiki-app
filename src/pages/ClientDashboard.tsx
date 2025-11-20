@@ -12,41 +12,57 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, LogOut, Search, Star, MapPin, Sparkles, Map } from 'lucide-react';
 import { toast } from 'sonner';
+import { getUserLocation } from '@/lib/distance-utils';
+import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 
 const ClientDashboard = () => {
   const t = useTranslation('lv');
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   
-  const [professionals, setProfessionals] = useState<any[]>([]);
+  const [professionals, setProfessionals] = useState<SortedMaster[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
 
   const categories = ['Manikīrs', 'Pedikīrs', 'Skropstas', 'Frizieris', 'Masāža', 'Kosmetoloģija'];
 
   useEffect(() => {
     if (user) {
-      loadProfessionals();
-      loadBookings();
+      initializeData();
     }
   }, [user]);
 
-  const loadProfessionals = async () => {
+  const initializeData = async () => {
+    // Iegūst lietotāja atrašanās vietu
+    const location = await getUserLocation();
+    setUserLocation(location);
+    
+    // Ielādē datus
+    await Promise.all([loadProfessionals(location), loadBookings()]);
+  };
+
+  const loadProfessionals = async (location: { lat: number; lon: number }) => {
     const { data, error } = await supabase
       .from('professional_profiles')
       .select(`
         *,
         profiles!professional_profiles_user_id_fkey(name, avatar)
       `)
-      .eq('approved', true); // Tikai apstiprinātie meistari
+      .eq('approved', true)
+      .eq('active', true);
     
     if (error) {
       toast.error(t.error);
-    } else {
-      setProfessionals(data || []);
+      setLoading(false);
+      return;
     }
+    
+    // Kārto meistarus pēc prioritātes
+    const sortedMasters = getSortedMasters(data || [], location.lat, location.lon);
+    setProfessionals(sortedMasters);
     setLoading(false);
   };
 
@@ -190,17 +206,24 @@ const ClientDashboard = () => {
                     </div>
                     
                     <div className="space-y-2 text-sm text-muted-foreground">
-                      {prof.city && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" />
-                          <span>{prof.city}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        <span>{prof.city}</span>
+                        {prof.distance < 9999 && (
+                          <span className="text-xs">• {prof.distance} km</span>
+                        )}
+                      </div>
                       
                       <div className="flex items-center gap-2">
                         <Star className="w-4 h-4 fill-accent text-accent" />
                         <span>{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
                       </div>
+                      
+                      {prof.plan !== 'free' && (
+                        <Badge variant="outline" className="text-xs">
+                          {prof.plan === 'pro' ? 'PRO' : 'BASIC'}
+                        </Badge>
+                      )}
                     </div>
                     
                     {prof.bio && (
