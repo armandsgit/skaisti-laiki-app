@@ -179,6 +179,16 @@
     button { font-size: 14px; }
     input, textarea, select { font-size: 16px; } /* Prevents iOS zoom */
   }
+
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer components {

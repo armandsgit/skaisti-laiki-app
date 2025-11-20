@@ -460,25 +460,33 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="pending" className="w-full overflow-x-hidden">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm gap-1">
-            <TabsTrigger value="pending">
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Gaida apstiprināšanu
-            </TabsTrigger>
-            <TabsTrigger value="professionals">
-              <Briefcase className="w-4 h-4 mr-2" />
-              {t.manageProfessionals}
-            </TabsTrigger>
-            <TabsTrigger value="clients">
-              <Users className="w-4 h-4 mr-2" />
-              Klienti
-            </TabsTrigger>
-            <TabsTrigger value="bookings">
-              <Calendar className="w-4 h-4 mr-2" />
-              {t.manageBookings}
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="pending" className="w-full">
+          <div className="w-full mb-4 sm:mb-6 overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 bg-card/80 backdrop-blur-sm">
+              <TabsTrigger value="pending" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
+                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden xs:inline sm:hidden">Gaida</span>
+                <span className="hidden sm:inline">Gaida apstiprināšanu</span>
+                <span className="xs:hidden">Gaida</span>
+              </TabsTrigger>
+              <TabsTrigger value="professionals" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
+                <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden xs:inline sm:hidden">Meistari</span>
+                <span className="hidden sm:inline">{t.manageProfessionals}</span>
+                <span className="xs:hidden">Meistari</span>
+              </TabsTrigger>
+              <TabsTrigger value="clients" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
+                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span>Klienti</span>
+              </TabsTrigger>
+              <TabsTrigger value="bookings" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden xs:inline sm:hidden">Rezerv.</span>
+                <span className="hidden sm:inline">{t.manageBookings}</span>
+                <span className="xs:hidden">Rezerv.</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="pending" className="space-y-4">
             <Card className="shadow-card border-0">
