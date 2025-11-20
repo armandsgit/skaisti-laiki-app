@@ -4,55 +4,51 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_TOKEN } from '@/lib/mapbox-config';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { getUserLocation } from '@/lib/distance-utils';
+import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 
-interface Master {
-  id: string;
-  latitude: number;
-  longitude: number;
-  address: string;
-  category: string;
-  rating: number;
-  profiles: {
-    name: string;
-    avatar?: string;
-  };
-}
+// Izmanto SortedMaster no master-sorting.ts
 
 const AllMastersMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [masters, setMasters] = useState<Master[]>([]);
+  const [masters, setMasters] = useState<SortedMaster[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
 
   useEffect(() => {
-    loadMasters();
+    initializeMap();
   }, []);
 
-  const loadMasters = async () => {
+  const initializeMap = async () => {
+    const location = await getUserLocation();
+    setUserLocation(location);
+    await loadMasters(location);
+  };
+
+  const loadMasters = async (location: { lat: number; lon: number }) => {
     try {
       const { data, error } = await supabase
         .from('professional_profiles')
         .select(`
-          id,
-          latitude,
-          longitude,
-          address,
-          category,
-          rating,
+          *,
           profiles!professional_profiles_user_id_fkey(name, avatar)
         `)
         .eq('approved', true)
-        .eq('is_blocked', false)
+        .eq('active', true)
         .not('latitude', 'is', null)
         .not('longitude', 'is', null);
 
       if (error) {
         console.error('Error loading masters:', error);
+        setLoading(false);
         return;
       }
 
-      setMasters(data as any);
+      // Kārto meistarus pēc prioritātes
+      const sortedMasters = getSortedMasters(data || [], location.lat, location.lon);
+      setMasters(sortedMasters);
     } catch (error) {
       console.error('Exception loading masters:', error);
     } finally {
