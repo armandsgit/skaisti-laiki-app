@@ -108,14 +108,13 @@ const AllMastersMap = () => {
         const hoverPopup = new mapboxgl.Popup({ 
           offset: 25,
           closeButton: false,
-          closeOnClick: false,
-          className: 'hover-popup'
+          closeOnClick: false
         }).setHTML(
-          `<div style="padding: 6px 10px;">
-            <h3 style="font-weight: bold; margin-bottom: 2px; font-size: 14px;">${master.profiles.name}</h3>
+          `<div style="padding: 6px 10px; background: white; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+            <h3 style="font-weight: bold; margin-bottom: 2px; font-size: 14px; color: #1a1a1a;">${master.profiles.name}</h3>
             <div style="display: flex; align-items: center; gap: 4px; font-size: 13px;">
               <span style="color: #f59e0b;">⭐</span>
-              <span>${master.rating || 0}</span>
+              <span style="color: #666;">${master.rating || 0}</span>
             </div>
           </div>`
         );
@@ -125,20 +124,30 @@ const AllMastersMap = () => {
           .addTo(map.current);
 
         const markerElement = marker.getElement();
+        
+        // Make cursor pointer on hover
+        markerElement.style.cursor = 'pointer';
 
         // Hover events
         markerElement.addEventListener('mouseenter', () => {
-          hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current!);
+          console.log('Hover on:', master.profiles.name);
+          if (map.current) {
+            hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
+          }
         });
 
         markerElement.addEventListener('mouseleave', () => {
+          console.log('Leave:', master.profiles.name);
           hoverPopup.remove();
         });
 
-        // Click event
+        // Click event - remove hover popup and show detailed one
         markerElement.addEventListener('click', () => {
+          console.log('Click on:', master.profiles.name);
           hoverPopup.remove();
-          clickPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current!);
+          if (map.current) {
+            clickPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
+          }
           navigate(`/professional/${master.id}`);
         });
       });
