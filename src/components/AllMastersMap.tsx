@@ -200,75 +200,91 @@ const AllMastersMap = () => {
         });
       });
 
-      // Auto-show popup on zoom for nearby markers
+      // Auto-show popup on zoom for nearby markers with debounce
       let activePopup: mapboxgl.Popup | null = null;
+      let zoomTimeout: NodeJS.Timeout | null = null;
+      let lastShownMasterId: string | null = null;
       
       map.current.on('zoom', () => {
         if (!map.current) return;
         
-        const zoom = map.current.getZoom();
-        const center = map.current.getCenter();
+        // Clear previous timeout
+        if (zoomTimeout) {
+          clearTimeout(zoomTimeout);
+        }
         
-        // Show popup when zoomed in enough (zoom > 13)
-        if (zoom > 13) {
-          // Find closest marker to center
-          let closestMarker: any = null;
-          let minDistance = Infinity;
+        // Debounce: wait 300ms after zoom stops
+        zoomTimeout = setTimeout(() => {
+          if (!map.current) return;
           
-          masters.forEach((master) => {
-            const dx = master.longitude - center.lng;
-            const dy = master.latitude - center.lat;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < minDistance) {
-              minDistance = distance;
-              closestMarker = master;
-            }
-          });
+          const zoom = map.current.getZoom();
+          const center = map.current.getCenter();
           
-          // Show popup for closest marker if within reasonable distance
-          if (closestMarker && minDistance < 0.01 && map.current) {
-            const avatarUrl = closestMarker.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + closestMarker.profiles.name;
+          // Show popup when zoomed in enough (zoom > 14)
+          if (zoom > 14) {
+            // Find closest marker to center
+            let closestMarker: any = null;
+            let minDistance = Infinity;
             
-            // Remove previous popup
-            if (activePopup) {
-              activePopup.remove();
-            }
+            masters.forEach((master) => {
+              const dx = master.longitude - center.lng;
+              const dy = master.latitude - center.lat;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              
+              if (distance < minDistance) {
+                minDistance = distance;
+                closestMarker = master;
+              }
+            });
             
-            // Create and show new popup
-            activePopup = new mapboxgl.Popup({ 
-              offset: 25,
-              closeButton: false,
-              closeOnClick: false,
-              className: 'compact-marker-popup'
-            }).setHTML(
-              `<div style="padding: 6px 10px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <img 
-                    src="${avatarUrl}" 
-                    alt="${closestMarker.profiles.name}"
-                    style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
-                  />
-                  <div style="min-width: 0;">
-                    <h3 style="font-weight: 600; margin: 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${closestMarker.profiles.name}</h3>
-                    <div style="display: flex; align-items: center; gap: 3px; font-size: 12px; margin-top: 2px;">
-                      <span style="color: #f59e0b;">⭐</span>
-                      <span style="color: #666;">${closestMarker.rating || 0}</span>
+            // Show popup for closest marker if within reasonable distance and different from last shown
+            if (closestMarker && minDistance < 0.005 && closestMarker.id !== lastShownMasterId && map.current) {
+              const avatarUrl = closestMarker.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + closestMarker.profiles.name;
+              
+              // Remove previous popup with fade
+              if (activePopup) {
+                activePopup.remove();
+              }
+              
+              // Create and show new popup with fade-in
+              activePopup = new mapboxgl.Popup({ 
+                offset: 25,
+                closeButton: false,
+                closeOnClick: false,
+                className: 'compact-marker-popup zoom-popup',
+                maxWidth: '220px'
+              }).setHTML(
+                `<div class="popup-content-fade">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <img 
+                      src="${avatarUrl}" 
+                      alt="${closestMarker.profiles.name}"
+                      style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                    />
+                    <div style="min-width: 0; flex: 1;">
+                      <h3 style="font-weight: 600; margin: 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${closestMarker.profiles.name}</h3>
+                      <div style="display: flex; align-items: center; gap: 3px; font-size: 12px; margin-top: 2px;">
+                        <span style="color: #f59e0b;">⭐</span>
+                        <span style="color: #666; font-weight: 500;">${closestMarker.rating || 0}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>`
-            )
-            .setLngLat([closestMarker.longitude, closestMarker.latitude])
-            .addTo(map.current);
+                </div>`
+              )
+              .setLngLat([closestMarker.longitude, closestMarker.latitude])
+              .addTo(map.current);
+              
+              lastShownMasterId = closestMarker.id;
+            }
+          } else {
+            // Remove popup when zoomed out
+            if (activePopup) {
+              activePopup.remove();
+              activePopup = null;
+              lastShownMasterId = null;
+            }
           }
-        } else {
-          // Remove popup when zoomed out
-          if (activePopup) {
-            activePopup.remove();
-            activePopup = null;
-          }
-        }
+        }, 300);
       });
     } catch (error) {
       console.error('Error creating map:', error);
