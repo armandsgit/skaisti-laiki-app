@@ -18,7 +18,7 @@ import StatusBadge from '@/components/StatusBadge';
 
 const AdminDashboard = () => {
   const t = useTranslation('lv');
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -176,12 +176,23 @@ const AdminDashboard = () => {
   };
 
   const handleOpenDeleteModal = (professional: any) => {
+    // Prevent admin from deleting their own profile
+    if (professional.user_id === user?.id) {
+      toast.error('Nevar izdzēst savu profilu!');
+      return;
+    }
     setSelectedProfessional(professional);
     setDeleteModalOpen(true);
   };
 
   const handleDeleteProfessional = async () => {
     if (!selectedProfessional) return;
+
+    // Double-check to prevent self-deletion
+    if (selectedProfessional.user_id === user?.id) {
+      toast.error('Nevar izdzēst savu profilu!');
+      return;
+    }
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -214,6 +225,11 @@ const AdminDashboard = () => {
   };
 
   const handleOpenSuspendModal = (user: any, type: 'professional' | 'client') => {
+    // Prevent admin from suspending their own profile
+    if (user.id === user?.id || (type === 'professional' && user.user_id === user?.id)) {
+      toast.error('Nevar apturēt savu profilu!');
+      return;
+    }
     setSelectedUser(user);
     setSelectedUserType(type);
     setSuspendModalOpen(true);
@@ -227,6 +243,13 @@ const AdminDashboard = () => {
 
   const handleSuspendUser = async () => {
     if (!selectedUser) return;
+
+    // Double-check to prevent self-suspension
+    if (selectedUser.id === user?.id || selectedUser.user_id === user?.id) {
+      toast.error('Nevar apturēt savu profilu!');
+      setSuspendModalOpen(false);
+      return;
+    }
 
     const { error } = await supabase
       .from('profiles')
@@ -264,6 +287,11 @@ const AdminDashboard = () => {
   };
 
   const handleOpenDeleteClientModal = (client: any) => {
+    // Prevent admin from deleting their own profile
+    if (client.id === user?.id) {
+      toast.error('Nevar izdzēst savu profilu!');
+      return;
+    }
     setSelectedClient(client);
     setDeleteClientModalOpen(true);
   };
@@ -271,6 +299,13 @@ const AdminDashboard = () => {
   const handleDeleteClient = async () => {
     if (!selectedClient) {
       console.log('No selected client');
+      return;
+    }
+
+    // Double-check to prevent self-deletion
+    if (selectedClient.id === user?.id) {
+      toast.error('Nevar izdzēst savu profilu!');
+      setDeleteClientModalOpen(false);
       return;
     }
 
