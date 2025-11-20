@@ -28,14 +28,48 @@ const ClientDashboard = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
-
-  const categories = ['Manikīrs', 'Pedikīrs', 'Skropstas', 'Frizieris', 'Masāža', 'Kosmetoloģija'];
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (user) {
       initializeData();
+      loadCategories();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Real-time atjauninājums kategorijām
+    const channel = supabase
+      .channel('categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories'
+        },
+        () => {
+          loadCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const loadCategories = async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('name')
+      .eq('active', true)
+      .order('display_order', { ascending: true });
+
+    if (!error && data) {
+      setCategories(data.map(cat => cat.name));
+    }
+  };
 
   const initializeData = async () => {
     // Iegūst lietotāja atrašanās vietu
