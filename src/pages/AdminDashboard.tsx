@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PlanBadge from '@/components/PlanBadge';
 
 const AdminDashboard = () => {
   const t = useTranslation('lv');
@@ -109,6 +111,39 @@ const AdminDashboard = () => {
       loadData();
     }
   };
+
+  const handleUpdatePlan = async (id: string, newPlan: string) => {
+    const { error } = await supabase
+      .from('professional_profiles')
+      .update({ 
+        plan: newPlan,
+        subscription_status: 'active'
+      })
+      .eq('id', id);
+
+    if (error) {
+      toast.error(t.error);
+    } else {
+      toast.success(`Plāns nomainīts uz ${newPlan}`);
+      loadData();
+    }
+  };
+
+  const handleToggleSubscriptionStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const { error } = await supabase
+      .from('professional_profiles')
+      .update({ subscription_status: newStatus })
+      .eq('id', id);
+
+    if (error) {
+      toast.error(t.error);
+    } else {
+      toast.success(`Abonements ${newStatus === 'active' ? 'aktivizēts' : 'deaktivizēts'}`);
+      loadData();
+    }
+  };
+
 
   if (loading) {
     return (
@@ -322,18 +357,21 @@ const AdminDashboard = () => {
                               <div className="flex gap-2 mt-2 flex-wrap">
                                 <Badge variant="secondary">{prof.category}</Badge>
                                 <Badge variant="outline">{prof.city}</Badge>
-                                {prof.is_verified && (
-                                  <Badge variant="default">
-                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                    {t.verified}
-                                  </Badge>
-                                )}
+                                <PlanBadge 
+                                  plan={prof.plan || 'free'} 
+                                  isVerified={prof.is_verified || false}
+                                />
                                 {prof.is_blocked && (
                                   <Badge variant="destructive">Bloķēts</Badge>
                                 )}
                                 {!prof.approved && (
                                   <Badge variant="outline" className="border-amber-500 text-amber-600">
                                     Gaida apstiprinājumu
+                                  </Badge>
+                                )}
+                                {prof.subscription_status === 'inactive' && (
+                                  <Badge variant="outline" className="border-red-500 text-red-600">
+                                    Neaktīvs abonements
                                   </Badge>
                                 )}
                               </div>
@@ -368,21 +406,47 @@ const AdminDashboard = () => {
                             </div>
                           )}
 
-                          <div className="flex gap-2 border-t pt-3 flex-wrap">
-                            <Button
-                              variant={prof.is_verified ? 'outline' : 'default'}
-                              size="sm"
-                              onClick={() => handleVerifyProfessional(prof.id, prof.is_verified)}
-                            >
-                              {prof.is_verified ? 'Atcelt verificēšanu' : t.verifyProfessional}
-                            </Button>
-                            <Button
-                              variant={prof.is_blocked ? 'default' : 'destructive'}
-                              size="sm"
-                              onClick={() => handleBlockProfessional(prof.id, prof.is_blocked)}
-                            >
-                              {prof.is_blocked ? 'Atbloķēt' : 'Bloķēt'}
-                            </Button>
+                          <div className="space-y-3 border-t pt-3">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium min-w-[100px]">Plāns:</label>
+                              <Select
+                                value={prof.plan || 'starter'}
+                                onValueChange={(value) => handleUpdatePlan(prof.id, value)}
+                              >
+                                <SelectTrigger className="w-[180px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="starter">Starter (€0)</SelectItem>
+                                  <SelectItem value="pro">Pro (€14.99)</SelectItem>
+                                  <SelectItem value="premium">Premium (€24.99)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="flex gap-2 flex-wrap">
+                              <Button
+                                variant={prof.subscription_status === 'active' ? 'outline' : 'default'}
+                                size="sm"
+                                onClick={() => handleToggleSubscriptionStatus(prof.id, prof.subscription_status || 'inactive')}
+                              >
+                                {prof.subscription_status === 'active' ? 'Deaktivizēt' : 'Aktivizēt'}
+                              </Button>
+                              <Button
+                                variant={prof.is_verified ? 'outline' : 'default'}
+                                size="sm"
+                                onClick={() => handleVerifyProfessional(prof.id, prof.is_verified)}
+                              >
+                                {prof.is_verified ? 'Atcelt verificēšanu' : t.verifyProfessional}
+                              </Button>
+                              <Button
+                                variant={prof.is_blocked ? 'default' : 'destructive'}
+                                size="sm"
+                                onClick={() => handleBlockProfessional(prof.id, prof.is_blocked)}
+                              >
+                                {prof.is_blocked ? 'Atbloķēt' : 'Bloķēt'}
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>

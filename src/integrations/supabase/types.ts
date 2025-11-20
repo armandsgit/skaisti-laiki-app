@@ -93,6 +93,7 @@ export type Database = {
           longitude: number | null
           plan: string | null
           rating: number | null
+          subscription_status: string | null
           total_reviews: number | null
           updated_at: string
           user_id: string
@@ -114,6 +115,7 @@ export type Database = {
           longitude?: number | null
           plan?: string | null
           rating?: number | null
+          subscription_status?: string | null
           total_reviews?: number | null
           updated_at?: string
           user_id: string
@@ -135,6 +137,7 @@ export type Database = {
           longitude?: number | null
           plan?: string | null
           rating?: number | null
+          subscription_status?: string | null
           total_reviews?: number | null
           updated_at?: string
           user_id?: string

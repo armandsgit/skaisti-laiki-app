@@ -41,9 +41,12 @@ export function getSortedMasters(
   const now = new Date();
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
   
-  // Filtrē tikai apstiprinātos un aktīvos meistarus
+  // Filtrē tikai apstiprinātos, aktīvos meistarus ar aktīvu subscription
   const validMasters = masters.filter(
-    (master) => master.approved === true && master.active === true
+    (master) => 
+      master.approved === true && 
+      master.active === true &&
+      (master as any).subscription_status === 'active'
   );
   
   // Pievieno papildu info katram meistaram
@@ -54,9 +57,11 @@ export function getSortedMasters(
         ? calculateDistance(userLat, userLon, master.latitude, master.longitude)
         : 9999; // Ja nav koordinātes, liek pašā beigās
     
-    // Plāna prioritāte
+    // Plāna prioritāte (premium > pro > basic/starter > free)
     const planPriority =
-      master.plan === 'pro' ? 1 : master.plan === 'basic' ? 2 : 3;
+      master.plan === 'premium' ? 0 :
+      master.plan === 'pro' ? 1 : 
+      (master.plan === 'basic' || master.plan === 'starter') ? 2 : 3;
     
     return {
       ...master,
@@ -67,12 +72,19 @@ export function getSortedMasters(
   
   // Šķiro pēc prioritātes
   return mastersWithInfo.sort((a, b) => {
-    // 1. Pēc plāna prioritātes
+    // 1. Premium plāns vienmēr pirmajā vietā
+    const aIsPremium = a.plan === 'premium';
+    const bIsPremium = b.plan === 'premium';
+    if (aIsPremium !== bIsPremium) {
+      return aIsPremium ? -1 : 1;
+    }
+    
+    // 2. Pēc plāna prioritātes (pro > basic/starter > free)
     if (a.planPriority !== b.planPriority) {
       return a.planPriority - b.planPriority;
     }
     
-    // 2. Aktivitāte - ja >60 dienām, iet uz apakšu
+    // 3. Aktivitāte - ja >60 dienām, iet uz apakšu
     const aLastActive = new Date(a.last_active);
     const bLastActive = new Date(b.last_active);
     const aIsInactive = aLastActive < sixtyDaysAgo;
@@ -82,19 +94,19 @@ export function getSortedMasters(
       return aIsInactive ? 1 : -1;
     }
     
-    // 3. Pēc attāluma
+    // 4. Pēc attāluma
     if (Math.abs(a.distance - b.distance) > 0.1) {
       return a.distance - b.distance;
     }
     
-    // 4. Pēc reitinga
+    // 5. Pēc reitinga
     const aRating = a.rating || 0;
     const bRating = b.rating || 0;
     if (aRating !== bRating) {
       return bRating - aRating;
     }
     
-    // 5. Pēc aktivitātes (jaunākie pirmie)
+    // 6. Pēc aktivitātes (jaunākie pirmie)
     return bLastActive.getTime() - aLastActive.getTime();
   });
 }
