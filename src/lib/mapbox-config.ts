@@ -1,5 +1,5 @@
-// Mapbox public token from environment variable
-export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN || '';
+// Mapbox public token - safe to include in client-side code as it's public
+export const MAPBOX_TOKEN = 'pk.eyJ1IjoiYXJtaXgyMjIiLCJhIjoiY21pNzl1Ym12MGFxdzJqc2ZsMGNkeGpnZyJ9.5yfOtSNFwaWhs9bIU4G_5w';
 
 // Mapbox Geocoding API
 export const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
