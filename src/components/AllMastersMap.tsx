@@ -148,7 +148,7 @@ const AllMastersMap = () => {
           .setLngLat([master.longitude, master.latitude])
           .addTo(map.current);
 
-        // Hover popup - desktop only, no scale effect
+        // Hover popup - desktop only
         if (window.innerWidth >= 768) {
           markerEl.addEventListener('mouseenter', () => {
             if (map.current) {
@@ -161,14 +161,45 @@ const AllMastersMap = () => {
           });
         }
 
-        // Click event
-        markerEl.addEventListener('click', () => {
-          hoverPopup.remove();
-          if (map.current) {
-            clickPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
+        // Click/Tap event
+        markerEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          
+          // On mobile, show hover popup on first tap
+          if (window.innerWidth < 768) {
+            // Check if this popup is already showing
+            const isShowing = hoverPopup.isOpen();
+            
+            // Remove all popups first
+            hoverPopup.remove();
+            clickPopup.remove();
+            
+            if (!isShowing) {
+              // Show hover popup (with avatar, name, rating)
+              if (map.current) {
+                hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
+              }
+            } else {
+              // Second tap - navigate to profile
+              navigate(`/professional/${master.id}`);
+            }
+          } else {
+            // Desktop - always navigate
+            hoverPopup.remove();
+            if (map.current) {
+              clickPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
+            }
+            navigate(`/professional/${master.id}`);
           }
-          navigate(`/professional/${master.id}`);
         });
+        
+        // Close popup when clicking elsewhere on map (mobile only)
+        if (window.innerWidth < 768 && map.current) {
+          map.current.on('click', () => {
+            hoverPopup.remove();
+            clickPopup.remove();
+          });
+        }
       });
     } catch (error) {
       console.error('Error creating map:', error);
