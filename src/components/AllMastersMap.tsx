@@ -33,7 +33,7 @@ const AllMastersMap = () => {
         .from('professional_profiles')
         .select(`
           *,
-          profiles!professional_profiles_user_id_fkey(name, avatar)
+          profiles!professional_profiles_user_id_fkey(name, avatar, status)
         `)
         .eq('approved', true)
         .eq('active', true)
@@ -46,8 +46,17 @@ const AllMastersMap = () => {
         return;
       }
 
-      // Kārto meistarus pēc prioritātes
-      const sortedMasters = getSortedMasters(data || [], location.lat, location.lon);
+      // Filter out suspended/deleted masters
+      const activeMasters = (data || []).filter(m => m.profiles?.status === 'active');
+
+      if (error) {
+        console.error('Error loading masters:', error);
+        setLoading(false);
+        return;
+      }
+
+      // Sort masters by priority
+      const sortedMasters = getSortedMasters(activeMasters, location.lat, location.lon);
       setMasters(sortedMasters);
     } catch (error) {
       console.error('Exception loading masters:', error);
