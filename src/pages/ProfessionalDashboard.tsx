@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -19,6 +19,7 @@ import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
+import SubscriptionStatusIndicator from '@/components/SubscriptionStatusIndicator';
 
 const ProfessionalDashboard = () => {
   const t = useTranslation('lv');
@@ -440,6 +441,15 @@ const ProfessionalDashboard = () => {
     }
   };
 
+  const getPlanDisplayInfo = () => {
+    const planMap = {
+      starter: { name: 'Starter', price: '0' },
+      pro: { name: 'Pro', price: '14.99' },
+      premium: { name: 'Premium', price: '24.99' },
+    };
+    return planMap[profile?.plan as keyof typeof planMap] || { name: 'Nav izvēlēts', price: '0' };
+  };
+
   useEffect(() => {
     if (profile) {
       loadServices();
@@ -504,14 +514,45 @@ const ProfessionalDashboard = () => {
             </h1>
           </div>
           
-          <Button variant="ghost" size="sm" onClick={signOut} className="flex-shrink-0">
-            <LogOut className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">{t.logout}</span>
-          </Button>
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <SubscriptionStatusIndicator 
+              plan={profile.plan || 'starter'} 
+              status={profile.subscription_status || 'inactive'} 
+            />
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t.logout}</span>
+            </Button>
+          </div>
         </div>
       </header>
 
+
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-x-hidden">
+        {/* Subscription Management Section */}
+        <Card className="shadow-card border-0 mb-6">
+          <CardHeader>
+            <CardTitle>Mans abonements</CardTitle>
+            <CardDescription>Pārvaldi savu abonēšanas plānu</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-semibold">{getPlanDisplayInfo().name}</p>
+                  <Badge variant={profile.subscription_status === 'active' ? 'default' : 'destructive'}>
+                    {profile.subscription_status === 'active' ? 'Aktīvs' : 'Neaktīvs'}
+                  </Badge>
+                </div>
+                <p className="text-2xl font-bold">€{getPlanDisplayInfo().price}<span className="text-sm text-muted-foreground">/mēn</span></p>
+              </div>
+              <Button onClick={() => window.location.href = '/subscription-plans'}>
+                {profile.subscription_status === 'active' ? 'Mainīt plānu' : 'Aktivizēt abonementu'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
             <CardHeader className="pb-3">
