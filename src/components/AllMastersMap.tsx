@@ -43,6 +43,7 @@ const AllMastersMap = () => {
         `)
         .eq('approved', true)
         .eq('is_blocked', false)
+        .eq('city', 'Rīga')
         .not('latitude', 'is', null)
         .not('longitude', 'is', null);
 
@@ -79,7 +80,7 @@ const AllMastersMap = () => {
       const avgLat = masters.reduce((sum, m) => sum + m.latitude, 0) / masters.length;
       const avgLng = masters.reduce((sum, m) => sum + m.longitude, 0) / masters.length;
       center = [avgLng, avgLat];
-      zoom = 11;
+      zoom = 12;
     } else {
       center = [24.1052, 56.9496]; // Rīga
       zoom = 12;
