@@ -10,6 +10,7 @@ import ClientDashboard from "./pages/ClientDashboard";
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import AdminDashboard from "./pages/AdminDashboard";
+import MapView from "./pages/MapView";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -61,6 +62,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/map" 
+              element={
+                <ProtectedRoute>
+                  <MapView />
                 </ProtectedRoute>
               } 
             />

@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, MapPin } from 'lucide-react';
+import { geocodeAddress } from '@/lib/mapbox-config';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const t = useTranslation('lv');
@@ -21,6 +23,8 @@ const Auth = () => {
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerName, setRegisterName] = useState('');
   const [registerRole, setRegisterRole] = useState<'CLIENT' | 'PROFESSIONAL'>('CLIENT');
+  const [registerAddress, setRegisterAddress] = useState('');
+  const [geocoding, setGeocoding] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -43,11 +47,50 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signUp(registerEmail, registerPassword, registerName, registerRole);
+    // Ja ir profesionālis ar adresi, veic geocoding
+    let latitude = null;
+    let longitude = null;
+    
+    if (registerRole === 'PROFESSIONAL' && registerAddress) {
+      setGeocoding(true);
+      toast.loading('Notiek adreses noteikšana...');
+      
+      const coords = await geocodeAddress(registerAddress);
+      setGeocoding(false);
+      toast.dismiss();
+      
+      if (!coords) {
+        toast.error('Nederīga adrese. Lūdzu pārbaudiet ievadīto informāciju.');
+        setLoading(false);
+        return;
+      }
+      
+      latitude = coords.lat;
+      longitude = coords.lng;
+    }
+    
+    const { error, data } = await signUp(registerEmail, registerPassword, registerName, registerRole);
     
     if (error) {
       toast.error(t.registerError);
     } else {
+      // Ja ir profesionālis, atjaunina profilu ar adreses datiem
+      if (registerRole === 'PROFESSIONAL' && data?.user && registerAddress) {
+        const { error: profileError } = await supabase
+          .from('professional_profiles')
+          .update({
+            address: registerAddress,
+            latitude,
+            longitude,
+            approved: false // Gaida apstiprināšanu
+          })
+          .eq('user_id', data.user.id);
+        
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+        }
+      }
+      
       toast.success(t.registerSuccess);
       navigate('/');
     }

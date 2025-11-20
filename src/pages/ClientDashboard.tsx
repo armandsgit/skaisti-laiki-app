@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, LogOut, Search, Star, MapPin, Sparkles } from 'lucide-react';
+import { Calendar, LogOut, Search, Star, MapPin, Sparkles, Map } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ClientDashboard = () => {
@@ -39,7 +39,8 @@ const ClientDashboard = () => {
       .select(`
         *,
         profiles!professional_profiles_user_id_fkey(name, avatar)
-      `);
+      `)
+      .eq('approved', true); // Tikai apstiprinātie meistari
     
     if (error) {
       toast.error(t.error);
@@ -98,10 +99,16 @@ const ClientDashboard = () => {
             </h1>
           </div>
           
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            {t.logout}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate('/map')}>
+              <Map className="w-4 h-4 mr-2" />
+              Skatīt kartē
+            </Button>
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              {t.logout}
+            </Button>
+          </div>
         </div>
       </header>
 

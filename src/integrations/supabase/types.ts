@@ -77,6 +77,8 @@ export type Database = {
       }
       professional_profiles: {
         Row: {
+          address: string | null
+          approved: boolean | null
           bio: string | null
           category: Database["public"]["Enums"]["service_category"]
           city: string
@@ -84,12 +86,16 @@ export type Database = {
           gallery: string[] | null
           id: string
           is_verified: boolean | null
+          latitude: number | null
+          longitude: number | null
           rating: number | null
           total_reviews: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address?: string | null
+          approved?: boolean | null
           bio?: string | null
           category: Database["public"]["Enums"]["service_category"]
           city: string
@@ -97,12 +103,16 @@ export type Database = {
           gallery?: string[] | null
           id?: string
           is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           rating?: number | null
           total_reviews?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address?: string | null
+          approved?: boolean | null
           bio?: string | null
           category?: Database["public"]["Enums"]["service_category"]
           city?: string
@@ -110,6 +120,8 @@ export type Database = {
           gallery?: string[] | null
           id?: string
           is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           rating?: number | null
           total_reviews?: number | null
           updated_at?: string
