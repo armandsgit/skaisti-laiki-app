@@ -107,7 +107,7 @@ const AllMastersMap = () => {
           </div>`
         );
 
-        const marker = new mapboxgl.Marker({ color: '#ec4899' })
+        const marker = new mapboxgl.Marker({ color: '#f97316' })
           .setLngLat([master.longitude, master.latitude])
           .setPopup(popup)
           .addTo(map.current);
@@ -140,10 +140,9 @@ const AllMastersMap = () => {
     <div className="relative w-full h-full">
       <div 
         ref={mapContainer} 
-        className="absolute inset-0 rounded-lg overflow-hidden border shadow-sm"
-        style={{ minHeight: '600px' }}
+        className="absolute inset-0"
       />
-      {masters.length === 0 && (
+      {masters.length === 0 && !loading && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="bg-card/95 backdrop-blur-sm p-6 rounded-lg shadow-lg border max-w-sm text-center">
             <p className="text-lg font-semibold mb-2">Nav pieejamu meistaru</p>
