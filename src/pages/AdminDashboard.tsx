@@ -565,18 +565,19 @@ const AdminDashboard = () => {
                             
                             {/* KARTE */}
                             {prof.latitude && prof.longitude && (
-                              <div className="w-full h-[180px] rounded-2xl overflow-hidden border max-w-full">
+                              <div className="w-full rounded-2xl overflow-hidden border mb-2" style={{ maxHeight: '200px', height: '180px' }}>
                                 <LocationMap
                                   latitude={prof.latitude}
                                   longitude={prof.longitude}
+                                  showOpenButton={false}
                                 />
                               </div>
                             )}
                             
                             {prof.address && (
                               <div className="border-t pt-2">
-                                <div className="flex items-start justify-between gap-2 text-xs">
-                                  <p className="text-muted-foreground inline-block overflow-wrap-break-word max-w-[70%]" style={{ whiteSpace: 'normal', lineHeight: 'normal' }}>
+                                <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                                  <p className="text-xs text-muted-foreground break-words max-w-full" style={{ whiteSpace: 'normal', lineHeight: '1.4', overflowWrap: 'break-word' }}>
                                     {prof.address}
                                   </p>
                                   {prof.latitude && prof.longitude && (
@@ -584,8 +585,9 @@ const AdminDashboard = () => {
                                       href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-primary hover:underline text-sm whitespace-nowrap flex-shrink-0"
+                                      className="text-primary tap-feedback text-xs sm:text-sm whitespace-nowrap flex-shrink-0 flex items-center gap-1"
                                     >
+                                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                                       Skatīt kartē →
                                     </a>
                                   )}
@@ -693,10 +695,11 @@ const AdminDashboard = () => {
 
                         {/* Karte (kompakta) */}
                         {prof.latitude && prof.longitude && (
-                          <div className="w-full h-[180px] sm:h-[200px] rounded-2xl overflow-hidden border shadow-sm mb-3 max-w-full">
+                          <div className="w-full rounded-2xl overflow-hidden border shadow-sm mb-3" style={{ maxHeight: '200px', height: '180px' }}>
                             <LocationMap
                               latitude={prof.latitude}
                               longitude={prof.longitude}
+                              showOpenButton={false}
                             />
                           </div>
                         )}
@@ -712,13 +715,14 @@ const AdminDashboard = () => {
 
                         {/* Poga "Skatīt kartē →" */}
                         {prof.latitude && prof.longitude && (
-                          <div className="mb-4 flex justify-end">
+                          <div className="mb-3 flex justify-end">
                             <a
                               href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-primary hover:underline text-sm font-medium"
+                              className="text-primary tap-feedback text-xs sm:text-sm font-medium whitespace-nowrap flex items-center gap-1"
                             >
+                              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                               Skatīt kartē →
                             </a>
                           </div>
