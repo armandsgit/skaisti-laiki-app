@@ -537,34 +537,34 @@ const AdminDashboard = () => {
                   <div className="space-y-4">
                     {professionals.filter(p => !p.approved).map((prof) => (
                       <Card key={prof.id} className="border border-amber-200 bg-amber-50/50">
-                        <CardContent className="p-4">
-                          <div className="space-y-4">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-lg">{prof.profiles?.name}</h4>
-                                <p className="text-sm text-muted-foreground">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="space-y-3">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-base sm:text-lg truncate">{prof.profiles?.name}</h4>
+                                <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                   {prof.profiles?.phone || 'Nav telefona'}
                                 </p>
-                                <div className="flex gap-2 mt-2">
-                                  <Badge variant="secondary">{prof.category}</Badge>
-                                  <Badge variant="outline">{prof.city}</Badge>
+                                <div className="flex gap-1.5 mt-2 flex-wrap">
+                                  <Badge variant="secondary" className="text-xs">{prof.category}</Badge>
+                                  <Badge variant="outline" className="text-xs">{prof.city}</Badge>
                                 </div>
                               </div>
                             </div>
                             
                             {prof.address && (
-                              <div className="border-t pt-3">
-                                <div className="flex items-start gap-2 text-sm">
-                                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                  <div>
-                                    <p className="font-medium">Adrese:</p>
-                                    <p className="text-muted-foreground">{prof.address}</p>
+                              <div className="border-t pt-2">
+                                <div className="flex items-start gap-2 text-xs sm:text-sm">
+                                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-xs">Adrese:</p>
+                                    <p className="text-muted-foreground text-xs break-words">{prof.address}</p>
                                     {prof.latitude && prof.longitude && (
                                       <a
                                         href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-primary hover:underline text-xs mt-1 inline-block"
+                                        className="text-primary hover:underline text-xs mt-0.5 inline-block"
                                       >
                                         Skatīt kartē →
                                       </a>
@@ -575,33 +575,27 @@ const AdminDashboard = () => {
                             )}
                             
                             {prof.bio && (
-                              <div className="border-t pt-3">
-                                <p className="text-sm"><strong>Bio:</strong> {prof.bio}</p>
-                              </div>
-                            )}
-
-                            {prof.profiles?.phone && (
-                              <div className="border-t pt-3">
-                                <p className="text-sm"><strong>Telefons:</strong> {prof.profiles.phone}</p>
+                              <div className="border-t pt-2">
+                                <p className="text-xs sm:text-sm line-clamp-2"><strong>Bio:</strong> {prof.bio}</p>
                               </div>
                             )}
                             
-                            <div className="flex gap-2 border-t pt-3">
+                            <div className="flex gap-2 border-t pt-2">
                               <Button
                                 size="sm"
                                 onClick={() => handleApproveProfessional(prof.id)}
-                                className="flex-1"
+                                className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                               >
-                                <CheckCircle className="w-4 h-4 mr-2" />
+                                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Apstiprināt
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => handleRejectProfessional(prof.id)}
-                                className="flex-1"
+                                className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                               >
-                                <XCircle className="w-4 h-4 mr-2" />
+                                <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Noraidīt
                               </Button>
                             </div>
@@ -629,31 +623,31 @@ const AdminDashboard = () => {
                         ? "border-2 border-destructive bg-destructive/5" 
                         : "border"}
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg">{prof.profiles?.name}</h4>
-                              <p className="text-sm text-muted-foreground">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-base sm:text-lg truncate">{prof.profiles?.name}</h4>
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                 {prof.profiles?.phone || 'Nav telefona'}
                               </p>
-                              <div className="flex gap-2 mt-2 flex-wrap">
-                                <Badge variant="secondary">{prof.category}</Badge>
-                                <Badge variant="outline">{prof.city}</Badge>
+                              <div className="flex gap-1.5 mt-2 flex-wrap">
+                                <Badge variant="secondary" className="text-xs">{prof.category}</Badge>
+                                <Badge variant="outline" className="text-xs">{prof.city}</Badge>
                                 <PlanBadge 
                                   plan={prof.plan || 'free'} 
                                   isVerified={prof.is_verified || false}
                                 />
                                 {prof.is_blocked && (
-                                  <Badge variant="destructive">Bloķēts</Badge>
+                                  <Badge variant="destructive" className="text-xs">Bloķēts</Badge>
                                 )}
                                 {!prof.approved && (
-                                  <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                  <Badge variant="outline" className="border-amber-500 text-amber-600 text-xs">
                                     Gaida apstiprinājumu
                                   </Badge>
                                 )}
                                 {prof.subscription_status === 'inactive' && (
-                                  <Badge variant="outline" className="border-red-500 text-red-600">
+                                  <Badge variant="outline" className="border-red-500 text-red-600 text-xs">
                                     Neaktīvs abonements
                                   </Badge>
                                 )}
@@ -662,18 +656,18 @@ const AdminDashboard = () => {
                           </div>
 
                           {prof.address && (
-                            <div className="border-t pt-3">
-                              <div className="flex items-start gap-2 text-sm">
-                                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                <div>
-                                  <p className="font-medium">Adrese:</p>
-                                  <p className="text-muted-foreground">{prof.address}</p>
+                            <div className="border-t pt-2">
+                              <div className="flex items-start gap-2 text-xs sm:text-sm">
+                                <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-xs">Adrese:</p>
+                                  <p className="text-muted-foreground text-xs break-words">{prof.address}</p>
                                   {prof.latitude && prof.longitude && (
                                     <a
                                       href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-primary hover:underline text-xs mt-1 inline-block"
+                                      className="text-primary hover:underline text-xs mt-0.5 inline-block"
                                     >
                                       Skatīt kartē →
                                     </a>
@@ -684,8 +678,8 @@ const AdminDashboard = () => {
                           )}
 
                           {prof.bio && (
-                            <div className="border-t pt-3">
-                              <p className="text-sm"><strong>Bio:</strong> {prof.bio}</p>
+                            <div className="border-t pt-2">
+                              <p className="text-xs sm:text-sm line-clamp-2"><strong>Bio:</strong> {prof.bio}</p>
                             </div>
                           )}
 
