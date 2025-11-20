@@ -91,7 +91,8 @@ const AllMastersMap = () => {
       masters.forEach((master) => {
         if (!map.current) return;
 
-        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+        // Popup for click (detailed info)
+        const clickPopup = new mapboxgl.Popup({ offset: 25 }).setHTML(
           `<div style="padding: 8px;">
             <h3 style="font-weight: bold; margin-bottom: 4px;">${master.profiles.name}</h3>
             <p style="color: #666; font-size: 14px; margin-bottom: 4px;">${master.category}</p>
@@ -103,12 +104,41 @@ const AllMastersMap = () => {
           </div>`
         );
 
+        // Hover popup (name and rating only)
+        const hoverPopup = new mapboxgl.Popup({ 
+          offset: 25,
+          closeButton: false,
+          closeOnClick: false,
+          className: 'hover-popup'
+        }).setHTML(
+          `<div style="padding: 6px 10px;">
+            <h3 style="font-weight: bold; margin-bottom: 2px; font-size: 14px;">${master.profiles.name}</h3>
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 13px;">
+              <span style="color: #f59e0b;">⭐</span>
+              <span>${master.rating || 0}</span>
+            </div>
+          </div>`
+        );
+
         const marker = new mapboxgl.Marker({ color: '#ec4899' })
           .setLngLat([master.longitude, master.latitude])
-          .setPopup(popup)
           .addTo(map.current);
 
-        marker.getElement().addEventListener('click', () => {
+        const markerElement = marker.getElement();
+
+        // Hover events
+        markerElement.addEventListener('mouseenter', () => {
+          hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current!);
+        });
+
+        markerElement.addEventListener('mouseleave', () => {
+          hoverPopup.remove();
+        });
+
+        // Click event
+        markerElement.addEventListener('click', () => {
+          hoverPopup.remove();
+          clickPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current!);
           navigate(`/professional/${master.id}`);
         });
       });
