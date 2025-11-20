@@ -271,6 +271,7 @@ const AdminDashboard = () => {
   const handleDeleteClient = async () => {
     if (!selectedClient) return;
 
+    const clientId = selectedClient.id;
     const loadingToast = toast.loading('Dzēš klienta profilu...');
 
     try {
@@ -289,7 +290,7 @@ const AdminDashboard = () => {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ userId: selectedClient.id }),
+          body: JSON.stringify({ userId: clientId }),
         }
       );
 
@@ -300,15 +301,17 @@ const AdminDashboard = () => {
       }
 
       // Immediately remove from local state
-      setClients(prev => prev.filter(c => c.id !== selectedClient.id));
+      setClients(prev => prev.filter(c => c.id !== clientId));
       
       toast.dismiss(loadingToast);
       toast.success('Klienta profils dzēsts');
+      
+      // Close modal and clear selected client
       setDeleteClientModalOpen(false);
       setSelectedClient(null);
       
-      // Reload data in background
-      loadData();
+      // Reload data in background to ensure consistency
+      setTimeout(() => loadData(), 500);
     } catch (error) {
       console.error('Error deleting client:', error);
       toast.dismiss(loadingToast);
