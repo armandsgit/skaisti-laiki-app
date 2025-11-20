@@ -10,7 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles } from 'lucide-react';
+import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import LocationMap from '@/components/LocationMap';
 import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
 
@@ -25,11 +28,26 @@ const ProfessionalDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [editingService, setEditingService] = useState<any>(null);
+  const [editProfileDialogOpen, setEditProfileDialogOpen] = useState(false);
+  const [editProfessionalInfoOpen, setEditProfessionalInfoOpen] = useState(false);
   const [newService, setNewService] = useState({
     name: '',
     price: '',
     duration: '',
     description: ''
+  });
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [editedProfile, setEditedProfile] = useState({
+    name: '',
+    phone: '',
+    avatar: ''
+  });
+  const [editedProfInfo, setEditedProfInfo] = useState({
+    bio: '',
+    category: '',
+    city: '',
+    address: ''
   });
 
   useEffect(() => {
@@ -43,6 +61,21 @@ const ProfessionalDashboard = () => {
   const loadProfile = async () => {
     if (!user?.id) return;
     
+    // Load user profile
+    const { data: userData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    
+    setUserProfile(userData);
+    setEditedProfile({
+      name: userData?.name || '',
+      phone: userData?.phone || '',
+      avatar: userData?.avatar || ''
+    });
+    
+    // Load professional profile
     const { data, error } = await supabase
       .from('professional_profiles')
       .select('*')
@@ -64,10 +97,22 @@ const ProfessionalDashboard = () => {
       
       if (!insertError && newProfile) {
         setProfile(newProfile);
+        setEditedProfInfo({
+          bio: '',
+          category: 'Manikīrs',
+          city: 'Rīga',
+          address: ''
+        });
         toast.success('Profesionālais profils izveidots! Lūdzu, atjauniniet savu informāciju.');
       }
     } else {
       setProfile(data);
+      setEditedProfInfo({
+        bio: data?.bio || '',
+        category: data?.category || '',
+        city: data?.city || '',
+        address: data?.address || ''
+      });
     }
     
     setLoading(false);
@@ -124,23 +169,47 @@ const ProfessionalDashboard = () => {
         description: newService.description || undefined
       });
 
-      const { error } = await supabase
-        .from('services')
-        .insert({
-          professional_id: profile.id,
-          name: validatedData.name,
-          price: validatedData.price,
-          duration: validatedData.duration,
-          description: validatedData.description
-        });
-      
-      if (error) {
-        toast.error(t.error);
+      if (editingService) {
+        // Update existing service
+        const { error } = await supabase
+          .from('services')
+          .update({
+            name: validatedData.name,
+            price: validatedData.price,
+            duration: validatedData.duration,
+            description: validatedData.description
+          })
+          .eq('id', editingService.id);
+
+        if (error) {
+          toast.error(t.error);
+        } else {
+          toast.success('Pakalpojums atjaunināts!');
+          setServiceDialogOpen(false);
+          setEditingService(null);
+          setNewService({ name: '', price: '', duration: '', description: '' });
+          loadServices();
+        }
       } else {
-        toast.success(t.serviceAdded);
-        setServiceDialogOpen(false);
-        setNewService({ name: '', price: '', duration: '', description: '' });
-        loadServices();
+        // Add new service
+        const { error } = await supabase
+          .from('services')
+          .insert({
+            professional_id: profile.id,
+            name: validatedData.name,
+            price: validatedData.price,
+            duration: validatedData.duration,
+            description: validatedData.description
+          });
+        
+        if (error) {
+          toast.error(t.error);
+        } else {
+          toast.success(t.serviceAdded);
+          setServiceDialogOpen(false);
+          setNewService({ name: '', price: '', duration: '', description: '' });
+          loadServices();
+        }
       }
     } catch (error: any) {
       if (error.errors) {
@@ -148,6 +217,78 @@ const ProfessionalDashboard = () => {
       } else {
         toast.error(t.error);
       }
+    }
+  };
+
+  const handleEditService = (service: any) => {
+    setEditingService(service);
+    setNewService({
+      name: service.name,
+      price: service.price.toString(),
+      duration: service.duration.toString(),
+      description: service.description || ''
+    });
+    setServiceDialogOpen(true);
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!user?.id) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: editedProfile.name,
+        phone: editedProfile.phone,
+        avatar: editedProfile.avatar
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      toast.error('Kļūda atjauninot profilu');
+    } else {
+      toast.success('Profils atjaunināts!');
+      setEditProfileDialogOpen(false);
+      loadProfile();
+    }
+  };
+
+  const handleUpdateProfessionalInfo = async () => {
+    if (!profile?.id) return;
+
+    // If address changed, geocode it
+    let updateData: any = {
+      bio: editedProfInfo.bio,
+      category: editedProfInfo.category,
+      city: editedProfInfo.city,
+      address: editedProfInfo.address
+    };
+
+    if (editedProfInfo.address !== profile.address) {
+      try {
+        const response = await supabase.functions.invoke('geocode-address', {
+          body: { address: editedProfInfo.address }
+        });
+
+        if (response.data?.latitude && response.data?.longitude) {
+          updateData.latitude = response.data.latitude;
+          updateData.longitude = response.data.longitude;
+        }
+      } catch (error) {
+        toast.error('Neizdevās noteikt koordinātes');
+      }
+    }
+
+    const { error } = await supabase
+      .from('professional_profiles')
+      .update(updateData)
+      .eq('id', profile.id);
+
+    if (error) {
+      toast.error('Kļūda atjauninot informāciju');
+    } else {
+      toast.success('Informācija atjaunināta!');
+      setEditProfessionalInfoOpen(false);
+      loadProfile();
     }
   };
 
@@ -345,7 +486,11 @@ const ProfessionalDashboard = () => {
         </div>
 
         <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-card/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-card/80 backdrop-blur-sm">
+            <TabsTrigger value="profile">
+              <User className="w-4 h-4 mr-2" />
+              Profils
+            </TabsTrigger>
             <TabsTrigger value="bookings">
               <Calendar className="w-4 h-4 mr-2" />
               {t.bookings}
@@ -359,6 +504,179 @@ const ProfessionalDashboard = () => {
               Galerija
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="profile" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="shadow-card border-0">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Lietotāja profils</CardTitle>
+                  <Dialog open={editProfileDialogOpen} onOpenChange={setEditProfileDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Edit className="w-4 h-4 mr-2" />
+                        Labot
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Labot profilu</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Vārds</Label>
+                          <Input
+                            id="name"
+                            value={editedProfile.name}
+                            onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Telefons</Label>
+                          <Input
+                            id="phone"
+                            value={editedProfile.phone}
+                            onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="avatar">Avatara URL</Label>
+                          <Input
+                            id="avatar"
+                            value={editedProfile.avatar}
+                            onChange={(e) => setEditedProfile({...editedProfile, avatar: e.target.value})}
+                          />
+                        </div>
+                        <Button onClick={handleUpdateProfile} className="w-full">
+                          Saglabāt izmaiņas
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={userProfile?.avatar} alt={userProfile?.name} />
+                      <AvatarFallback>{userProfile?.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{userProfile?.name}</p>
+                      <p className="text-sm text-muted-foreground">{userProfile?.phone || 'Nav telefona'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card border-0">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Profesionālā informācija</CardTitle>
+                  <Dialog open={editProfessionalInfoOpen} onOpenChange={setEditProfessionalInfoOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Edit className="w-4 h-4 mr-2" />
+                        Labot
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Labot profesionālo informāciju</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="category">Kategorija</Label>
+                          <Select
+                            value={editedProfInfo.category}
+                            onValueChange={(value) => setEditedProfInfo({...editedProfInfo, category: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Manikīrs">Manikīrs</SelectItem>
+                              <SelectItem value="Pedikīrs">Pedikīrs</SelectItem>
+                              <SelectItem value="Skropstas">Skropstas</SelectItem>
+                              <SelectItem value="Frizieris">Frizieris</SelectItem>
+                              <SelectItem value="Masāža">Masāža</SelectItem>
+                              <SelectItem value="Kosmetoloģija">Kosmetoloģija</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="city">Pilsēta</Label>
+                          <Input
+                            id="city"
+                            value={editedProfInfo.city}
+                            onChange={(e) => setEditedProfInfo({...editedProfInfo, city: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="address">Adrese</Label>
+                          <Input
+                            id="address"
+                            value={editedProfInfo.address}
+                            onChange={(e) => setEditedProfInfo({...editedProfInfo, address: e.target.value})}
+                            placeholder="Ievadiet pilnu adresi..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="bio">Bio</Label>
+                          <Textarea
+                            id="bio"
+                            value={editedProfInfo.bio}
+                            onChange={(e) => setEditedProfInfo({...editedProfInfo, bio: e.target.value})}
+                            rows={4}
+                          />
+                        </div>
+                        <Button onClick={handleUpdateProfessionalInfo} className="w-full">
+                          Saglabāt izmaiņas
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Kategorija</p>
+                    <Badge variant="secondary">{profile?.category}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pilsēta</p>
+                    <p className="font-medium">{profile?.city}</p>
+                  </div>
+                  {profile?.address && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Adrese</p>
+                      <p className="font-medium">{profile.address}</p>
+                    </div>
+                  )}
+                  {profile?.bio && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Bio</p>
+                      <p className="text-sm">{profile.bio}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {profile?.latitude && profile?.longitude && (
+              <Card className="shadow-card border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    Atrašanās vieta kartē
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <LocationMap
+                    latitude={profile.latitude}
+                    longitude={profile.longitude}
+                    address={profile.address}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
           <TabsContent value="bookings" className="space-y-4">
             <Card className="shadow-card border-0">
@@ -441,7 +759,13 @@ const ProfessionalDashboard = () => {
             <Card className="shadow-card border-0">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{t.myServices}</CardTitle>
-                <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
+                <Dialog open={serviceDialogOpen} onOpenChange={(open) => {
+                  setServiceDialogOpen(open);
+                  if (!open) {
+                    setEditingService(null);
+                    setNewService({ name: '', price: '', duration: '', description: '' });
+                  }
+                }}>
                   <DialogTrigger asChild>
                     <Button size="sm">
                       <Plus className="w-4 h-4 mr-2" />
@@ -450,7 +774,7 @@ const ProfessionalDashboard = () => {
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>{t.addService}</DialogTitle>
+                      <DialogTitle>{editingService ? 'Labot pakalpojumu' : t.addService}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAddService} className="space-y-4">
                       <div className="space-y-2">
@@ -499,7 +823,7 @@ const ProfessionalDashboard = () => {
                       </div>
                       
                       <Button type="submit" className="w-full">
-                        {t.addService}
+                        {editingService ? 'Saglabāt izmaiņas' : t.addService}
                       </Button>
                     </form>
                   </DialogContent>
@@ -534,14 +858,24 @@ const ProfessionalDashboard = () => {
                                 </span>
                               </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteService(service.id)}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditService(service)}
+                                className="text-primary hover:text-primary hover:bg-primary/10"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteService(service.id)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
