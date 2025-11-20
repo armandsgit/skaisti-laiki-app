@@ -17,6 +17,7 @@ interface AddressAutocompleteProps {
   onSelect?: (address: string, lat: number, lng: number) => void;
   placeholder?: string;
   disabled?: boolean;
+  city?: string; // Add city context for better results
 }
 
 export const AddressAutocomplete = ({ 
@@ -24,7 +25,8 @@ export const AddressAutocomplete = ({
   onChange, 
   onSelect,
   placeholder = "Ievadiet adresi",
-  disabled = false 
+  disabled = false,
+  city = ''
 }: AddressAutocompleteProps) => {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [open, setOpen] = useState(false);
@@ -45,8 +47,11 @@ export const AddressAutocomplete = ({
     debounceTimer.current = setTimeout(async () => {
       setLoading(true);
       try {
+        // Add city context to search query for better results
+        const searchQuery = city ? `${value}, ${city}` : value;
+        
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=5&language=lv`
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=5&language=lv&types=address,place`
         );
         
         if (response.ok) {

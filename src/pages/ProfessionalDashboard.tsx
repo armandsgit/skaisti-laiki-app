@@ -636,6 +636,7 @@ const ProfessionalDashboard = () => {
                           <Label htmlFor="address">Adrese</Label>
                           <AddressAutocomplete
                             value={editedProfInfo.address}
+                            city={editedProfInfo.city}
                             onChange={(value) => setEditedProfInfo({...editedProfInfo, address: value})}
                             onSelect={(address, lat, lng) => {
                               setEditedProfInfo({
