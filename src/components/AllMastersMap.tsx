@@ -110,8 +110,9 @@ const AllMastersMap = () => {
           </div>`
         );
 
-        // Compact hover popup for mobile zoom (name, avatar and rating)
+        // Compact hover popup for mobile zoom (name, avatar, rating, and address)
         const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
+        const shortAddress = master.address ? (master.address.length > 25 ? master.address.substring(0, 25) + '...' : master.address) : master.city;
         
         const hoverPopup = new mapboxgl.Popup({ 
           offset: 25,
@@ -119,18 +120,22 @@ const AllMastersMap = () => {
           closeOnClick: false,
           className: 'compact-marker-popup'
         }).setHTML(
-          `<div style="padding: 6px 10px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          `<div style="padding: 8px 10px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 14px; box-shadow: 0 8px 24px rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.1);">
             <div style="display: flex; align-items: center; gap: 8px;">
               <img 
                 src="${avatarUrl}" 
                 alt="${master.profiles.name}"
-                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
               />
-              <div style="min-width: 0;">
-                <h3 style="font-weight: 600; margin: 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${master.profiles.name}</h3>
-                <div style="display: flex; align-items: center; gap: 3px; font-size: 12px; margin-top: 2px;">
-                  <span style="color: #f59e0b;">⭐</span>
-                  <span style="color: #666;">${master.rating || 0}</span>
+              <div style="min-width: 0; flex: 1;">
+                <h3 style="font-weight: 600; margin: 0 0 2px 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${master.profiles.name}</h3>
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                  <span style="color: #f59e0b; font-size: 11px;">⭐</span>
+                  <span style="color: #666; font-weight: 500; font-size: 11px;">${master.rating || 0}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 3px; font-size: 10px; color: #888;">
+                  <span style="font-size: 10px;">📍</span>
+                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${shortAddress}</span>
                 </div>
               </div>
             </div>
@@ -240,6 +245,7 @@ const AllMastersMap = () => {
             // Show popup for closest marker if within reasonable distance and different from last shown
             if (closestMarker && minDistance < 0.005 && closestMarker.id !== lastShownMasterId && map.current) {
               const avatarUrl = closestMarker.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + closestMarker.profiles.name;
+              const shortAddress = closestMarker.address ? (closestMarker.address.length > 25 ? closestMarker.address.substring(0, 25) + '...' : closestMarker.address) : closestMarker.city;
               
               // Remove previous popup with fade
               if (activePopup) {
@@ -252,20 +258,24 @@ const AllMastersMap = () => {
                 closeButton: false,
                 closeOnClick: false,
                 className: 'compact-marker-popup zoom-popup',
-                maxWidth: '220px'
+                maxWidth: '240px'
               }).setHTML(
                 `<div class="popup-content-fade">
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <img 
                       src="${avatarUrl}" 
                       alt="${closestMarker.profiles.name}"
-                      style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                      style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
                     />
                     <div style="min-width: 0; flex: 1;">
-                      <h3 style="font-weight: 600; margin: 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${closestMarker.profiles.name}</h3>
-                      <div style="display: flex; align-items: center; gap: 3px; font-size: 12px; margin-top: 2px;">
-                        <span style="color: #f59e0b;">⭐</span>
-                        <span style="color: #666; font-weight: 500;">${closestMarker.rating || 0}</span>
+                      <h3 style="font-weight: 600; margin: 0 0 2px 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${closestMarker.profiles.name}</h3>
+                      <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                        <span style="color: #f59e0b; font-size: 11px;">⭐</span>
+                        <span style="color: #666; font-weight: 500; font-size: 11px;">${closestMarker.rating || 0}</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 3px; font-size: 10px; color: #888;">
+                        <span style="font-size: 10px;">📍</span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${shortAddress}</span>
                       </div>
                     </div>
                   </div>
