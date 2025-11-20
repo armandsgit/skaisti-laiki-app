@@ -135,6 +135,15 @@ export default {
           "0%": { backgroundPosition: "-1000px 0" },
           "100%": { backgroundPosition: "1000px 0" },
         },
+        "tap-pulse": {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(0.98)", opacity: "0.9" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "ripple": {
+          "0%": { width: "0", height: "0", opacity: "0.3" },
+          "100%": { width: "300%", height: "300%", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -146,6 +155,8 @@ export default {
         "bounce-soft": "bounce-soft 2s ease-in-out infinite",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
+        "tap-pulse": "tap-pulse 0.2s ease-out",
+        "ripple": "ripple 0.6s ease-out",
       },
     },
   },

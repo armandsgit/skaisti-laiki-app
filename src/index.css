@@ -156,29 +156,78 @@
 }
 
 @layer components {
-  /* Premium Card Styles */
+  /* Premium Card Styles - Mobile First (No Hover) */
   .card-premium {
     @apply rounded-2xl bg-card shadow-[var(--shadow-card)] border border-border/50 backdrop-blur-sm;
     background: var(--gradient-card);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  .card-premium:hover {
-    @apply shadow-[var(--shadow-hover)] -translate-y-1;
+  .card-premium:active {
+    @apply shadow-[var(--shadow-hover)] -translate-y-0.5 scale-[1.01];
+  }
+  
+  /* Touch Ripple Effect */
+  .touch-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .touch-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: hsl(var(--primary) / 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease-out, height 0.3s ease-out, opacity 0.3s ease-out;
+    opacity: 0;
+  }
+  
+  .touch-ripple:active::after {
+    width: 300%;
+    height: 300%;
+    opacity: 0.3;
   }
   
   /* Skeleton Loaders */
   .skeleton {
-    @apply animate-pulse rounded-md bg-muted/70;
+    @apply animate-shimmer rounded-xl bg-muted/70;
   }
   
-  /* Smooth Transitions */
+  /* Smooth Transitions - Mobile Optimized */
   .transition-smooth {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .transition-bounce {
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  /* Tap Feedback */
+  .tap-feedback {
+    @apply transition-smooth;
+  }
+  
+  .tap-feedback:active {
+    @apply scale-[0.98] opacity-90;
+  }
+  
+  /* Icon Tap Animation */
+  .icon-tap {
+    @apply transition-all duration-150;
+  }
+  
+  .icon-tap:active {
+    @apply scale-95 opacity-80;
+  }
+  
+  /* Dark Mode Transition */
+  * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
 }
 
@@ -255,7 +304,35 @@
     }
   }
   
-  /* Animation Classes */
+  @keyframes tap-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes ripple {
+    0% {
+      width: 0;
+      height: 0;
+      opacity: 0.3;
+    }
+    100% {
+      width: 300%;
+      height: 300%;
+      opacity: 0;
+    }
+  }
+  
+  /* Animation Classes - Mobile First */
   .animate-fade-in {
     animation: fade-in 0.4s ease-out;
   }
@@ -289,6 +366,14 @@
       hsl(var(--muted)) 100%
     );
     background-size: 1000px 100%;
+  }
+  
+  .animate-tap-pulse {
+    animation: tap-pulse 0.2s ease-out;
+  }
+  
+  .animate-ripple {
+    animation: ripple 0.6s ease-out;
   }
   
   /* Delay Classes */

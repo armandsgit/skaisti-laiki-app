@@ -5,23 +5,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] touch-ripple [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-gradient-primary text-primary-foreground shadow-soft hover:shadow-hover hover:-translate-y-0.5",
-        destructive: "bg-destructive text-destructive-foreground shadow-card hover:bg-destructive/90 hover:shadow-hover",
-        outline: "border-2 border-border bg-background hover:bg-secondary hover:border-primary/50 hover:shadow-card",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-card hover:shadow-soft",
-        ghost: "hover:bg-secondary hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline hover:text-primary/80",
-        premium: "bg-gradient-header text-primary-foreground shadow-glow hover:shadow-hover hover:-translate-y-0.5 border-2 border-primary-glow/30",
+        default: "bg-gradient-primary text-primary-foreground shadow-soft active:shadow-hover",
+        destructive: "bg-destructive text-destructive-foreground shadow-card active:shadow-hover active:bg-destructive/90",
+        outline: "border-2 border-border bg-background active:bg-secondary active:border-primary/50 active:shadow-card",
+        secondary: "bg-secondary text-secondary-foreground shadow-card active:bg-secondary/80 active:shadow-soft",
+        ghost: "active:bg-secondary/80",
+        link: "text-primary underline-offset-4 active:underline active:text-primary/80",
+        premium: "bg-gradient-header text-primary-foreground shadow-glow active:shadow-hover border-2 border-primary-glow/30",
       },
       size: {
-        default: "h-11 px-6 py-2.5",
-        sm: "h-9 rounded-lg px-4 text-xs",
+        default: "h-12 px-6 py-3",
+        sm: "h-10 rounded-lg px-4 text-xs",
         lg: "h-14 rounded-xl px-10 text-base",
-        icon: "h-11 w-11",
+        icon: "h-12 w-12",
       },
     },
     defaultVariants: {
