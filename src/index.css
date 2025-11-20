@@ -337,8 +337,8 @@
       @apply p-3 !important;
     }
     
-    /* Force single column on mobile */
-    .grid {
+    /* Force single column on mobile - excluding tabs */
+    .grid:not([role="tablist"]) {
       grid-template-columns: 1fr !important;
     }
     
