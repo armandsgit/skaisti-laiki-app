@@ -118,55 +118,6 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         (marker as any).masterData = master;
         markersRef.current.set(master.id, marker);
 
-        // Hover popup - desktop only
-        if (window.innerWidth >= 768) {
-          markerEl.addEventListener('mouseenter', () => {
-            if (map.current) {
-              const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
-              const shortAddress = master.address ? (master.address.length > 25 ? master.address.substring(0, 25) + '...' : master.address) : master.city;
-              
-              const hoverPopup = new mapboxgl.Popup({ 
-                offset: 25,
-                closeButton: false,
-                closeOnClick: false,
-                className: 'compact-marker-popup'
-              }).setHTML(
-                `<div style="padding: 8px 10px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 14px; box-shadow: 0 8px 24px rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.1);">
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                    <img 
-                      src="${avatarUrl}" 
-                      alt="${master.profiles.name}"
-                      style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
-                    />
-                    <div style="min-width: 0; flex: 1;">
-                      <h3 style="font-weight: 600; margin: 0 0 2px 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${master.profiles.name}</h3>
-                      <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
-                        <span style="color: #f59e0b; font-size: 11px;">⭐</span>
-                        <span style="color: #666; font-weight: 500; font-size: 11px;">${master.rating || 0}</span>
-                      </div>
-                      <div style="display: flex; align-items: center; gap: 3px; font-size: 10px; color: #888;">
-                        <span style="font-size: 10px;">📍</span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${shortAddress}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>`
-              )
-              .setLngLat([master.longitude, master.latitude])
-              .addTo(map.current);
-              
-              (marker as any).hoverPopup = hoverPopup;
-            }
-          });
-
-          markerEl.addEventListener('mouseleave', () => {
-            const popup = (marker as any).hoverPopup;
-            if (popup) {
-              popup.remove();
-            }
-          });
-        }
-
         // Click/Tap event
         markerEl.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -187,15 +138,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
             essential: true
           });
 
-          // Add bounce animation AFTER fly animation completes
-          setTimeout(() => {
-            markerEl.classList.add('marker-bounce');
-            setTimeout(() => {
-              markerEl.classList.remove('marker-bounce');
-            }, 1000);
-          }, 1500);
-
-          // Show popup after animation
+          // Show popup after animation (no bounce - causes position issues)
           setTimeout(() => {
             if (!map.current) return;
 
