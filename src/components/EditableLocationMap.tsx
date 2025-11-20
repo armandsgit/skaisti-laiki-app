@@ -187,11 +187,17 @@ const EditableLocationMap = ({
   }, [latitude, longitude]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full">
       <div 
         ref={mapContainer} 
-        className={`rounded-lg overflow-hidden border shadow-sm ${className}`}
-        style={{ height: '400px' }}
+        className={`map-container rounded-2xl overflow-hidden border shadow-sm w-full ${className}`}
+        style={{ 
+          height: '280px',
+          maxHeight: '320px',
+          minHeight: '240px',
+          maxWidth: '100%',
+          width: '100%'
+        }}
       />
       <p className="text-xs text-muted-foreground">
         Noklikšķiniet uz kartes, lai atzīmētu savu atrašanās vietu. Marķieri var arī vilkt.

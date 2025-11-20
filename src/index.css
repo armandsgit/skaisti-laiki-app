@@ -299,8 +299,16 @@
 }
 
 @layer utilities {
-  /* Mobile Grid & Layout Utilities */
+  /* ========================================
+     MOBILE-FIRST RESPONSIVE UTILITIES (< 640px)
+     ======================================== */
   @media (max-width: 640px) {
+    /* Layout & Containers */
+    .page-container, .section-container, .card, .details-block {
+      padding: 16px !important;
+      border-radius: 16px !important;
+    }
+    
     .mobile-stack {
       @apply flex flex-col gap-3 !important;
     }
@@ -321,33 +329,114 @@
     .grid {
       grid-template-columns: 1fr !important;
     }
-  }
-  
-  /* Map Mobile Fixes */
-  @media (max-width: 640px) {
-    .mapboxgl-map, [class*="map"] {
-      @apply w-full !important;
-      min-height: 300px !important;
-      height: 50vh !important;
+    
+    /* Typography - Reduce by 15-20% */
+    h1, h2, h3 {
+      font-size: 85% !important;
+    }
+    
+    p, span, div {
+      font-size: 90% !important;
+    }
+    
+    /* Buttons & Chips - Smaller */
+    button, .chip, .tag, [role="button"] {
+      padding: 6px 12px !important;
+      font-size: 14px !important;
+      border-radius: 12px !important;
+    }
+    
+    /* Avatars - Fixed Size */
+    .avatar, [class*="avatar"] {
+      width: 48px !important;
+      height: 48px !important;
+    }
+    
+    /* Images - Contain & Scale */
+    img, svg {
+      max-width: 100% !important;
+      height: auto !important;
+      object-fit: contain !important;
+    }
+    
+    /* Large Icons - Limit Height */
+    svg[class*="lucide"] {
+      max-height: 160px !important;
+      width: auto !important;
+    }
+    
+    /* Cards - Proper Overflow */
+    [class*="card"], .card {
+      overflow: hidden !important;
+      max-width: 100% !important;
+    }
+    
+    /* Tags Must Wrap */
+    [class*="badge"], .badge, .tag {
+      flex-wrap: wrap !important;
+      white-space: normal !important;
     }
   }
   
-  /* Modal Mobile Optimization */
+  /* ========================================
+     MAP RESPONSIVE FIXES (ALL MAPS)
+     ======================================== */
   @media (max-width: 640px) {
-    [role="dialog"], .dialog {
+    /* Map Container - Universal */
+    .map-container, 
+    .mapboxgl-map, 
+    [class*="map"],
+    div[class*="Map"] {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      max-height: 260px !important;
+      min-height: 200px !important;
+      border-radius: 16px !important;
+      overflow: hidden !important;
+    }
+    
+    /* Mapbox Logo Fix */
+    .mapboxgl-ctrl-logo,
+    .mapboxgl-ctrl-bottom-left,
+    .mapboxgl-ctrl-bottom-right {
+      max-width: 100% !important;
+      overflow: hidden !important;
+    }
+    
+    /* Location Pin Icons - Limit Size */
+    [class*="location"] svg,
+    [class*="MapPin"] {
+      max-height: 100px !important;
+      max-width: 100px !important;
+      object-fit: contain !important;
+    }
+  }
+  
+  /* ========================================
+     MODAL & DIALOG RESPONSIVE
+     ======================================== */
+  @media (max-width: 640px) {
+    [role="dialog"], .dialog, [class*="Dialog"] {
       @apply w-[95vw] max-w-[95vw] max-h-[90vh] m-4 !important;
       overflow-y: auto !important;
+      overflow-x: hidden !important;
     }
   }
   
-  /* Input Mobile Optimization */
+  /* ========================================
+     INPUT & FORM RESPONSIVE
+     ======================================== */
   @media (max-width: 640px) {
     input, select, textarea {
       @apply w-full text-base p-3.5 !important;
+      max-width: 100% !important;
     }
   }
   
-  /* Tab Mobile Scrolling */
+  /* ========================================
+     TAB SCROLLING
+     ======================================== */
   @media (max-width: 640px) {
     [role="tablist"] {
       @apply overflow-x-auto overflow-y-hidden;
@@ -357,6 +446,23 @@
     
     [role="tablist"]::-webkit-scrollbar {
       display: none;
+    }
+  }
+  
+  /* ========================================
+     SCROLLING FIXES - NO NESTED SCROLLS
+     ======================================== */
+  @media (max-width: 640px) {
+    /* Remove nested scrolling */
+    main, section, article {
+      overflow-x: hidden !important;
+      overflow-y: visible !important;
+    }
+    
+    /* Only page-level scroll */
+    body {
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
     }
   }
   
