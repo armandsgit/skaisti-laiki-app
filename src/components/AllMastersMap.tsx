@@ -148,19 +148,15 @@ const AllMastersMap = () => {
           .setLngLat([master.longitude, master.latitude])
           .addTo(map.current);
 
-        // Hover effects - desktop only
+        // Hover popup - desktop only, no scale effect
         if (window.innerWidth >= 768) {
           markerEl.addEventListener('mouseenter', () => {
-            markerEl.style.transform = 'scale(1.1)';
-            markerEl.style.boxShadow = '0 6px 16px rgba(236, 72, 153, 0.7)';
             if (map.current) {
               hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
             }
           });
 
           markerEl.addEventListener('mouseleave', () => {
-            markerEl.style.transform = 'scale(1)';
-            markerEl.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.5)';
             hoverPopup.remove();
           });
         }
