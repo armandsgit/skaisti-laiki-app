@@ -382,19 +382,43 @@
   
   /* Compact marker popup for mobile */
   .compact-marker-popup .mapboxgl-popup-content {
-    padding: 0 !important;
+    padding: 6px 10px !important;
     border-radius: 12px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
     max-width: 220px !important;
+    background: white !important;
   }
   
   .compact-marker-popup .mapboxgl-popup-tip {
     border-top-color: white !important;
   }
   
+  /* Fade-in animation for zoom popup */
+  .zoom-popup {
+    animation: fadeInPopup 0.3s ease-out;
+  }
+  
+  @keyframes fadeInPopup {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .popup-content-fade {
+    padding: 6px 10px;
+    background: white;
+    border-radius: 12px;
+  }
+  
   @media (max-width: 639px) {
     .compact-marker-popup .mapboxgl-popup-content {
       max-width: 200px !important;
+      padding: 5px 8px !important;
     }
   }
   
