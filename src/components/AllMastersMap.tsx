@@ -14,7 +14,13 @@ interface AllMastersMapProps {
   selectedMasterId?: string;
 }
 
-type CategoryFilter = 'all' | 'Frizieris' | 'Manikīrs' | 'Skropstas' | 'Kosmetoloģija';
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  active: boolean;
+}
 
 const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -24,11 +30,28 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     initializeMap();
+    loadCategories();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('active', true)
+        .order('display_order');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   const initializeMap = async () => {
     const location = await getUserLocation();
@@ -340,38 +363,22 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           >
             Visas kategorijas
           </Button>
-          <Button
-            size="sm"
-            variant={selectedCategory === 'Frizieris' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('Frizieris')}
-            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
-          >
-            Frizieri
-          </Button>
-          <Button
-            size="sm"
-            variant={selectedCategory === 'Manikīrs' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('Manikīrs')}
-            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
-          >
-            Manikīrs
-          </Button>
-          <Button
-            size="sm"
-            variant={selectedCategory === 'Skropstas' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('Skropstas')}
-            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
-          >
-            Skropstas
-          </Button>
-          <Button
-            size="sm"
-            variant={selectedCategory === 'Kosmetoloģija' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('Kosmetoloģija')}
-            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
-          >
-            Kosmetoloģija
-          </Button>
+          {categories.map((category) => (
+            <Button
+              key={category.id}
+              size="sm"
+              variant={selectedCategory === category.name ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory(category.name)}
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+              style={{
+                backgroundColor: selectedCategory === category.name ? category.color : undefined,
+                borderColor: category.color,
+              }}
+            >
+              <span className="mr-1">{category.icon}</span>
+              {category.name}
+            </Button>
+          ))}
         </div>
       </div>
       
