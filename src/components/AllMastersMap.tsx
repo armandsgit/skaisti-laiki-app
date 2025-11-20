@@ -119,10 +119,10 @@ const AllMastersMap = () => {
   }, [masters, navigate]);
 
   return (
-    <div className="relative w-full h-full" style={{ minHeight: '500px' }}>
+    <div className="relative w-full h-full">
       <div 
         ref={mapContainer} 
-        className="w-full h-full rounded-lg overflow-hidden border shadow-sm"
+        className="absolute inset-0 rounded-lg overflow-hidden border shadow-sm"
       />
       {masters.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

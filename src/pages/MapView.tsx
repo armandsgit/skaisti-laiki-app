@@ -7,7 +7,7 @@ const MapView = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex flex-col">
       <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
@@ -20,8 +20,10 @@ const MapView = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <AllMastersMap />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="h-full min-h-[600px]">
+          <AllMastersMap />
+        </div>
       </main>
     </div>
   );
