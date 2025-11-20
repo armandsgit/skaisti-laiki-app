@@ -200,7 +200,8 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
             }
             
             const selectedPopup = new mapboxgl.Popup({ 
-              offset: 25,
+              offset: 15,
+              anchor: 'bottom',
               closeButton: true,
               closeOnClick: false,
               className: 'selected-master-popup',
@@ -292,7 +293,8 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
               const shortAddress = selectedMaster.address ? (selectedMaster.address.length > 40 ? selectedMaster.address.substring(0, 40) + '...' : selectedMaster.address) : selectedMaster.city;
               
               const selectedPopup = new mapboxgl.Popup({ 
-                offset: 25,
+                offset: 15,
+                anchor: 'bottom',
                 closeButton: true,
                 closeOnClick: false,
                 className: 'selected-master-popup',
