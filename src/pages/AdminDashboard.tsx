@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin } from 'lucide-react';
+import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PlanBadge from '@/components/PlanBadge';
+import DeleteProfessionalModal from '@/components/DeleteProfessionalModal';
 
 const AdminDashboard = () => {
   const t = useTranslation('lv');
@@ -27,6 +28,8 @@ const AdminDashboard = () => {
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
 
   useEffect(() => {
     loadData();
@@ -156,6 +159,80 @@ const AdminDashboard = () => {
     } else {
       toast.success(`Abonements ${newStatus === 'active' ? 'aktivizēts' : 'deaktivizēts'}`);
       loadData();
+    }
+  };
+
+  const handleOpenDeleteModal = (professional: any) => {
+    setSelectedProfessional(professional);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteProfessional = async () => {
+    if (!selectedProfessional) return;
+
+    try {
+      // Delete in correct order to respect foreign key constraints
+      
+      // 1. Delete reviews
+      const { error: reviewsError } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('professional_id', selectedProfessional.id);
+
+      if (reviewsError) throw reviewsError;
+
+      // 2. Delete bookings
+      const { error: bookingsError } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('professional_id', selectedProfessional.id);
+
+      if (bookingsError) throw bookingsError;
+
+      // 3. Delete services
+      const { error: servicesError } = await supabase
+        .from('services')
+        .delete()
+        .eq('professional_id', selectedProfessional.id);
+
+      if (servicesError) throw servicesError;
+
+      // 4. Delete professional profile
+      const { error: profileError } = await supabase
+        .from('professional_profiles')
+        .delete()
+        .eq('id', selectedProfessional.id);
+
+      if (profileError) throw profileError;
+
+      // 5. Delete user roles
+      const { error: rolesError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', selectedProfessional.user_id);
+
+      if (rolesError) throw rolesError;
+
+      // 6. Delete user profile
+      const { error: userProfileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', selectedProfessional.user_id);
+
+      if (userProfileError) throw userProfileError;
+
+      // 7. Delete auth user (using admin API)
+      const { error: authError } = await supabase.auth.admin.deleteUser(
+        selectedProfessional.user_id
+      );
+
+      if (authError) throw authError;
+
+      toast.success('Profils veiksmīgi izdzēsts.');
+      loadData();
+    } catch (error) {
+      console.error('Error deleting professional:', error);
+      toast.error('Neizdevās izdzēst profilu. Lūdzu, mēģiniet vēlreiz.');
     }
   };
 
@@ -507,6 +584,13 @@ const AdminDashboard = () => {
                               >
                                 {prof.is_blocked ? 'Atbloķēt' : 'Bloķēt'}
                               </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleOpenDeleteModal(prof)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -560,6 +644,13 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      <DeleteProfessionalModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        professionalName={selectedProfessional?.profiles?.name || ''}
+        onConfirmDelete={handleDeleteProfessional}
+      />
     </div>
   );
 };
