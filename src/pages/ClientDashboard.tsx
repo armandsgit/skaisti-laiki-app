@@ -188,21 +188,21 @@ const ClientDashboard = () => {
                   }`}
                   onClick={() => navigate(`/professional/${prof.id}`)}
                 >
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex items-start gap-3 mb-3">
-                      <Avatar className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-primary/20 flex-shrink-0">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                      <Avatar className="w-12 h-12 sm:w-14 sm:h-14 border-2 border-primary/20 flex-shrink-0">
                         <AvatarImage src={prof.profiles?.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-base sm:text-lg">
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm sm:text-base">
                           {prof.profiles?.name?.charAt(0) || '?'}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base sm:text-lg truncate">
+                        <h3 className="font-semibold text-sm sm:text-base truncate">
                           {prof.profiles?.name}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Badge variant="secondary" className="text-xs whitespace-nowrap">
+                        <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5 whitespace-nowrap">
                             {prof.category}
                           </Badge>
                           <PlanBadge 
@@ -213,23 +213,23 @@ const ClientDashboard = () => {
                       </div>
                     </div>
                     
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                         <span className="truncate">{prof.city}</span>
                         {prof.distance < 9999 && (
                           <span className="text-xs whitespace-nowrap flex-shrink-0">• {prof.distance} km</span>
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 fill-accent text-accent flex-shrink-0" />
-                        <span className="truncate">{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-accent text-accent flex-shrink-0" />
+                        <span className="truncate text-xs sm:text-sm">{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
                       </div>
                     </div>
                     
                     {prof.bio && (
-                      <p className="mt-3 text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                      <p className="mt-2 sm:mt-3 text-xs text-muted-foreground line-clamp-2">
                         {prof.bio}
                       </p>
                     )}
@@ -252,31 +252,34 @@ const ClientDashboard = () => {
                 ) : (
                   <div className="space-y-3">
                     {bookings.map((booking) => (
-                      <Card key={booking.id} className="border">
-                        <CardContent className="p-3 sm:p-4">
-                          <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-sm sm:text-base truncate">
-                                {booking.professional_profiles?.profiles?.name}
-                              </h4>
-                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                                {booking.services?.name}
-                              </p>
-                              <p className="text-xs sm:text-sm mt-2">
-                                {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
-                              </p>
+                      <Card key={booking.id} className="border overflow-hidden">
+                        <CardContent className="p-3">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm truncate">
+                                  {booking.professional_profiles?.profiles?.name}
+                                </h4>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {booking.services?.name}
+                                </p>
+                              </div>
+                              
+                              <Badge 
+                                variant={
+                                  booking.status === 'confirmed' ? 'default' :
+                                  booking.status === 'completed' ? 'secondary' :
+                                  booking.status === 'canceled' ? 'destructive' : 'outline'
+                                }
+                                className="text-xs px-2 py-0.5 whitespace-nowrap flex-shrink-0"
+                              >
+                                {t[booking.status as keyof typeof t] || booking.status}
+                              </Badge>
                             </div>
                             
-                            <Badge 
-                              variant={
-                                booking.status === 'confirmed' ? 'default' :
-                                booking.status === 'completed' ? 'secondary' :
-                                booking.status === 'canceled' ? 'destructive' : 'outline'
-                              }
-                              className="text-xs whitespace-nowrap self-start"
-                            >
-                              {t[booking.status as keyof typeof t] || booking.status}
-                            </Badge>
+                            <p className="text-xs">
+                              {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
+                            </p>
                           </div>
                         </CardContent>
                       </Card>

@@ -536,72 +536,72 @@ const ProfessionalDashboard = () => {
 
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-x-hidden">
         {/* Subscription Management Section */}
-        <Card className="shadow-card border-0 mb-6">
-          <CardHeader>
-            <CardTitle>Mans abonements</CardTitle>
-            <CardDescription>Pārvaldi savu abonēšanas plānu</CardDescription>
+        <Card className="shadow-card border-0 mb-4 sm:mb-6 overflow-hidden">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">Mans abonements</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Pārvaldi savu abonēšanas plānu</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+          <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 border rounded-xl">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-semibold">{getPlanDisplayInfo().name}</p>
-                  <Badge variant={profile.subscription_status === 'active' ? 'default' : 'destructive'}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-base sm:text-lg font-semibold">{getPlanDisplayInfo().name}</p>
+                  <Badge variant={profile.subscription_status === 'active' ? 'default' : 'destructive'} className="text-xs px-2 py-0.5">
                     {profile.subscription_status === 'active' ? 'Aktīvs' : 'Neaktīvs'}
                   </Badge>
                 </div>
-                <p className="text-2xl font-bold">€{getPlanDisplayInfo().price}<span className="text-sm text-muted-foreground">/mēn</span></p>
+                <p className="text-xl sm:text-2xl font-bold">€{getPlanDisplayInfo().price}<span className="text-xs sm:text-sm text-muted-foreground">/mēn</span></p>
               </div>
-              <Button onClick={() => window.location.href = '/subscription-plans'}>
+              <Button onClick={() => window.location.href = '/subscription-plans'} size="sm" className="w-full sm:w-auto">
                 {profile.subscription_status === 'active' ? 'Mainīt plānu' : 'Aktivizēt abonementu'}
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
+            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t.totalEarnings}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6 pt-0">
               <div className="flex items-center gap-2">
-                <Euro className="w-5 h-5 text-primary" />
-                <span className="text-3xl font-bold text-foreground">
+                <Euro className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span className="text-2xl sm:text-3xl font-bold text-foreground">
                   {stats.totalEarnings.toFixed(2)}
                 </span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
+            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t.completedServices}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6 pt-0">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-primary" />
-                <span className="text-3xl font-bold text-foreground">
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span className="text-2xl sm:text-3xl font-bold text-foreground">
                   {stats.completedBookings}
                 </span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden sm:col-span-2 md:col-span-1">
+            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t.myServices}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6 pt-0">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <span className="text-3xl font-bold text-foreground">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span className="text-2xl sm:text-3xl font-bold text-foreground">
                   {services.length}
                 </span>
               </div>
@@ -610,22 +610,22 @@ const ProfessionalDashboard = () => {
         </div>
 
         <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm text-xs sm:text-sm">
-            <TabsTrigger value="profile" className="px-2 sm:px-4">
-              <User className="w-4 h-4 mr-2" />
-              Profils
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm text-xs sm:text-sm overflow-x-auto">
+            <TabsTrigger value="profile" className="px-2 py-2 sm:px-4 sm:py-2.5">
+              <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Profils</span>
             </TabsTrigger>
-            <TabsTrigger value="bookings">
-              <Calendar className="w-4 h-4 mr-2" />
-              {t.bookings}
+            <TabsTrigger value="bookings" className="px-2 py-2 sm:px-4 sm:py-2.5">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">{t.bookings}</span>
             </TabsTrigger>
-            <TabsTrigger value="services">
-              <Sparkles className="w-4 h-4 mr-2" />
-              {t.myServices}
+            <TabsTrigger value="services" className="px-2 py-2 sm:px-4 sm:py-2.5">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">{t.myServices}</span>
             </TabsTrigger>
-            <TabsTrigger value="gallery">
-              <Plus className="w-4 h-4 mr-2" />
-              Galerija
+            <TabsTrigger value="gallery" className="px-2 py-2 sm:px-4 sm:py-2.5">
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Galerija</span>
             </TabsTrigger>
           </TabsList>
 

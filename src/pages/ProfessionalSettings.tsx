@@ -38,34 +38,37 @@ export default function ProfessionalSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-3 sm:p-4">
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
         <Button
           variant="ghost"
           onClick={() => navigate('/professional/dashboard')}
-          className="mb-4"
+          className="mb-2 sm:mb-4"
+          size="sm"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
           Atpakaļ
         </Button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Konta iestatījumi</CardTitle>
-            <CardDescription>
+        <Card className="overflow-hidden">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">Konta iestatījumi</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Pārvaldat sava konta iestatījumus un datus
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold text-destructive mb-2">Dzēst profilu</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+          <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
+            <div className="border-t pt-3 sm:pt-4">
+              <h3 className="text-sm sm:text-base font-semibold text-destructive mb-2">Dzēst profilu</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                 Pēc profila dzēšanas visi jūsu dati tiks neatgriezeniski izdzēsti.
               </p>
               <Button
                 variant="destructive"
                 onClick={() => setDeleteModalOpen(true)}
                 disabled={isDeleting}
+                size="sm"
+                className="w-full sm:w-auto"
               >
                 Dzēst profilu
               </Button>
