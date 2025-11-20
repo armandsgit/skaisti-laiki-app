@@ -66,10 +66,11 @@ export const AddressAutocomplete = ({
 
         const [lng, lat] = cityData.features[0].center;
         
-        // Search for address with city context
+        // Search for full address (street + number) with city context
+        // Remove types restriction to get better results with house numbers
         const searchQuery = `${value}, ${city}, Latvija`;
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=10&language=lv&types=address&proximity=${lng},${lat}`
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=10&language=lv&proximity=${lng},${lat}`
         );
         
         if (response.ok) {
