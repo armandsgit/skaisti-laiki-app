@@ -211,11 +211,11 @@ const AllMastersMap = () => {
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full overflow-hidden">
       <div 
         ref={mapContainer} 
-        className="absolute inset-0 rounded-lg overflow-hidden border shadow-sm"
-        style={{ minHeight: '600px' }}
+        className="absolute inset-0 sm:rounded-lg overflow-hidden border-0 sm:border shadow-sm"
+        style={{ minHeight: '400px', touchAction: 'pan-x pan-y' }}
       />
       {masters.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
