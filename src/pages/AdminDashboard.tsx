@@ -542,6 +542,12 @@ const AdminDashboard = () => {
                         <CardContent className="p-3 sm:p-4">
                           <div className="space-y-2.5">
                             <div className="flex items-start gap-2">
+                              <Avatar className="h-16 w-16 flex-shrink-0">
+                                <AvatarImage src={prof.profiles?.avatar || ""} />
+                                <AvatarFallback className="text-lg">
+                                  {prof.profiles?.name?.[0] || "M"}
+                                </AvatarFallback>
+                              </Avatar>
                               <div className="flex-1 min-w-0 overflow-hidden">
                                 <h4 className="font-semibold text-sm sm:text-base truncate">{prof.profiles?.name}</h4>
                                 <p className="text-xs text-muted-foreground truncate">
@@ -550,28 +556,39 @@ const AdminDashboard = () => {
                                 <div className="flex gap-1 mt-1.5 flex-wrap">
                                   <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">{prof.category}</Badge>
                                   <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0">{prof.city}</Badge>
+                                  <Badge variant="outline" className="border-amber-500 text-amber-600 text-[10px] sm:text-xs px-1.5 py-0">
+                                    Gaida apstiprināšanu
+                                  </Badge>
                                 </div>
                               </div>
                             </div>
                             
+                            {/* KARTE */}
+                            {prof.latitude && prof.longitude && (
+                              <div className="w-full h-[180px] rounded-2xl overflow-hidden border max-w-full">
+                                <LocationMap
+                                  latitude={prof.latitude}
+                                  longitude={prof.longitude}
+                                />
+                              </div>
+                            )}
+                            
                             {prof.address && (
                               <div className="border-t pt-2">
-                                <div className="flex items-start gap-1.5 text-xs overflow-hidden">
-                                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                  <div className="flex-1 min-w-0 overflow-hidden">
-                                    <p className="font-medium text-[10px] sm:text-xs">Adrese:</p>
-                                    <p className="text-muted-foreground text-[10px] sm:text-xs break-all">{prof.address}</p>
-                                    {prof.latitude && prof.longitude && (
-                                      <a
-                                        href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-primary hover:underline text-[10px] sm:text-xs mt-0.5 inline-block"
-                                      >
-                                        Skatīt kartē →
-                                      </a>
-                                    )}
-                                  </div>
+                                <div className="flex items-start justify-between gap-2 text-xs">
+                                  <p className="text-muted-foreground inline-block overflow-wrap-break-word max-w-[70%]" style={{ whiteSpace: 'normal', lineHeight: 'normal' }}>
+                                    {prof.address}
+                                  </p>
+                                  {prof.latitude && prof.longitude && (
+                                    <a
+                                      href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-primary hover:underline text-sm whitespace-nowrap flex-shrink-0"
+                                    >
+                                      Skatīt kartē →
+                                    </a>
+                                  )}
                                 </div>
                               </div>
                             )}
