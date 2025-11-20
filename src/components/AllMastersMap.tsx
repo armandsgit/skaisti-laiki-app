@@ -40,6 +40,7 @@ const AllMastersMap = () => {
         profiles!professional_profiles_user_id_fkey(name)
       `)
       .eq('approved', true)
+      .eq('is_blocked', false)
       .not('latitude', 'is', null)
       .not('longitude', 'is', null);
 
@@ -49,7 +50,7 @@ const AllMastersMap = () => {
   };
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current) return;
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -67,6 +68,11 @@ const AllMastersMap = () => {
       // Latvijas centrs, ja nav meistaru
       center = [24.6032, 56.8796];
       zoom = 7;
+    }
+
+    // Dzēš veco karti, ja tāda eksistē
+    if (map.current) {
+      map.current.remove();
     }
 
     map.current = new mapboxgl.Map({
@@ -105,7 +111,10 @@ const AllMastersMap = () => {
     });
 
     return () => {
-      map.current?.remove();
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
   }, [masters, navigate]);
 
