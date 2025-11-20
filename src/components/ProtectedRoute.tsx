@@ -16,13 +16,26 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   useEffect(() => {
     const checkRole = async () => {
       if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        setUserRole(data?.role || null);
+        // Ja meklē ADMIN lomu, pārbauda user_roles tabulu
+        if (requiredRole === 'ADMIN') {
+          const { data: adminRole } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'ADMIN')
+            .maybeSingle();
+          
+          setUserRole(adminRole ? 'ADMIN' : null);
+        } else {
+          // Citām lomām izmanto profiles tabulu
+          const { data } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          setUserRole(data?.role || null);
+        }
       }
       setChecking(false);
     };
@@ -30,7 +43,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     if (!loading) {
       checkRole();
     }
-  }, [user, loading]);
+  }, [user, loading, requiredRole]);
 
   if (loading || checking) {
     return (
