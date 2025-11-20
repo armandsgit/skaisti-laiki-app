@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -11,6 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 interface DeleteClientModalProps {
   open: boolean;
@@ -29,6 +29,7 @@ export default function DeleteClientModal({
   const [confirmText, setConfirmText] = useState('');
 
   const handleFirstConfirm = () => {
+    console.log('Step 1 confirmed, moving to step 2');
     setStep(2);
   };
 
@@ -60,12 +61,12 @@ export default function DeleteClientModal({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleClose}>Atcelt</AlertDialogCancel>
-              <AlertDialogAction
+              <Button
                 onClick={handleFirstConfirm}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                variant="destructive"
               >
                 Turpināt dzēst
-              </AlertDialogAction>
+              </Button>
             </AlertDialogFooter>
           </>
         ) : (
@@ -91,13 +92,13 @@ export default function DeleteClientModal({
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleClose}>Atcelt</AlertDialogCancel>
-              <AlertDialogAction
+              <Button
                 onClick={handleFinalDelete}
                 disabled={!isDeleteEnabled}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="destructive"
               >
                 Dzēst klientu galīgi
-              </AlertDialogAction>
+              </Button>
             </AlertDialogFooter>
           </>
         )}
