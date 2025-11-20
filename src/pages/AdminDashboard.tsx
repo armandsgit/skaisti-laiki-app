@@ -31,7 +31,7 @@ const AdminDashboard = () => {
       supabase.from('profiles').select('*', { count: 'exact' }),
       supabase.from('professional_profiles').select(`
         *,
-        profiles!professional_profiles_user_id_fkey(name, email)
+        profiles!professional_profiles_user_id_fkey(name, phone)
       `),
       supabase.from('bookings').select(`
         *,
@@ -211,7 +211,7 @@ const AdminDashboard = () => {
                               <div className="flex-1">
                                 <h4 className="font-semibold text-lg">{prof.profiles?.name}</h4>
                                 <p className="text-sm text-muted-foreground">
-                                  {prof.profiles?.email}
+                                  {prof.profiles?.phone || 'Nav telefona'}
                                 </p>
                                 <div className="flex gap-2 mt-2">
                                   <Badge variant="secondary">{prof.category}</Badge>
@@ -291,7 +291,7 @@ const AdminDashboard = () => {
                           <div className="flex-1">
                             <h4 className="font-semibold">{prof.profiles?.name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {prof.profiles?.email}
+                              {prof.profiles?.phone || 'Nav telefona'}
                             </p>
                             <div className="flex gap-2 mt-2">
                               <Badge variant="secondary">{prof.category}</Badge>
