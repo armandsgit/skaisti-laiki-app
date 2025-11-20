@@ -14,6 +14,7 @@ import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Ed
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import LocationMap from '@/components/LocationMap';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
 
@@ -47,7 +48,9 @@ const ProfessionalDashboard = () => {
     bio: '',
     category: '',
     city: '',
-    address: ''
+    address: '',
+    latitude: null as number | null,
+    longitude: null as number | null
   });
 
   useEffect(() => {
@@ -101,7 +104,9 @@ const ProfessionalDashboard = () => {
           bio: '',
           category: 'Manikīrs',
           city: 'Rīga',
-          address: ''
+          address: '',
+          latitude: null,
+          longitude: null
         });
         toast.success('Profesionālais profils izveidots! Lūdzu, atjauniniet savu informāciju.');
       }
@@ -111,7 +116,9 @@ const ProfessionalDashboard = () => {
         bio: data?.bio || '',
         category: data?.category || '',
         city: data?.city || '',
-        address: data?.address || ''
+        address: data?.address || '',
+        latitude: data?.latitude || null,
+        longitude: data?.longitude || null
       });
     }
     
@@ -255,7 +262,7 @@ const ProfessionalDashboard = () => {
   const handleUpdateProfessionalInfo = async () => {
     if (!profile?.id) return;
 
-    // If address changed, geocode it
+    // If address changed or we have new coordinates from autocomplete
     let updateData: any = {
       bio: editedProfInfo.bio,
       category: editedProfInfo.category,
@@ -263,18 +270,33 @@ const ProfessionalDashboard = () => {
       address: editedProfInfo.address
     };
 
-    if (editedProfInfo.address !== profile.address) {
+    // Use coordinates from autocomplete if available, otherwise geocode
+    if (editedProfInfo.latitude && editedProfInfo.longitude) {
+      updateData.latitude = editedProfInfo.latitude;
+      updateData.longitude = editedProfInfo.longitude;
+    } else if (editedProfInfo.address && editedProfInfo.address !== profile.address) {
       try {
         const response = await supabase.functions.invoke('geocode-address', {
           body: { address: editedProfInfo.address }
         });
 
+        if (response.error) {
+          console.error('Geocoding error:', response.error);
+          toast.error(`Ģeokodēšanas kļūda: ${response.error.message || 'Neizdevās noteikt koordinātes'}`);
+          return;
+        }
+
         if (response.data?.latitude && response.data?.longitude) {
           updateData.latitude = response.data.latitude;
           updateData.longitude = response.data.longitude;
+        } else {
+          toast.error('Neizdevās atrast adresi. Lūdzu, izvēlieties no ieteikumiem.');
+          return;
         }
-      } catch (error) {
-        toast.error('Neizdevās noteikt koordinātes');
+      } catch (error: any) {
+        console.error('Geocoding error:', error);
+        toast.error(`Kļūda: ${error.message || 'Neizdevās noteikt koordinātes'}`);
+        return;
       }
     }
 
@@ -284,7 +306,8 @@ const ProfessionalDashboard = () => {
       .eq('id', profile.id);
 
     if (error) {
-      toast.error('Kļūda atjauninot informāciju');
+      console.error('Update error:', error);
+      toast.error(`Kļūda atjauninot informāciju: ${error.message}`);
     } else {
       toast.success('Informācija atjaunināta!');
       setEditProfessionalInfoOpen(false);
@@ -611,12 +634,22 @@ const ProfessionalDashboard = () => {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="address">Adrese</Label>
-                          <Input
-                            id="address"
+                          <AddressAutocomplete
                             value={editedProfInfo.address}
-                            onChange={(e) => setEditedProfInfo({...editedProfInfo, address: e.target.value})}
-                            placeholder="Ievadiet pilnu adresi..."
+                            onChange={(value) => setEditedProfInfo({...editedProfInfo, address: value})}
+                            onSelect={(address, lat, lng) => {
+                              setEditedProfInfo({
+                                ...editedProfInfo,
+                                address,
+                                latitude: lat,
+                                longitude: lng
+                              });
+                            }}
+                            placeholder="Sāciet rakstīt adresi un izvēlieties no saraksta..."
                           />
+                          <p className="text-xs text-muted-foreground">
+                            Izvēlieties adresi no ieteikumiem, lai klientiem parādītu precīzu atrašanās vietu kartē
+                          </p>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="bio">Bio</Label>
