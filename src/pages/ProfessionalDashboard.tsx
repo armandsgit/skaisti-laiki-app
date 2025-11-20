@@ -50,6 +50,7 @@ const ProfessionalDashboard = () => {
     category: '',
     city: '',
     address: '',
+    street_number: '',
     latitude: null as number | null,
     longitude: null as number | null
   });
@@ -106,6 +107,7 @@ const ProfessionalDashboard = () => {
           category: 'Manikīrs',
           city: 'Rīga',
           address: '',
+          street_number: '',
           latitude: null,
           longitude: null
         });
@@ -113,11 +115,14 @@ const ProfessionalDashboard = () => {
       }
     } else {
       setProfile(data);
+      // Parse address to separate street name and number
+      const addressParts = data?.address?.match(/^(.+?)(\s+\d+.*)$/) || [];
       setEditedProfInfo({
         bio: data?.bio || '',
         category: data?.category || '',
         city: data?.city || '',
-        address: data?.address || '',
+        address: addressParts[1]?.trim() || data?.address || '',
+        street_number: addressParts[2]?.trim() || '',
         latitude: data?.latitude || null,
         longitude: data?.longitude || null
       });
@@ -263,22 +268,27 @@ const ProfessionalDashboard = () => {
   const handleUpdateProfessionalInfo = async () => {
     if (!profile?.id) return;
 
+    // Combine street name and number for full address
+    const fullAddress = editedProfInfo.street_number 
+      ? `${editedProfInfo.address} ${editedProfInfo.street_number}`.trim()
+      : editedProfInfo.address;
+
     // If address changed or we have new coordinates from autocomplete
     let updateData: any = {
       bio: editedProfInfo.bio,
       category: editedProfInfo.category,
       city: editedProfInfo.city,
-      address: editedProfInfo.address
+      address: fullAddress
     };
 
     // Use coordinates from autocomplete if available, otherwise geocode
     if (editedProfInfo.latitude && editedProfInfo.longitude) {
       updateData.latitude = editedProfInfo.latitude;
       updateData.longitude = editedProfInfo.longitude;
-    } else if (editedProfInfo.address && editedProfInfo.address !== profile.address) {
+    } else if (fullAddress && fullAddress !== profile.address) {
       try {
         const response = await supabase.functions.invoke('geocode-address', {
-          body: { address: editedProfInfo.address }
+          body: { address: `${fullAddress}, ${editedProfInfo.city}, Latvija` }
         });
 
         if (response.error) {
@@ -291,7 +301,7 @@ const ProfessionalDashboard = () => {
           updateData.latitude = response.data.latitude;
           updateData.longitude = response.data.longitude;
         } else {
-          toast.error('Neizdevās atrast adresi. Lūdzu, izvēlieties no ieteikumiem.');
+          toast.error('Neizdevās atrast adresi. Lūdzu, pārbaudiet ievadīto adresi.');
           return;
         }
       } catch (error: any) {
@@ -312,7 +322,7 @@ const ProfessionalDashboard = () => {
     } else {
       toast.success('Informācija atjaunināta!');
       setEditProfessionalInfoOpen(false);
-      loadProfile();
+      await loadProfile(); // Await to ensure profile is loaded before re-render
     }
   };
 
@@ -637,23 +647,37 @@ const ProfessionalDashboard = () => {
                           </p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="address">Ielas adrese</Label>
+                          <Label htmlFor="address">Ielas nosaukums</Label>
                           <AddressAutocomplete
                             value={editedProfInfo.address}
                             city={editedProfInfo.city}
                             onChange={(value) => setEditedProfInfo({...editedProfInfo, address: value})}
                             onSelect={(address, lat, lng) => {
+                              // Extract just the street name without number
+                              const streetName = address.split(',')[0].replace(/\d+.*$/, '').trim();
                               setEditedProfInfo({
                                 ...editedProfInfo,
-                                address,
+                                address: streetName,
                                 latitude: lat,
                                 longitude: lng
                               });
                             }}
-                            placeholder="Ievadiet ielas nosaukumu un numuru..."
+                            placeholder="Piemēram: Latgales iela"
                           />
                           <p className="text-xs text-muted-foreground">
-                            Pēc pilsētas izvēles, šeit ievadiet tikai ielas nosaukumu un numuru
+                            Pēc pilsētas izvēles, ievadiet tikai ielas nosaukumu (bez numura)
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="street_number">Mājas numurs</Label>
+                          <Input
+                            id="street_number"
+                            value={editedProfInfo.street_number}
+                            onChange={(e) => setEditedProfInfo({...editedProfInfo, street_number: e.target.value})}
+                            placeholder="Piemēram: 245"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Ievadiet mājas numuru (piemēram: 245, 12A, 5-3)
                           </p>
                         </div>
                         <div className="space-y-2">
@@ -707,6 +731,7 @@ const ProfessionalDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <LocationMap
+                    key={`${profile.latitude}-${profile.longitude}`}
                     latitude={profile.latitude}
                     longitude={profile.longitude}
                     address={profile.address}
