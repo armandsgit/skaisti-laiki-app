@@ -131,27 +131,27 @@ const AllMastersMap = () => {
           </div>`
         );
 
-        // Create custom marker element with modern beauty icon
+        // Create custom marker element
         const markerEl = document.createElement('div');
-        markerEl.className = 'custom-marker';
-        markerEl.innerHTML = '✨';
-        markerEl.style.cssText = `
-          width: 40px;
-          height: 40px;
-          background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
-          border-radius: 50% 50% 50% 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          cursor: pointer;
-          box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
-          transform: rotate(-45deg);
-          border: 3px solid white;
-          transition: all 0.2s ease;
+        markerEl.innerHTML = `
+          <div style="
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+            border-radius: 50% 50% 50% 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+            transform: rotate(-45deg);
+            border: 3px solid white;
+            transition: all 0.2s ease;
+            position: relative;
+          ">
+            <span style="transform: rotate(45deg); font-size: 18px; user-select: none;">✨</span>
+          </div>
         `;
-        
-        markerEl.querySelector('span') || (markerEl.innerHTML = `<span style="transform: rotate(45deg); display: block;">✨</span>`);
 
         const marker = new mapboxgl.Marker({ 
           element: markerEl,
@@ -161,27 +161,29 @@ const AllMastersMap = () => {
           .addTo(map.current);
 
         const markerElement = marker.getElement();
+        const innerDiv = markerEl.querySelector('div') as HTMLElement;
 
         // Hover effects
         markerElement.addEventListener('mouseenter', () => {
-          markerEl.style.transform = 'rotate(-45deg) scale(1.1)';
-          markerEl.style.boxShadow = '0 6px 16px rgba(236, 72, 153, 0.6)';
-          console.log('Hover on:', master.profiles.name);
+          if (innerDiv) {
+            innerDiv.style.transform = 'rotate(-45deg) scale(1.15)';
+            innerDiv.style.boxShadow = '0 6px 16px rgba(236, 72, 153, 0.6)';
+          }
           if (map.current) {
             hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
           }
         });
 
         markerElement.addEventListener('mouseleave', () => {
-          markerEl.style.transform = 'rotate(-45deg) scale(1)';
-          markerEl.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
-          console.log('Leave:', master.profiles.name);
+          if (innerDiv) {
+            innerDiv.style.transform = 'rotate(-45deg) scale(1)';
+            innerDiv.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
+          }
           hoverPopup.remove();
         });
 
-        // Click event - remove hover popup and show detailed one
+        // Click event
         markerElement.addEventListener('click', () => {
-          console.log('Click on:', master.profiles.name);
           hoverPopup.remove();
           if (map.current) {
             clickPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
