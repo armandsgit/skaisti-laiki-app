@@ -399,7 +399,7 @@ const AdminDashboard = () => {
                 <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">
                   BeautyOn Admin
                 </h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">Administratora panelis X</p>
+                <p className="text-xs text-muted-foreground hidden sm:block">Administratora panelis</p>
               </div>
             </div>
 
