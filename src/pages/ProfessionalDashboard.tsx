@@ -54,6 +54,46 @@ const ProfessionalDashboard = () => {
     latitude: null as number | null,
     longitude: null as number | null
   });
+  
+  const [geocodingTimer, setGeocodingTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Automatic geocoding when street number changes
+  useEffect(() => {
+    if (geocodingTimer) {
+      clearTimeout(geocodingTimer);
+    }
+
+    // Only geocode if we have all required fields and street number is provided
+    if (editedProfInfo.city && editedProfInfo.address && editedProfInfo.street_number) {
+      const timer = setTimeout(async () => {
+        const fullAddress = `${editedProfInfo.address} ${editedProfInfo.street_number}, ${editedProfInfo.city}, Latvija`;
+        
+        try {
+          const response = await supabase.functions.invoke('geocode-address', {
+            body: { address: fullAddress }
+          });
+
+          if (response.data?.latitude && response.data?.longitude) {
+            setEditedProfInfo(prev => ({
+              ...prev,
+              latitude: response.data.latitude,
+              longitude: response.data.longitude
+            }));
+          }
+        } catch (error) {
+          console.error('Auto-geocoding error:', error);
+        }
+      }, 1000); // Wait 1 second after user stops typing
+
+      setGeocodingTimer(timer);
+    }
+
+    return () => {
+      if (geocodingTimer) {
+        clearTimeout(geocodingTimer);
+      }
+    };
+  }, [editedProfInfo.street_number, editedProfInfo.address, editedProfInfo.city]);
 
   useEffect(() => {
     if (user) {
@@ -273,47 +313,64 @@ const ProfessionalDashboard = () => {
       ? `${editedProfInfo.address} ${editedProfInfo.street_number}`.trim()
       : editedProfInfo.address;
 
-    // If address changed or we have new coordinates from autocomplete
-    let updateData: any = {
-      bio: editedProfInfo.bio,
-      category: editedProfInfo.category,
-      city: editedProfInfo.city,
-      address: fullAddress
-    };
+    // Validate that we have coordinates
+    if (!editedProfInfo.latitude || !editedProfInfo.longitude) {
+      // Try to geocode one last time
+      if (fullAddress && editedProfInfo.city) {
+        try {
+          const response = await supabase.functions.invoke('geocode-address', {
+            body: { address: `${fullAddress}, ${editedProfInfo.city}, Latvija` }
+          });
 
-    // Use coordinates from autocomplete if available, otherwise geocode
-    if (editedProfInfo.latitude && editedProfInfo.longitude) {
-      updateData.latitude = editedProfInfo.latitude;
-      updateData.longitude = editedProfInfo.longitude;
-    } else if (fullAddress && fullAddress !== profile.address) {
-      try {
-        const response = await supabase.functions.invoke('geocode-address', {
-          body: { address: `${fullAddress}, ${editedProfInfo.city}, Latvija` }
-        });
+          if (response.error || !response.data?.latitude || !response.data?.longitude) {
+            toast.error('Neizdevās noteikt adreses koordinātes. Lūdzu, pārbaudiet ievadīto adresi.');
+            return;
+          }
 
-        if (response.error) {
-          console.error('Geocoding error:', response.error);
-          toast.error(`Ģeokodēšanas kļūda: ${response.error.message || 'Neizdevās noteikt koordinātes'}`);
+          // Update with geocoded coordinates
+          const { error } = await supabase
+            .from('professional_profiles')
+            .update({
+              bio: editedProfInfo.bio,
+              category: editedProfInfo.category as any,
+              city: editedProfInfo.city,
+              address: fullAddress,
+              latitude: response.data.latitude,
+              longitude: response.data.longitude
+            })
+            .eq('id', profile.id);
+
+          if (error) {
+            console.error('Update error:', error);
+            toast.error(`Kļūda atjauninot informāciju: ${error.message}`);
+          } else {
+            toast.success('Informācija atjaunināta!');
+            setEditProfessionalInfoOpen(false);
+            await loadProfile();
+          }
+          return;
+        } catch (error: any) {
+          console.error('Geocoding error:', error);
+          toast.error('Kļūda noteikt koordinātes');
           return;
         }
-
-        if (response.data?.latitude && response.data?.longitude) {
-          updateData.latitude = response.data.latitude;
-          updateData.longitude = response.data.longitude;
-        } else {
-          toast.error('Neizdevās atrast adresi. Lūdzu, pārbaudiet ievadīto adresi.');
-          return;
-        }
-      } catch (error: any) {
-        console.error('Geocoding error:', error);
-        toast.error(`Kļūda: ${error.message || 'Neizdevās noteikt koordinātes'}`);
+      } else {
+        toast.error('Lūdzu, aizpildiet pilsētu un adresi');
         return;
       }
     }
 
+    // Update with existing coordinates
     const { error } = await supabase
       .from('professional_profiles')
-      .update(updateData)
+      .update({
+        bio: editedProfInfo.bio,
+        category: editedProfInfo.category as any,
+        city: editedProfInfo.city,
+        address: fullAddress,
+        latitude: editedProfInfo.latitude,
+        longitude: editedProfInfo.longitude
+      })
       .eq('id', profile.id);
 
     if (error) {
@@ -322,7 +379,7 @@ const ProfessionalDashboard = () => {
     } else {
       toast.success('Informācija atjaunināta!');
       setEditProfessionalInfoOpen(false);
-      await loadProfile(); // Await to ensure profile is loaded before re-render
+      await loadProfile();
     }
   };
 
