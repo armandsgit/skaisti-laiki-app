@@ -195,7 +195,17 @@ const CategoryManager = () => {
             />
           </div>
           <div className="w-24">
-            <label className="text-sm font-medium mb-1 block">Ikona</label>
+            <label className="text-sm font-medium mb-1 block">
+              Ikona
+              <a 
+                href="https://emojipedia.org/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline ml-1"
+              >
+                📝
+              </a>
+            </label>
             <Input
               value={newCategory.icon}
               onChange={(e) => setNewCategory({ ...newCategory, icon: e.target.value })}
