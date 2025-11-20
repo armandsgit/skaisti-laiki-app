@@ -204,30 +204,30 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
               closeButton: true,
               closeOnClick: false,
               className: 'selected-master-popup',
-              maxWidth: '280px'
+              maxWidth: window.innerWidth < 640 ? '240px' : '280px'
             }).setHTML(
-              `<div style="padding: 12px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 16px;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+              `<div style="padding: ${window.innerWidth < 640 ? '8px' : '12px'}; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: ${window.innerWidth < 640 ? '12px' : '16px'};">
+                <div style="display: flex; align-items: center; gap: ${window.innerWidth < 640 ? '8px' : '12px'}; margin-bottom: ${window.innerWidth < 640 ? '6px' : '10px'};">
                   <img 
                     src="${avatarUrl}" 
                     alt="${master.profiles.name}"
-                    style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                    style="width: ${window.innerWidth < 640 ? '36px' : '48px'}; height: ${window.innerWidth < 640 ? '36px' : '48px'}; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
                   />
                   <div style="min-width: 0; flex: 1;">
-                    <h3 style="font-weight: 600; margin: 0 0 4px 0; font-size: 15px; color: #1a1a1a; line-height: 1.3;">${master.profiles.name}</h3>
+                    <h3 style="font-weight: 600; margin: 0 0 ${window.innerWidth < 640 ? '2px' : '4px'} 0; font-size: ${window.innerWidth < 640 ? '13px' : '15px'}; color: #1a1a1a; line-height: 1.3;">${master.profiles.name}</h3>
                     <div style="display: flex; align-items: center; gap: 4px;">
-                      <span style="color: #f59e0b; font-size: 13px;">⭐</span>
-                      <span style="color: #666; font-weight: 500; font-size: 13px;">${master.rating || 0}</span>
+                      <span style="color: #f59e0b; font-size: ${window.innerWidth < 640 ? '11px' : '13px'};">⭐</span>
+                      <span style="color: #666; font-weight: 500; font-size: ${window.innerWidth < 640 ? '11px' : '13px'};">${master.rating || 0}</span>
                     </div>
                   </div>
                 </div>
-                <div style="display: flex; align-items: start; gap: 6px; font-size: 12px; color: #666; line-height: 1.4; margin-bottom: 10px;">
-                  <span style="font-size: 13px; margin-top: 1px;">📍</span>
+                <div style="display: flex; align-items: start; gap: ${window.innerWidth < 640 ? '4px' : '6px'}; font-size: ${window.innerWidth < 640 ? '10px' : '12px'}; color: #666; line-height: 1.4; margin-bottom: ${window.innerWidth < 640 ? '6px' : '10px'};">
+                  <span style="font-size: ${window.innerWidth < 640 ? '11px' : '13px'}; margin-top: 1px;">📍</span>
                   <span>${shortAddress}</span>
                 </div>
                 <button 
                   onclick="window.location.href='/professional/${master.id}'" 
-                  style="width: 100%; padding: 8px; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;"
+                  style="width: 100%; padding: ${window.innerWidth < 640 ? '6px' : '8px'}; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: ${window.innerWidth < 640 ? '6px' : '8px'}; font-weight: 600; font-size: ${window.innerWidth < 640 ? '11px' : '13px'}; cursor: pointer; transition: all 0.2s;"
                   onmouseover="this.style.opacity='0.9'"
                   onmouseout="this.style.opacity='1'"
                 >
@@ -296,27 +296,35 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
                 closeButton: true,
                 closeOnClick: false,
                 className: 'selected-master-popup',
-                maxWidth: '280px'
+                maxWidth: window.innerWidth < 640 ? '240px' : '280px'
               }).setHTML(
-                `<div style="padding: 12px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 16px;">
-                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                `<div style="padding: ${window.innerWidth < 640 ? '8px' : '12px'}; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: ${window.innerWidth < 640 ? '12px' : '16px'};">
+                  <div style="display: flex; align-items: center; gap: ${window.innerWidth < 640 ? '8px' : '12px'}; margin-bottom: ${window.innerWidth < 640 ? '6px' : '10px'};">
                     <img 
                       src="${avatarUrl}" 
                       alt="${selectedMaster.profiles.name}"
-                      style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                      style="width: ${window.innerWidth < 640 ? '36px' : '48px'}; height: ${window.innerWidth < 640 ? '36px' : '48px'}; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
                     />
                     <div style="min-width: 0; flex: 1;">
-                      <h3 style="font-weight: 600; margin: 0 0 4px 0; font-size: 15px; color: #1a1a1a; line-height: 1.3;">${selectedMaster.profiles.name}</h3>
+                      <h3 style="font-weight: 600; margin: 0 0 ${window.innerWidth < 640 ? '2px' : '4px'} 0; font-size: ${window.innerWidth < 640 ? '13px' : '15px'}; color: #1a1a1a; line-height: 1.3;">${selectedMaster.profiles.name}</h3>
                       <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: #f59e0b; font-size: 13px;">⭐</span>
-                        <span style="color: #666; font-weight: 500; font-size: 13px;">${selectedMaster.rating || 0}</span>
+                        <span style="color: #f59e0b; font-size: ${window.innerWidth < 640 ? '11px' : '13px'};">⭐</span>
+                        <span style="color: #666; font-weight: 500; font-size: ${window.innerWidth < 640 ? '11px' : '13px'};">${selectedMaster.rating || 0}</span>
                       </div>
                     </div>
                   </div>
-                  <div style="display: flex; align-items: start; gap: 6px; font-size: 12px; color: #666; line-height: 1.4;">
-                    <span style="font-size: 13px; margin-top: 1px;">📍</span>
+                  <div style="display: flex; align-items: start; gap: ${window.innerWidth < 640 ? '4px' : '6px'}; font-size: ${window.innerWidth < 640 ? '10px' : '12px'}; color: #666; line-height: 1.4; margin-bottom: ${window.innerWidth < 640 ? '6px' : '10px'};">
+                    <span style="font-size: ${window.innerWidth < 640 ? '11px' : '13px'}; margin-top: 1px;">📍</span>
                     <span>${shortAddress}</span>
                   </div>
+                  <button 
+                    onclick="window.location.href='/professional/${selectedMaster.id}'" 
+                    style="width: 100%; padding: ${window.innerWidth < 640 ? '6px' : '8px'}; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: ${window.innerWidth < 640 ? '6px' : '8px'}; font-weight: 600; font-size: ${window.innerWidth < 640 ? '11px' : '13px'}; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.opacity='0.9'"
+                    onmouseout="this.style.opacity='1'"
+                  >
+                    Skatīt profilu
+                  </button>
                 </div>`
               )
               .setLngLat([selectedMaster.longitude, selectedMaster.latitude])
@@ -352,16 +360,16 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Category filter */}
-      <div className="absolute top-3 left-3 right-3 z-10 bg-card/95 backdrop-blur-sm rounded-xl shadow-lg border p-2">
+      {/* Category filter - moved to bottom */}
+      <div className="absolute bottom-3 left-3 right-3 z-10 bg-card/95 backdrop-blur-sm rounded-xl shadow-lg border p-2">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           <Button
             size="sm"
             variant={selectedCategory === 'all' ? 'default' : 'outline'}
             onClick={() => setSelectedCategory('all')}
-            className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+            className="whitespace-nowrap text-xs flex-shrink-0"
           >
-            Visas kategorijas
+            Visas
           </Button>
           {categories.map((category) => (
             <Button
@@ -369,7 +377,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
               size="sm"
               variant={selectedCategory === category.name ? 'default' : 'outline'}
               onClick={() => setSelectedCategory(category.name)}
-              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+              className="whitespace-nowrap text-xs flex-shrink-0"
               style={{
                 backgroundColor: selectedCategory === category.name ? category.color : undefined,
                 borderColor: category.color,
