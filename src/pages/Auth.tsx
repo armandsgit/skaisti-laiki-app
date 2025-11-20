@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
@@ -23,10 +23,54 @@ const Auth = () => {
   const [registerName, setRegisterName] = useState('');
   const [registerRole, setRegisterRole] = useState<'CLIENT' | 'PROFESSIONAL'>('CLIENT');
   const [registerAddress, setRegisterAddress] = useState('');
-  const [registerCategory, setRegisterCategory] = useState('Manikīrs');
+  const [registerCategory, setRegisterCategory] = useState('');
   const [registerCity, setRegisterCity] = useState('');
   const [geocoding, setGeocoding] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    // Real-time atjauninājums kategorijām
+    const channel = supabase
+      .channel('categories-changes-auth')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories'
+        },
+        () => {
+          loadCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const loadCategories = async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('name')
+      .eq('active', true)
+      .order('display_order', { ascending: true });
+
+    if (!error && data) {
+      const categoryNames = data.map(cat => cat.name);
+      setCategories(categoryNames);
+      // Set pirmās kategorijas kā default
+      if (categoryNames.length > 0 && !registerCategory) {
+        setRegisterCategory(categoryNames[0]);
+      }
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,12 +331,15 @@ const Auth = () => {
                         onChange={(e) => setRegisterCategory(e.target.value)}
                         required
                       >
-                        <option value="Manikīrs">Manikīrs</option>
-                        <option value="Pedikīrs">Pedikīrs</option>
-                        <option value="Skropstas">Skropstas</option>
-                        <option value="Frizieris">Frizieris</option>
-                        <option value="Masāža">Masāža</option>
-                        <option value="Kosmetoloģija">Kosmetoloģija</option>
+                        {categories.length === 0 ? (
+                          <option value="">Ielādē kategorijas...</option>
+                        ) : (
+                          categories.map((category) => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))
+                        )}
                       </select>
                     </div>
                     
