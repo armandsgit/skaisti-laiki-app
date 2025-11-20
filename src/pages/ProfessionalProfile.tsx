@@ -195,6 +195,27 @@ const ProfessionalProfile = () => {
                 <p className="text-muted-foreground text-xs sm:text-sm break-words">{professional.bio}</p>
               </div>
             )}
+
+            {professional.gallery && professional.gallery.length > 0 && (
+              <div className="border-t pt-3 sm:pt-4">
+                <h3 className="font-semibold mb-2 sm:mb-3 text-sm sm:text-base">Galerija</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                  {professional.gallery.map((imageUrl: string, index: number) => (
+                    <div 
+                      key={index}
+                      className="relative aspect-square rounded-lg overflow-hidden border bg-muted touch-ripple"
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={`Galerijas attēls ${index + 1}`}
+                        className="w-full h-full object-cover transition-transform hover:scale-105"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {professional.latitude && professional.longitude && (
               <div className="border-t pt-3 sm:pt-4">
