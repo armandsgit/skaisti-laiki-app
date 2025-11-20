@@ -12,6 +12,20 @@ const Index = () => {
     const redirectUser = async () => {
       if (!user || loading) return;
 
+      // Vispirms pārbauda, vai ir ADMIN loma user_roles tabulā
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'ADMIN')
+        .maybeSingle();
+
+      if (adminRole) {
+        navigate('/admin');
+        return;
+      }
+
+      // Ja nav ADMIN, pārbauda parasto profila lomu
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
