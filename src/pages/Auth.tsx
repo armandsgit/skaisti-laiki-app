@@ -23,6 +23,8 @@ const Auth = () => {
   const [registerName, setRegisterName] = useState('');
   const [registerRole, setRegisterRole] = useState<'CLIENT' | 'PROFESSIONAL'>('CLIENT');
   const [registerAddress, setRegisterAddress] = useState('');
+  const [registerCategory, setRegisterCategory] = useState('Manikīrs');
+  const [registerCity, setRegisterCity] = useState('');
   const [geocoding, setGeocoding] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -45,6 +47,15 @@ const Auth = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Ja ir profesionālis, validē obligātos laukus
+    if (registerRole === 'PROFESSIONAL') {
+      if (!registerAddress || !registerCity) {
+        toast.error('Lūdzu aizpildiet visus obligātos laukus');
+        setLoading(false);
+        return;
+      }
+    }
     
     // Ja ir profesionālis ar adresi, veic geocoding
     let latitude = null;
@@ -90,20 +101,52 @@ const Auth = () => {
     if (error) {
       toast.error(t.registerError);
     } else {
-      // Ja ir profesionālis, atjaunina profilu ar adreses datiem
-      if (registerRole === 'PROFESSIONAL' && data?.user && registerAddress) {
-        const { error: profileError } = await supabase
-          .from('professional_profiles')
-          .update({
-            address: registerAddress,
-            latitude,
-            longitude,
-            approved: false // Gaida apstiprināšanu
-          })
-          .eq('user_id', data.user.id);
+      // Ja ir profesionālis, izveido vai atjaunina profilu
+      if (registerRole === 'PROFESSIONAL' && data?.user) {
+        // Gaida nedaudz, lai trigger izveidotu profilu
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (profileError) {
-          console.error('Profile update error:', profileError);
+        // Mēģina atrast esošo profilu
+        const { data: existingProfile } = await supabase
+          .from('professional_profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+        
+        if (existingProfile) {
+          // Atjaunina esošo profilu
+          const { error: profileError } = await supabase
+            .from('professional_profiles')
+            .update({
+              address: registerAddress,
+              latitude,
+              longitude,
+              category: registerCategory as any,
+              city: registerCity,
+              approved: false
+            })
+            .eq('user_id', data.user.id);
+          
+          if (profileError) {
+            console.error('Profile update error:', profileError);
+          }
+        } else {
+          // Izveido jaunu profilu
+          const { error: profileError } = await supabase
+            .from('professional_profiles')
+            .insert({
+              user_id: data.user.id,
+              address: registerAddress,
+              latitude,
+              longitude,
+              category: registerCategory as any,
+              city: registerCity,
+              approved: false
+            });
+          
+          if (profileError) {
+            console.error('Profile create error:', profileError);
+          }
         }
       }
       
@@ -233,12 +276,67 @@ const Auth = () => {
                   </div>
                 </div>
                 
+                {registerRole === 'PROFESSIONAL' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-category">Kategorija *</Label>
+                      <select
+                        id="register-category"
+                        className="w-full px-3 py-2 rounded-md border border-input bg-background"
+                        value={registerCategory}
+                        onChange={(e) => setRegisterCategory(e.target.value)}
+                        required
+                      >
+                        <option value="Manikīrs">Manikīrs</option>
+                        <option value="Pedikīrs">Pedikīrs</option>
+                        <option value="Skropstas">Skropstas</option>
+                        <option value="Frizieris">Frizieris</option>
+                        <option value="Masāža">Masāža</option>
+                        <option value="Kosmetoloģija">Kosmetoloģija</option>
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="register-city">Pilsēta *</Label>
+                      <Input
+                        id="register-city"
+                        type="text"
+                        placeholder="Piemēram: Rīga"
+                        value={registerCity}
+                        onChange={(e) => setRegisterCity(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="register-address">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          Adrese *
+                        </div>
+                      </Label>
+                      <Input
+                        id="register-address"
+                        type="text"
+                        placeholder="Piemēram: Brīvības iela 1, Rīga"
+                        value={registerAddress}
+                        onChange={(e) => setRegisterAddress(e.target.value)}
+                        disabled={geocoding}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ievadiet savu darba vietas adresi
+                      </p>
+                    </div>
+                  </>
+                )}
+                
                 <Button 
                   type="submit" 
                   className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-soft"
-                  disabled={loading}
+                  disabled={loading || geocoding}
                 >
-                  {loading ? t.loading : t.createAccount}
+                  {loading || geocoding ? t.loading : t.createAccount}
                 </Button>
               </form>
             </TabsContent>
