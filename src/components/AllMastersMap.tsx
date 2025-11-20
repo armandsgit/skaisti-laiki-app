@@ -14,6 +14,7 @@ interface Master {
   rating: number;
   profiles: {
     name: string;
+    avatar?: string;
   };
 }
 
@@ -39,7 +40,7 @@ const AllMastersMap = () => {
           address,
           category,
           rating,
-          profiles!professional_profiles_user_id_fkey(name)
+          profiles!professional_profiles_user_id_fkey(name, avatar)
         `)
         .eq('approved', true)
         .eq('is_blocked', false)
@@ -104,32 +105,67 @@ const AllMastersMap = () => {
           </div>`
         );
 
-        // Hover popup (name and rating only)
+        // Hover popup (name, avatar and rating)
+        const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
+        
         const hoverPopup = new mapboxgl.Popup({ 
           offset: 25,
           closeButton: false,
           closeOnClick: false
         }).setHTML(
-          `<div style="padding: 6px 10px; background: white; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-            <h3 style="font-weight: bold; margin-bottom: 2px; font-size: 14px; color: #1a1a1a;">${master.profiles.name}</h3>
-            <div style="display: flex; align-items: center; gap: 4px; font-size: 13px;">
-              <span style="color: #f59e0b;">⭐</span>
-              <span style="color: #666;">${master.rating || 0}</span>
+          `<div style="padding: 8px 12px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img 
+                src="${avatarUrl}" 
+                alt="${master.profiles.name}"
+                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899;"
+              />
+              <div>
+                <h3 style="font-weight: 600; margin-bottom: 2px; font-size: 14px; color: #1a1a1a;">${master.profiles.name}</h3>
+                <div style="display: flex; align-items: center; gap: 4px; font-size: 13px;">
+                  <span style="color: #f59e0b;">⭐</span>
+                  <span style="color: #666;">${master.rating || 0}</span>
+                </div>
+              </div>
             </div>
           </div>`
         );
 
-        const marker = new mapboxgl.Marker({ color: '#ec4899' })
+        // Create custom marker element with modern beauty icon
+        const markerEl = document.createElement('div');
+        markerEl.className = 'custom-marker';
+        markerEl.innerHTML = '✨';
+        markerEl.style.cssText = `
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+          border-radius: 50% 50% 50% 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+          transform: rotate(-45deg);
+          border: 3px solid white;
+          transition: all 0.2s ease;
+        `;
+        
+        markerEl.querySelector('span') || (markerEl.innerHTML = `<span style="transform: rotate(45deg); display: block;">✨</span>`);
+
+        const marker = new mapboxgl.Marker({ 
+          element: markerEl,
+          anchor: 'bottom'
+        })
           .setLngLat([master.longitude, master.latitude])
           .addTo(map.current);
 
         const markerElement = marker.getElement();
-        
-        // Make cursor pointer on hover
-        markerElement.style.cursor = 'pointer';
 
-        // Hover events
+        // Hover effects
         markerElement.addEventListener('mouseenter', () => {
+          markerEl.style.transform = 'rotate(-45deg) scale(1.1)';
+          markerEl.style.boxShadow = '0 6px 16px rgba(236, 72, 153, 0.6)';
           console.log('Hover on:', master.profiles.name);
           if (map.current) {
             hoverPopup.setLngLat([master.longitude, master.latitude]).addTo(map.current);
@@ -137,6 +173,8 @@ const AllMastersMap = () => {
         });
 
         markerElement.addEventListener('mouseleave', () => {
+          markerEl.style.transform = 'rotate(-45deg) scale(1)';
+          markerEl.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
           console.log('Leave:', master.profiles.name);
           hoverPopup.remove();
         });
