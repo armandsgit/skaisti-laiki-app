@@ -555,7 +555,7 @@ const AdminDashboard = () => {
                             {prof.address && (
                               <div className="border-t pt-3">
                                 <div className="flex items-start gap-2 text-sm">
-                                  <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                                   <div>
                                     <p className="font-medium">Adrese:</p>
                                     <p className="text-muted-foreground">{prof.address}</p>
@@ -664,7 +664,7 @@ const AdminDashboard = () => {
                           {prof.address && (
                             <div className="border-t pt-3">
                               <div className="flex items-start gap-2 text-sm">
-                                <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                                 <div>
                                   <p className="font-medium">Adrese:</p>
                                   <p className="text-muted-foreground">{prof.address}</p>
