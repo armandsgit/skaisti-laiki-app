@@ -32,6 +32,7 @@ const ProfessionalDashboard = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalEarnings: 0, completedBookings: 0 });
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<any[]>([]);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
@@ -63,8 +64,43 @@ const ProfessionalDashboard = () => {
       loadProfile();
       loadServices();
       loadBookings();
+      loadCategories();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Set up real-time subscription for categories
+    const channel = supabase
+      .channel('categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories'
+        },
+        () => {
+          loadCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const loadCategories = async () => {
+    const { data } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('active', true)
+      .order('display_order');
+    
+    if (data) {
+      setCategories(data);
+    }
+  };
 
   const loadProfile = async () => {
     if (!user?.id) return;
@@ -757,12 +793,11 @@ const ProfessionalDashboard = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Manikīrs">Manikīrs</SelectItem>
-                              <SelectItem value="Pedikīrs">Pedikīrs</SelectItem>
-                              <SelectItem value="Skropstas">Skropstas</SelectItem>
-                              <SelectItem value="Frizieris">Frizieris</SelectItem>
-                              <SelectItem value="Masāža">Masāža</SelectItem>
-                              <SelectItem value="Kosmetoloģija">Kosmetoloģija</SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.name}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
