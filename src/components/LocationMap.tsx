@@ -21,29 +21,16 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    const isMobile = window.innerWidth < 640;
-    
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [longitude, latitude],
-      zoom: isMobile ? 15 : 14,
+      zoom: 15,
     });
 
     // Create custom marker
     const markerEl = document.createElement('div');
-    markerEl.style.cssText = `
-      width: ${isMobile ? '40px' : '32px'};
-      height: ${isMobile ? '40px' : '32px'};
-      background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
-      border-radius: 50%;
-      border: 3px solid white;
-      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: ${isMobile ? '20px' : '16px'};
-    `;
+    markerEl.className = 'custom-map-marker';
     markerEl.innerHTML = '📍';
 
     new mapboxgl.Marker({ element: markerEl })
@@ -68,9 +55,9 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
         ref={mapContainer} 
         className={`map-container rounded-2xl overflow-hidden border shadow-sm w-full ${className}`}
         style={{ 
-          height: window.innerWidth < 640 ? '320px' : '220px',
-          maxHeight: window.innerWidth < 640 ? '320px' : '220px',
-          minHeight: window.innerWidth < 640 ? '320px' : '220px',
+          height: '320px',
+          maxHeight: '320px',
+          minHeight: '320px',
           maxWidth: '100%',
           width: '100%',
           touchAction: 'pan-x pan-y'

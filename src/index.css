@@ -345,26 +345,17 @@
   }
   
   /* ========================================
-     MAP RESPONSIVE FIXES (ALL MAPS) - EXACT 220px
+     MAP RESPONSIVE FIXES (ALL MAPS)
      ======================================== */
   @media (max-width: 640px) {
-    /* Map Container - Universal 220px height */
+    /* Map Container - Universal height */
     .map-container, 
     .mapboxgl-map, 
     [class*="map"],
     div[class*="Map"] {
       width: 100% !important;
-      height: 220px !important;
-      max-height: 220px !important;
-      min-height: 220px !important;
       border-radius: 16px !important;
       overflow: hidden !important;
-    }
-    
-    /* Mapbox Canvas - Force 220px */
-    .mapboxgl-canvas {
-      width: 100% !important;
-      height: 220px !important;
     }
     
     /* Hide Mapbox Controls, Logo & Attribution on Mobile */
@@ -379,6 +370,45 @@
     .mapboxgl-ctrl-zoom-out,
     .mapboxgl-ctrl-compass {
       display: none !important;
+    }
+  }
+  
+  /* ========================================
+     CUSTOM MAP MARKERS
+     ======================================== */
+  .custom-map-marker {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s ease;
+  }
+  
+  .draggable-marker {
+    cursor: grab;
+  }
+  
+  .draggable-marker:active {
+    cursor: grabbing;
+  }
+  
+  .clickable-marker {
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  
+  @media (max-width: 639px) {
+    .custom-map-marker {
+      width: 44px;
+      height: 44px;
+      font-size: 22px;
+      border-width: 4px;
     }
   }
   
