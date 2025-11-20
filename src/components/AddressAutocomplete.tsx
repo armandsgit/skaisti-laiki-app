@@ -66,7 +66,7 @@ export const AddressAutocomplete = ({
 
         const [lng, lat] = cityData.features[0].center;
         
-        // Search for streets only (no house numbers in query)
+        // Search for addresses with city context
         const searchQuery = `${value}, ${city}, Latvija`;
         const response = await fetch(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=10&language=lv&types=address&proximity=${lng},${lat}`
@@ -75,37 +75,16 @@ export const AddressAutocomplete = ({
         if (response.ok) {
           const data = await response.json();
           
-          // Filter and process results
-          const filteredFeatures = (data.features || [])
-            .filter((feature: any) => {
-              // Check if the address context includes our selected city
-              const contexts = feature.context || [];
-              const hasCity = contexts.some((ctx: any) => 
-                ctx.text_lv?.toLowerCase() === city.toLowerCase() || 
-                ctx.text?.toLowerCase() === city.toLowerCase()
-              );
-              
-              // Filter out results with postcodes in the name
-              const hasPostcode = /\d{4}/.test(feature.place_name);
-              
-              return hasCity && !hasPostcode;
-            })
-            .map((feature: any) => {
-              // Extract just the street name (first part before comma)
-              const streetName = feature.text || feature.place_name.split(',')[0];
-              return {
-                ...feature,
-                place_name: `${streetName}, ${city}`,
-                text: streetName
-              };
-            });
+          // Filter to only include addresses from selected city
+          const filteredFeatures = (data.features || []).filter((feature: any) => {
+            const contexts = feature.context || [];
+            return contexts.some((ctx: any) => 
+              ctx.text_lv?.toLowerCase() === city.toLowerCase() || 
+              ctx.text?.toLowerCase() === city.toLowerCase()
+            );
+          });
           
-          // Remove duplicates by street name
-          const uniqueFeatures = filteredFeatures.filter((feature: any, index: number, self: any[]) =>
-            index === self.findIndex((f) => f.text === feature.text)
-          );
-          
-          setSuggestions(uniqueFeatures);
+          setSuggestions(filteredFeatures);
         } else {
           setSuggestions([]);
         }
@@ -126,8 +105,13 @@ export const AddressAutocomplete = ({
 
   const handleSelect = (suggestion: AddressSuggestion) => {
     const [lng, lat] = suggestion.center;
-    // Use the cleaned street name (text) instead of full place_name
-    const streetName = (suggestion as any).text || suggestion.place_name.split(',')[0];
+    // Extract just street name without postcode
+    const fullName = suggestion.place_name;
+    // Remove postcode if present
+    const nameWithoutPostcode = fullName.replace(/,\s*\d{4}\s*,/, ',');
+    // Get just the street part (before first comma)
+    const streetName = nameWithoutPostcode.split(',')[0].trim();
+    
     onChange(streetName);
     setOpen(false);
     setSuggestions([]);
