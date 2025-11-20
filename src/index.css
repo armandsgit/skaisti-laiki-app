@@ -192,17 +192,41 @@
 }
 
 @layer components {
-  /* Premium Card Styles */
+  /* Premium Card Styles - Mobile First (No Hover) */
   .card-premium {
     @apply rounded-2xl bg-card shadow-[var(--shadow-card)] border border-border/50 backdrop-blur-sm;
     background: var(--gradient-card);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  @media (hover: hover) {
-    .card-premium:hover {
-      @apply shadow-[var(--shadow-hover)] scale-[1.01];
-    }
+  .card-premium:active {
+    @apply shadow-[var(--shadow-hover)];
+  }
+  
+  /* Touch Ripple Effect */
+  .touch-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .touch-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: hsl(var(--primary) / 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease-out, height 0.3s ease-out, opacity 0.3s ease-out;
+    opacity: 0;
+  }
+  
+  .touch-ripple:active::after {
+    width: 300%;
+    height: 300%;
+    opacity: 0.3;
   }
   
   /* Skeleton Loaders */
@@ -210,13 +234,31 @@
     @apply animate-shimmer rounded-xl bg-muted/70;
   }
   
-  /* Smooth Transitions */
+  /* Smooth Transitions - Mobile Optimized */
   .transition-smooth {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .transition-bounce {
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  /* Tap Feedback */
+  .tap-feedback {
+    @apply transition-smooth;
+  }
+  
+  .tap-feedback:active {
+    @apply opacity-90;
+  }
+  
+  /* Icon Tap Animation */
+  .icon-tap {
+    @apply transition-all duration-150;
+  }
+  
+  .icon-tap:active {
+    @apply opacity-80;
   }
   
   /* Dark Mode Transition */
@@ -325,9 +367,17 @@
       height: 220px !important;
     }
     
-    /* Hide Mapbox Logo & Attribution on Mobile */
+    /* Hide Mapbox Controls, Logo & Attribution on Mobile */
     .mapboxgl-ctrl-logo,
-    .mapboxgl-ctrl-attrib {
+    .mapboxgl-ctrl-attrib,
+    .mapboxgl-ctrl-bottom-left,
+    .mapboxgl-ctrl-bottom-right,
+    .mapboxgl-ctrl-top-right,
+    .mapboxgl-ctrl-top-left,
+    .mapboxgl-ctrl-group,
+    .mapboxgl-ctrl-zoom-in,
+    .mapboxgl-ctrl-zoom-out,
+    .mapboxgl-ctrl-compass {
       display: none !important;
     }
   }
