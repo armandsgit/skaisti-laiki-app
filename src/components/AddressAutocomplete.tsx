@@ -34,7 +34,8 @@ export const AddressAutocomplete = ({
   const debounceTimer = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (value.length < 3) {
+    // Require at least 5 characters and city to be selected
+    if (value.length < 5 || !city) {
       setSuggestions([]);
       return;
     }
@@ -47,47 +48,54 @@ export const AddressAutocomplete = ({
     debounceTimer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        // Search only within the specified city for better accuracy
-        let searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=5&language=lv&types=address`;
+        // First get city coordinates to use as proximity
+        const cityResponse = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(city)}.json?access_token=${MAPBOX_TOKEN}&country=LV&types=place&limit=1&language=lv`
+        );
         
-        // If city is specified, add it to the query for better results
-        if (city) {
-          searchUrl += `&proximity=auto`;
-          // First get city coordinates to use as proximity
-          const cityResponse = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(city)}.json?access_token=${MAPBOX_TOKEN}&country=LV&types=place&limit=1&language=lv`
-          );
-          
-          if (cityResponse.ok) {
-            const cityData = await cityResponse.json();
-            if (cityData.features && cityData.features.length > 0) {
-              const [lng, lat] = cityData.features[0].center;
-              // Add city name to search and use proximity
-              searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value + ', ' + city)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=5&language=lv&types=address&proximity=${lng},${lat}`;
-            }
-          }
+        if (!cityResponse.ok) {
+          throw new Error('Neizdevās atrast pilsētu');
         }
+
+        const cityData = await cityResponse.json();
+        if (!cityData.features || cityData.features.length === 0) {
+          throw new Error('Pilsēta nav atrasta');
+        }
+
+        const [lng, lat] = cityData.features[0].center;
         
-        const response = await fetch(searchUrl);
+        // Search for address with city context
+        const searchQuery = `${value}, ${city}, Latvija`;
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=10&language=lv&types=address&proximity=${lng},${lat}`
+        );
         
         if (response.ok) {
           const data = await response.json();
-          setSuggestions(data.features || []);
-          setOpen(data.features?.length > 0);
+          // Filter results to only include addresses from the selected city
+          const filteredFeatures = (data.features || []).filter((feature: AddressSuggestion) => 
+            feature.place_name.toLowerCase().includes(city.toLowerCase())
+          );
+          setSuggestions(filteredFeatures);
+          // Only open if we have filtered results
+          if (filteredFeatures.length > 0) {
+            setOpen(true);
+          }
         }
       } catch (error) {
         console.error('Address search error:', error);
+        toast.error('Kļūda meklējot adresi');
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 500);
 
     return () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [value]);
+  }, [value, city]);
 
   const handleSelect = (suggestion: AddressSuggestion) => {
     const [lng, lat] = suggestion.center;
@@ -109,10 +117,16 @@ export const AddressAutocomplete = ({
             value={value}
             onChange={(e) => {
               onChange(e.target.value);
-              setOpen(true);
+              // Don't force open - let the useEffect handle it based on results
             }}
-            placeholder={placeholder}
-            disabled={disabled}
+            onFocus={() => {
+              // Only open if we already have suggestions
+              if (suggestions.length > 0) {
+                setOpen(true);
+              }
+            }}
+            placeholder={!city ? "Vispirms izvēlieties pilsētu" : placeholder}
+            disabled={disabled || !city}
             className="pl-9"
           />
         </div>
