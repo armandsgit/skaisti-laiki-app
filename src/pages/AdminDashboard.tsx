@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2, Ban } from 'lucide-react';
+import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2, Ban, Power, ShieldCheck, ShieldOff, Lock, Unlock } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import LocationMap from '@/components/LocationMap';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PlanBadge from '@/components/PlanBadge';
@@ -623,115 +625,174 @@ const AdminDashboard = () => {
                         ? "border-2 border-destructive bg-destructive/5" 
                         : "border"}
                     >
-                      <CardContent className="p-3 sm:p-4">
-                        <div className="space-y-2.5">
-                          <div className="flex items-start gap-2">
-                            <div className="flex-1 min-w-0 overflow-hidden">
-                              <h4 className="font-semibold text-sm sm:text-base truncate">{prof.profiles?.name}</h4>
-                              <p className="text-xs text-muted-foreground truncate">
-                                {prof.profiles?.phone || 'Nav telefona'}
+                      <CardContent className="p-4">
+                        {/* HEADER - Kompakts */}
+                        <div className="flex items-start gap-3 mb-4">
+                          <Avatar className="h-14 w-14 sm:h-16 sm:w-16 flex-shrink-0">
+                            <AvatarImage src={prof.profiles?.avatar || ""} />
+                            <AvatarFallback className="text-lg">
+                              {prof.profiles?.name?.[0] || "M"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-base sm:text-lg truncate">
+                              {prof.profiles?.name}
+                            </h3>
+                            {prof.profiles?.phone && (
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5">
+                                {prof.profiles?.phone}
                               </p>
-                              <div className="flex gap-1 mt-1.5 flex-wrap">
-                                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">{prof.category}</Badge>
-                                <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0">{prof.city}</Badge>
-                                <PlanBadge 
-                                  plan={prof.plan || 'free'} 
-                                  isVerified={prof.is_verified || false}
-                                />
-                                {prof.is_blocked && (
-                                  <Badge variant="destructive" className="text-[10px] sm:text-xs px-1.5 py-0">Bloķēts</Badge>
-                                )}
-                                {!prof.approved && (
-                                  <Badge variant="outline" className="border-amber-500 text-amber-600 text-[10px] sm:text-xs px-1.5 py-0">
-                                    Gaida
-                                  </Badge>
-                                )}
-                                {prof.subscription_status === 'inactive' && (
-                                  <Badge variant="outline" className="border-red-500 text-red-600 text-[10px] sm:text-xs px-1.5 py-0">
-                                    Neaktīvs
-                                  </Badge>
-                                )}
-                              </div>
+                            )}
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              <Badge variant="outline" className="text-[10px] h-5">
+                                {prof.category}
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px] h-5">
+                                {prof.city}
+                              </Badge>
+                              <PlanBadge 
+                                plan={prof.plan || 'free'} 
+                                isVerified={prof.is_verified || false}
+                              />
+                              {prof.is_blocked && (
+                                <Badge variant="destructive" className="text-[10px] h-5">Bloķēts</Badge>
+                              )}
+                              {!prof.approved && (
+                                <Badge variant="outline" className="border-amber-500 text-amber-600 text-[10px] h-5">
+                                  Gaida
+                                </Badge>
+                              )}
+                              {prof.subscription_status === 'inactive' && (
+                                <Badge variant="outline" className="border-red-500 text-red-600 text-[10px] h-5">
+                                  Neaktīvs
+                                </Badge>
+                              )}
+                              <StatusBadge status={prof.profiles?.status || "active"} />
                             </div>
                           </div>
+                        </div>
 
+                        {/* MAZA KARTE */}
+                        <div className="mb-4">
+                          {prof.latitude && prof.longitude ? (
+                            <div className="w-full h-[180px] sm:h-[200px] rounded-xl overflow-hidden border shadow-sm">
+                              <LocationMap
+                                latitude={prof.latitude}
+                                longitude={prof.longitude}
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-full h-[180px] sm:h-[200px] rounded-xl border bg-muted/30 flex items-center justify-center">
+                              <p className="text-sm text-muted-foreground">Nav norādīta adrese</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* INFO BLOKS */}
+                        <div className="space-y-3 mb-4">
                           {prof.address && (
-                            <div className="border-t pt-2">
-                              <div className="flex items-start gap-1.5 text-xs overflow-hidden">
-                                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                <div className="flex-1 min-w-0 overflow-hidden">
-                                  <p className="font-medium text-[10px] sm:text-xs">Adrese:</p>
-                                  <p className="text-muted-foreground text-[10px] sm:text-xs break-all">{prof.address}</p>
-                                  {prof.latitude && prof.longitude && (
-                                    <a
-                                      href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-primary hover:underline text-[10px] sm:text-xs mt-0.5 inline-block"
-                                    >
-                                      Skatīt kartē →
-                                    </a>
-                                  )}
-                                </div>
+                            <div className="flex items-start gap-2 text-xs sm:text-sm">
+                              <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-muted-foreground break-words">{prof.address}</p>
+                                {prof.latitude && prof.longitude && (
+                                  <a
+                                    href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline text-xs mt-1 inline-block"
+                                  >
+                                    Skatīt kartē →
+                                  </a>
+                                )}
                               </div>
                             </div>
                           )}
 
                           {prof.bio && (
-                            <div className="border-t pt-2">
-                              <p className="text-[10px] sm:text-xs line-clamp-2 break-words"><strong>Bio:</strong> {prof.bio}</p>
+                            <div className="pt-2 border-t">
+                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                                <span className="font-medium">Bio:</span> {prof.bio}
+                              </p>
                             </div>
                           )}
 
-                          <div className="space-y-3 border-t pt-3">
-                            <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium min-w-[100px]">Plāns:</label>
-                              <Select
-                                value={prof.plan || 'starter'}
-                                onValueChange={(value) => handleUpdatePlan(prof.id, value)}
-                              >
-                                <SelectTrigger className="w-[180px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="starter">Starter (€0)</SelectItem>
-                                  <SelectItem value="pro">Pro (€14.99)</SelectItem>
-                                  <SelectItem value="premium">Premium (€24.99)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="flex gap-2 flex-wrap">
-                              <Button
-                                variant={prof.subscription_status === 'active' ? 'outline' : 'default'}
-                                size="sm"
-                                onClick={() => handleToggleSubscriptionStatus(prof.id, prof.subscription_status || 'inactive')}
-                              >
-                                {prof.subscription_status === 'active' ? 'Deaktivizēt' : 'Aktivizēt'}
-                              </Button>
-                              <Button
-                                variant={prof.is_verified ? 'outline' : 'default'}
-                                size="sm"
-                                onClick={() => handleVerifyProfessional(prof.id, prof.is_verified)}
-                              >
-                                {prof.is_verified ? 'Atcelt verificēšanu' : t.verifyProfessional}
-                              </Button>
-                              <Button
-                                variant={prof.is_blocked ? 'default' : 'destructive'}
-                                size="sm"
-                                onClick={() => handleBlockProfessional(prof.id, prof.is_blocked)}
-                              >
-                                {prof.is_blocked ? 'Atbloķēt' : 'Bloķēt'}
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleOpenDeleteModal(prof)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t">
+                            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                              Pašreizējais plāns:
+                            </span>
+                            <Select
+                              value={prof.plan || 'starter'}
+                              onValueChange={(value) => handleUpdatePlan(prof.id, value)}
+                            >
+                              <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="starter">Starter (€0)</SelectItem>
+                                <SelectItem value="pro">Pro (€14.99)</SelectItem>
+                                <SelectItem value="premium">Premium (€24.99)</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
+                        </div>
+
+                        {/* POGAS - 2 kolonnu grid */}
+                        <div className="grid grid-cols-2 gap-2 pt-3 border-t">
+                          <Button
+                            variant={prof.subscription_status === 'active' ? 'outline' : 'default'}
+                            size="sm"
+                            onClick={() => handleToggleSubscriptionStatus(prof.id, prof.subscription_status || 'inactive')}
+                            className="w-full text-xs h-9"
+                          >
+                            <Power className="mr-1.5 h-3.5 w-3.5" />
+                            <span className="truncate">{prof.subscription_status === 'active' ? 'Deaktivizēt' : 'Aktivizēt'}</span>
+                          </Button>
+                          <Button
+                            variant={prof.is_verified ? 'outline' : 'default'}
+                            size="sm"
+                            onClick={() => handleVerifyProfessional(prof.id, prof.is_verified)}
+                            className="w-full text-xs h-9"
+                          >
+                            {prof.is_verified ? (
+                              <>
+                                <ShieldOff className="mr-1.5 h-3.5 w-3.5" />
+                                <span className="truncate">Atcelt verif.</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+                                <span className="truncate">Verificēt</span>
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant={prof.is_blocked ? 'default' : 'destructive'}
+                            size="sm"
+                            onClick={() => handleBlockProfessional(prof.id, prof.is_blocked)}
+                            className="w-full text-xs h-9"
+                          >
+                            {prof.is_blocked ? (
+                              <>
+                                <Unlock className="mr-1.5 h-3.5 w-3.5" />
+                                <span className="truncate">Atbloķēt</span>
+                              </>
+                            ) : (
+                              <>
+                                <Lock className="mr-1.5 h-3.5 w-3.5" />
+                                <span className="truncate">Bloķēt</span>
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleOpenDeleteModal(prof)}
+                            className="w-full text-xs h-9"
+                          >
+                            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                            <span className="truncate">Dzēst</span>
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
