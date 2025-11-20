@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,18 +55,21 @@ const ProfessionalDashboard = () => {
     longitude: null as number | null
   });
   
-  const [geocodingTimer, setGeocodingTimer] = useState<NodeJS.Timeout | null>(null);
+  const geocodingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Automatic geocoding when street number changes
   useEffect(() => {
-    if (geocodingTimer) {
-      clearTimeout(geocodingTimer);
+    // Clear previous timer
+    if (geocodingTimerRef.current) {
+      clearTimeout(geocodingTimerRef.current);
     }
 
     // Only geocode if we have all required fields and street number is provided
-    if (editedProfInfo.city && editedProfInfo.address && editedProfInfo.street_number) {
-      const timer = setTimeout(async () => {
+    if (editedProfInfo.city && editedProfInfo.address && editedProfInfo.street_number.trim()) {
+      geocodingTimerRef.current = setTimeout(async () => {
         const fullAddress = `${editedProfInfo.address} ${editedProfInfo.street_number}, ${editedProfInfo.city}, Latvija`;
+        
+        console.log('Auto-geocoding:', fullAddress);
         
         try {
           const response = await supabase.functions.invoke('geocode-address', {
@@ -74,23 +77,25 @@ const ProfessionalDashboard = () => {
           });
 
           if (response.data?.latitude && response.data?.longitude) {
+            console.log('Geocoding success:', response.data);
             setEditedProfInfo(prev => ({
               ...prev,
               latitude: response.data.latitude,
               longitude: response.data.longitude
             }));
+            toast.success('Koordinātes noteiktas!');
+          } else {
+            console.error('No coordinates in response:', response);
           }
         } catch (error) {
           console.error('Auto-geocoding error:', error);
         }
-      }, 1000); // Wait 1 second after user stops typing
-
-      setGeocodingTimer(timer);
+      }, 1500); // Wait 1.5 seconds after user stops typing
     }
 
     return () => {
-      if (geocodingTimer) {
-        clearTimeout(geocodingTimer);
+      if (geocodingTimerRef.current) {
+        clearTimeout(geocodingTimerRef.current);
       }
     };
   }, [editedProfInfo.street_number, editedProfInfo.address, editedProfInfo.city]);
