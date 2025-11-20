@@ -75,9 +75,15 @@ const AllMastersMap = () => {
     let center: [number, number];
     let zoom: number;
 
-    // Always center on Riga and show the full city
-    center = [24.1052, 56.9496]; // Rīga center
-    zoom = 11; // Zoom level to show all of Riga
+    if (masters.length > 0) {
+      const avgLat = masters.reduce((sum, m) => sum + m.latitude, 0) / masters.length;
+      const avgLng = masters.reduce((sum, m) => sum + m.longitude, 0) / masters.length;
+      center = [avgLng, avgLat];
+      zoom = 11;
+    } else {
+      center = [24.1052, 56.9496]; // Rīga
+      zoom = 12;
+    }
 
     // Create map
     try {
@@ -107,7 +113,7 @@ const AllMastersMap = () => {
           </div>`
         );
 
-        const marker = new mapboxgl.Marker({ color: '#f97316' })
+        const marker = new mapboxgl.Marker({ color: '#ec4899' })
           .setLngLat([master.longitude, master.latitude])
           .setPopup(popup)
           .addTo(map.current);
@@ -140,9 +146,10 @@ const AllMastersMap = () => {
     <div className="relative w-full h-full">
       <div 
         ref={mapContainer} 
-        className="absolute inset-0"
+        className="absolute inset-0 rounded-lg overflow-hidden border shadow-sm"
+        style={{ minHeight: '600px' }}
       />
-      {masters.length === 0 && !loading && (
+      {masters.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="bg-card/95 backdrop-blur-sm p-6 rounded-lg shadow-lg border max-w-sm text-center">
             <p className="text-lg font-semibold mb-2">Nav pieejamu meistaru</p>
