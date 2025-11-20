@@ -1,10 +1,12 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import AllMastersMap from '@/components/AllMastersMap';
 
 const MapView = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedMasterId = searchParams.get('masterId');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex flex-col overflow-hidden">
@@ -29,7 +31,7 @@ const MapView = () => {
             maxWidth: '100%'
           }}
         >
-          <AllMastersMap />
+          <AllMastersMap selectedMasterId={selectedMasterId || undefined} />
         </div>
       </main>
     </div>
