@@ -114,7 +114,7 @@ export type Database = {
           address: string | null
           approved: boolean | null
           bio: string | null
-          category: Database["public"]["Enums"]["service_category"]
+          category: string
           city: string
           created_at: string
           gallery: string[] | null
@@ -137,7 +137,7 @@ export type Database = {
           address?: string | null
           approved?: boolean | null
           bio?: string | null
-          category: Database["public"]["Enums"]["service_category"]
+          category: string
           city: string
           created_at?: string
           gallery?: string[] | null
@@ -160,7 +160,7 @@ export type Database = {
           address?: string | null
           approved?: boolean | null
           bio?: string | null
-          category?: Database["public"]["Enums"]["service_category"]
+          category?: string
           city?: string
           created_at?: string
           gallery?: string[] | null
@@ -179,6 +179,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_professional_profiles_category"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["name"]
+          },
           {
             foreignKeyName: "professional_profiles_user_id_fkey"
             columns: ["user_id"]
@@ -354,13 +361,6 @@ export type Database = {
     }
     Enums: {
       booking_status: "pending" | "confirmed" | "completed" | "canceled"
-      service_category:
-        | "Manikīrs"
-        | "Pedikīrs"
-        | "Skropstas"
-        | "Frizieris"
-        | "Masāža"
-        | "Kosmetoloģija"
       user_role: "CLIENT" | "PROFESSIONAL" | "ADMIN"
     }
     CompositeTypes: {
@@ -490,14 +490,6 @@ export const Constants = {
   public: {
     Enums: {
       booking_status: ["pending", "confirmed", "completed", "canceled"],
-      service_category: [
-        "Manikīrs",
-        "Pedikīrs",
-        "Skropstas",
-        "Frizieris",
-        "Masāža",
-        "Kosmetoloģija",
-      ],
       user_role: ["CLIENT", "PROFESSIONAL", "ADMIN"],
     },
   },
