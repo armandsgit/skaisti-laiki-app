@@ -78,8 +78,9 @@ const AllMastersMap = () => {
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
     // Calculate center - always center on Rīga with zoom to see the whole city
+    const isMobile = window.innerWidth < 640;
     const center: [number, number] = [24.1052, 56.9496]; // Rīga
-    const zoom = 11;
+    const zoom = isMobile ? 11.5 : 11;
 
     // Create map
     try {
@@ -136,11 +137,12 @@ const AllMastersMap = () => {
           </div>`
         );
 
-        // Create custom marker with gradient
+        // Create custom marker with gradient - larger on mobile
+        const isMobile = window.innerWidth < 640;
         const markerEl = document.createElement('div');
         markerEl.style.cssText = `
-          width: 32px;
-          height: 32px;
+          width: ${isMobile ? '40px' : '32px'};
+          height: ${isMobile ? '40px' : '32px'};
           background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
           border-radius: 50%;
           border: 3px solid white;
@@ -149,7 +151,7 @@ const AllMastersMap = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 16px;
+          font-size: ${isMobile ? '20px' : '16px'};
           transition: all 0.2s ease;
           pointer-events: auto;
         `;
@@ -210,6 +212,8 @@ const AllMastersMap = () => {
     );
   }
 
+  const isMobile = window.innerWidth < 640;
+  
   return (
     <div className="relative w-full h-full overflow-hidden">
       <div 
@@ -218,7 +222,7 @@ const AllMastersMap = () => {
         style={{ 
           width: '100%',
           height: '100%',
-          minHeight: '280px',
+          minHeight: isMobile ? '380px' : '280px',
           maxWidth: '100%',
           touchAction: 'pan-x pan-y'
         }}

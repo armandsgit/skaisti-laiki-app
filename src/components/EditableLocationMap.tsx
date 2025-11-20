@@ -71,9 +71,27 @@ const EditableLocationMap = ({
     };
 
     // Add initial marker if coordinates exist
+    const isMobile = window.innerWidth < 640;
+    
     if (latitude && longitude) {
+      const markerEl = document.createElement('div');
+      markerEl.style.cssText = `
+        width: ${isMobile ? '40px' : '32px'};
+        height: ${isMobile ? '40px' : '32px'};
+        background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: ${isMobile ? '20px' : '16px'};
+        cursor: grab;
+      `;
+      markerEl.innerHTML = '📍';
+      
       marker.current = new mapboxgl.Marker({ 
-        color: '#ec4899',
+        element: markerEl,
         draggable: true 
       })
         .setLngLat([longitude, latitude])
@@ -95,13 +113,31 @@ const EditableLocationMap = ({
 
       const { lng, lat } = e.lngLat;
 
+      const isMobile = window.innerWidth < 640;
+      
       if (marker.current) {
         // Move existing marker
         marker.current.setLngLat([lng, lat]);
       } else {
         // Create new marker
+        const markerEl = document.createElement('div');
+        markerEl.style.cssText = `
+          width: ${isMobile ? '40px' : '32px'};
+          height: ${isMobile ? '40px' : '32px'};
+          background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+          border-radius: 50%;
+          border: 3px solid white;
+          box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: ${isMobile ? '20px' : '16px'};
+          cursor: grab;
+        `;
+        markerEl.innerHTML = '📍';
+        
         marker.current = new mapboxgl.Marker({ 
-          color: '#ec4899',
+          element: markerEl,
           draggable: true 
         })
           .setLngLat([lng, lat])
@@ -159,11 +195,29 @@ const EditableLocationMap = ({
     };
 
     if (map.current && latitude && longitude) {
+      const isMobile = window.innerWidth < 640;
+      
       if (marker.current) {
         marker.current.setLngLat([longitude, latitude]);
       } else {
+        const markerEl = document.createElement('div');
+        markerEl.style.cssText = `
+          width: ${isMobile ? '40px' : '32px'};
+          height: ${isMobile ? '40px' : '32px'};
+          background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+          border-radius: 50%;
+          border: 3px solid white;
+          box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: ${isMobile ? '20px' : '16px'};
+          cursor: grab;
+        `;
+        markerEl.innerHTML = '📍';
+        
         marker.current = new mapboxgl.Marker({ 
-          color: '#ec4899',
+          element: markerEl,
           draggable: true 
         })
           .setLngLat([longitude, latitude])
@@ -186,15 +240,17 @@ const EditableLocationMap = ({
     }
   }, [latitude, longitude]);
 
+  const isMobile = window.innerWidth < 640;
+  
   return (
     <div className="space-y-2 w-full">
       <div 
         ref={mapContainer} 
         className={`map-container rounded-2xl overflow-hidden border shadow-sm w-full ${className}`}
         style={{ 
-          height: '220px',
-          maxHeight: '220px',
-          minHeight: '220px',
+          height: isMobile ? '320px' : '220px',
+          maxHeight: isMobile ? '320px' : '220px',
+          minHeight: isMobile ? '320px' : '220px',
           maxWidth: '100%',
           width: '100%'
         }}
