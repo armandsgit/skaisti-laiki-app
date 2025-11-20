@@ -214,38 +214,30 @@ const AdminDashboard = () => {
   };
 
   const handleOpenSuspendModal = (user: any, type: 'professional' | 'client') => {
-    console.log('Opening suspend modal for:', user, type);
     setSelectedUser(user);
     setSelectedUserType(type);
     setSuspendModalOpen(true);
   };
 
   const handleOpenRestoreModal = (user: any, type: 'professional' | 'client') => {
-    console.log('Opening restore modal for:', user, type);
     setSelectedUser(user);
     setSelectedUserType(type);
     setRestoreModalOpen(true);
   };
 
   const handleSuspendUser = async () => {
-    if (!selectedUser) {
-      console.log('No selected user for suspension');
-      return;
-    }
+    if (!selectedUser) return;
 
-    console.log('Suspending user:', selectedUser.id);
     const { error } = await supabase
       .from('profiles')
       .update({ status: 'suspended' })
       .eq('id', selectedUser.id);
 
     if (error) {
-      console.error('Error suspending user:', error);
       toast.error('Kļūda apturot lietotāju');
       return;
     }
 
-    console.log('User suspended successfully');
     toast.success('Lietotājs apturēts');
     setSuspendModalOpen(false);
     setSelectedUser(null);
@@ -272,27 +264,17 @@ const AdminDashboard = () => {
   };
 
   const handleOpenDeleteClientModal = (client: any) => {
-    console.log('Opening delete client modal for:', client);
     setSelectedClient(client);
     setDeleteClientModalOpen(true);
   };
 
   const handleDeleteClient = async () => {
-    if (!selectedClient) {
-      console.log('No selected client for deletion');
-      return;
-    }
-
-    console.log('Deleting client:', selectedClient.id);
+    if (!selectedClient) return;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.error('No session found');
-        throw new Error('No session');
-      }
+      if (!session) throw new Error('No session');
 
-      console.log('Calling delete-user function with userId:', selectedClient.id);
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
         {
@@ -306,13 +288,11 @@ const AdminDashboard = () => {
       );
 
       const result = await response.json();
-      console.log('Delete user response:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to delete user');
       }
 
-      console.log('Client deleted successfully');
       toast.success('Klienta profils dzēsts.');
       setDeleteClientModalOpen(false);
       setSelectedClient(null);
