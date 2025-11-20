@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { ArrowLeft, Star, MapPin, Clock, Euro } from 'lucide-react';
 import { toast } from 'sonner';
+import LocationMap from '@/components/LocationMap';
 
 const ProfessionalProfile = () => {
   const { id } = useParams();
@@ -174,6 +175,17 @@ const ProfessionalProfile = () => {
               <div className="border-t pt-4">
                 <h3 className="font-semibold mb-2">{t.bio}</h3>
                 <p className="text-muted-foreground">{professional.bio}</p>
+              </div>
+            )}
+            
+            {professional.latitude && professional.longitude && (
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-3">Atrašanās vieta</h3>
+                <LocationMap
+                  latitude={professional.latitude}
+                  longitude={professional.longitude}
+                  address={professional.address}
+                />
               </div>
             )}
           </CardContent>

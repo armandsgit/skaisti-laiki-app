@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles } from 'lucide-react';
+import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminDashboard = () => {
@@ -64,6 +64,34 @@ const AdminDashboard = () => {
       toast.error(t.error);
     } else {
       toast.success(isVerified ? 'Verificēšana atcelta' : 'Verificēts veiksmīgi!');
+      loadData();
+    }
+  };
+
+  const handleApproveProfessional = async (id: string) => {
+    const { error } = await supabase
+      .from('professional_profiles')
+      .update({ approved: true })
+      .eq('id', id);
+
+    if (error) {
+      toast.error(t.error);
+    } else {
+      toast.success('Meistars apstiprināts!');
+      loadData();
+    }
+  };
+
+  const handleRejectProfessional = async (id: string) => {
+    const { error } = await supabase
+      .from('professional_profiles')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error(t.error);
+    } else {
+      toast.success('Meistars noraidīts');
       loadData();
     }
   };
@@ -147,8 +175,12 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="professionals" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-card/80 backdrop-blur-sm">
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-card/80 backdrop-blur-sm">
+            <TabsTrigger value="pending">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Gaida apstiprināšanu
+            </TabsTrigger>
             <TabsTrigger value="professionals">
               <Briefcase className="w-4 h-4 mr-2" />
               {t.manageProfessionals}
@@ -158,6 +190,92 @@ const AdminDashboard = () => {
               {t.manageBookings}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="pending" className="space-y-4">
+            <Card className="shadow-card border-0">
+              <CardHeader>
+                <CardTitle>Meistari, kas gaida apstiprināšanu</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {professionals.filter(p => !p.approved).length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Nav meistaru, kas gaida apstiprināšanu
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {professionals.filter(p => !p.approved).map((prof) => (
+                      <Card key={prof.id} className="border border-amber-200 bg-amber-50/50">
+                        <CardContent className="p-4">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-lg">{prof.profiles?.name}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {prof.profiles?.email}
+                                </p>
+                                <div className="flex gap-2 mt-2">
+                                  <Badge variant="secondary">{prof.category}</Badge>
+                                  <Badge variant="outline">{prof.city}</Badge>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {prof.address && (
+                              <div className="border-t pt-3">
+                                <div className="flex items-start gap-2 text-sm">
+                                  <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                                  <div>
+                                    <p className="font-medium">Adrese:</p>
+                                    <p className="text-muted-foreground">{prof.address}</p>
+                                    {prof.latitude && prof.longitude && (
+                                      <a
+                                        href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:underline text-xs mt-1 inline-block"
+                                      >
+                                        Skatīt kartē →
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {prof.bio && (
+                              <div className="border-t pt-3">
+                                <p className="text-sm text-muted-foreground">{prof.bio}</p>
+                              </div>
+                            )}
+                            
+                            <div className="flex gap-2 border-t pt-3">
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveProfessional(prof.id)}
+                                className="flex-1"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Apstiprināt
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleRejectProfessional(prof.id)}
+                                className="flex-1"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Noraidīt
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="professionals" className="space-y-4">
             <Card className="shadow-card border-0">
