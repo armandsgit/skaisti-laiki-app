@@ -75,15 +75,9 @@ const AllMastersMap = () => {
     let center: [number, number];
     let zoom: number;
 
-    if (masters.length > 0) {
-      const avgLat = masters.reduce((sum, m) => sum + m.latitude, 0) / masters.length;
-      const avgLng = masters.reduce((sum, m) => sum + m.longitude, 0) / masters.length;
-      center = [avgLng, avgLat];
-      zoom = 11;
-    } else {
-      center = [24.1052, 56.9496]; // Rīga
-      zoom = 12;
-    }
+    // Always center on Riga and show the full city
+    center = [24.1052, 56.9496]; // Rīga center
+    zoom = 11; // Zoom level to show all of Riga
 
     // Create map
     try {

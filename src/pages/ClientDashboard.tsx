@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, LogOut, Search, Star, MapPin, Sparkles, Map } from 'lucide-react';
+import AllMastersMap from '@/components/AllMastersMap';
 import { toast } from 'sonner';
 
 const ClientDashboard = () => {
@@ -99,18 +100,16 @@ const ClientDashboard = () => {
             </h1>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/map')}>
-              <Map className="w-4 h-4 mr-2" />
-              Skatīt kartē
-            </Button>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              {t.logout}
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" onClick={signOut}>
+            <LogOut className="w-5 h-5" />
+          </Button>
         </div>
       </header>
+
+      {/* Map Section - Full width at the top */}
+      <div className="w-full h-[400px] md:h-[500px]">
+        <AllMastersMap />
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="search" className="w-full">
