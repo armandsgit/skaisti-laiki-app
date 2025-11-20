@@ -192,9 +192,9 @@ const EditableLocationMap = ({
         ref={mapContainer} 
         className={`map-container rounded-2xl overflow-hidden border shadow-sm w-full ${className}`}
         style={{ 
-          height: '280px',
-          maxHeight: '320px',
-          minHeight: '240px',
+          height: '220px',
+          maxHeight: '220px',
+          minHeight: '220px',
           maxWidth: '100%',
           width: '100%'
         }}
