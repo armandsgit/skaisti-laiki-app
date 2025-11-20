@@ -24,6 +24,7 @@ const ProfessionalDashboard = () => {
   const [stats, setStats] = useState({ totalEarnings: 0, completedBookings: 0 });
   const [loading, setLoading] = useState(true);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [newService, setNewService] = useState({
     name: '',
     price: '',
@@ -184,6 +185,76 @@ const ProfessionalDashboard = () => {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !user?.id) return;
+    
+    const file = event.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    
+    setUploadingImage(true);
+    
+    try {
+      // Augšupielādē bildi
+      const { error: uploadError } = await supabase.storage
+        .from('gallery')
+        .upload(fileName, file);
+      
+      if (uploadError) throw uploadError;
+      
+      // Iegūst publisko URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('gallery')
+        .getPublicUrl(fileName);
+      
+      // Atjaunina profilu ar jauno bildi galerijā
+      const currentGallery = profile?.gallery || [];
+      const { error: updateError } = await supabase
+        .from('professional_profiles')
+        .update({ gallery: [...currentGallery, publicUrl] })
+        .eq('user_id', user.id);
+      
+      if (updateError) throw updateError;
+      
+      toast.success('Bilde pievienota!');
+      loadProfile();
+    } catch (error: any) {
+      toast.error('Kļūda augšupielādējot bildi: ' + error.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageUrl: string) => {
+    if (!confirm('Vai tiešām vēlaties dzēst šo bildi?') || !user?.id) return;
+    
+    try {
+      // Izņem bildi no galerijas masīva
+      const currentGallery = profile?.gallery || [];
+      const updatedGallery = currentGallery.filter((url: string) => url !== imageUrl);
+      
+      const { error: updateError } = await supabase
+        .from('professional_profiles')
+        .update({ gallery: updatedGallery })
+        .eq('user_id', user.id);
+      
+      if (updateError) throw updateError;
+      
+      // Dzēš bildi no storage (ja tā ir mūsu storage)
+      if (imageUrl.includes('gallery')) {
+        const path = imageUrl.split('/gallery/').pop();
+        if (path) {
+          await supabase.storage.from('gallery').remove([path]);
+        }
+      }
+      
+      toast.success('Bilde dzēsta!');
+      loadProfile();
+    } catch (error: any) {
+      toast.error('Kļūda dzēšot bildi: ' + error.message);
+    }
+  };
+
   useEffect(() => {
     if (profile) {
       loadServices();
@@ -274,7 +345,7 @@ const ProfessionalDashboard = () => {
         </div>
 
         <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-card/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-card/80 backdrop-blur-sm">
             <TabsTrigger value="bookings">
               <Calendar className="w-4 h-4 mr-2" />
               {t.bookings}
@@ -282,6 +353,10 @@ const ProfessionalDashboard = () => {
             <TabsTrigger value="services">
               <Sparkles className="w-4 h-4 mr-2" />
               {t.myServices}
+            </TabsTrigger>
+            <TabsTrigger value="gallery">
+              <Plus className="w-4 h-4 mr-2" />
+              Galerija
             </TabsTrigger>
           </TabsList>
 
@@ -473,6 +548,65 @@ const ProfessionalDashboard = () => {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="gallery" className="space-y-4">
+            <Card className="shadow-card border-0">
+              <CardHeader>
+                <CardTitle>Mana galerija</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="image-upload" className="cursor-pointer">
+                      <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
+                        <Plus className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {uploadingImage ? 'Augšupielādē...' : 'Klikšķiniet, lai pievienotu bildi'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, WEBP līdz 5MB
+                        </p>
+                      </div>
+                      <Input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                        className="hidden"
+                      />
+                    </Label>
+                  </div>
+                  
+                  {profile?.gallery && profile.gallery.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {profile.gallery.map((imageUrl: string, index: number) => (
+                        <div key={index} className="relative group aspect-square">
+                          <img
+                            src={imageUrl}
+                            alt={`Galerijas bilde ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteImage(imageUrl)}
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-8">
+                      Jums vēl nav pievienotu bilžu galerijā
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
