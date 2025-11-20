@@ -367,12 +367,12 @@
       height: 220px !important;
     }
     
-    /* Mapbox Logo Fix */
+    /* Hide Mapbox Logo & Attribution on Mobile */
     .mapboxgl-ctrl-logo,
+    .mapboxgl-ctrl-attrib,
     .mapboxgl-ctrl-bottom-left,
     .mapboxgl-ctrl-bottom-right {
-      max-width: 100% !important;
-      overflow: hidden !important;
+      display: none !important;
     }
   }
   
