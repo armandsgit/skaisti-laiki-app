@@ -200,6 +200,11 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
             const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
             const shortAddress = master.address ? (master.address.length > 40 ? master.address.substring(0, 40) + '...' : master.address) : master.city;
             
+            // Remove previous popup if exists
+            if (currentActivePopup) {
+              currentActivePopup.remove();
+            }
+            
             const selectedPopup = new mapboxgl.Popup({ 
               offset: 25,
               closeButton: true,
@@ -238,8 +243,24 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
             )
             .setLngLat([master.longitude, master.latitude])
             .addTo(map.current);
+            
+            // Store reference and handle close
+            currentActivePopup = selectedPopup;
+            selectedPopup.on('close', () => {
+              currentActivePopup = null;
+            });
           }, 1600);
         });
+      });
+
+      // Close popups when user starts dragging the map (mobile fix)
+      let currentActivePopup: mapboxgl.Popup | null = null;
+      
+      map.current.on('dragstart', () => {
+        if (currentActivePopup) {
+          currentActivePopup.remove();
+          currentActivePopup = null;
+        }
       });
 
       // Handle selected master
