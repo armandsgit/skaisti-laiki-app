@@ -68,6 +68,20 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleBlockProfessional = async (id: string, isBlocked: boolean) => {
+    const { error } = await supabase
+      .from('professional_profiles')
+      .update({ is_blocked: !isBlocked })
+      .eq('id', id);
+
+    if (error) {
+      toast.error(t.error);
+    } else {
+      toast.success(isBlocked ? 'Meistars atbloķēts' : 'Meistars bloķēts');
+      loadData();
+    }
+  };
+
   const handleApproveProfessional = async (id: string) => {
     const { error } = await supabase
       .from('professional_profiles')
@@ -244,7 +258,13 @@ const AdminDashboard = () => {
                             
                             {prof.bio && (
                               <div className="border-t pt-3">
-                                <p className="text-sm text-muted-foreground">{prof.bio}</p>
+                                <p className="text-sm"><strong>Bio:</strong> {prof.bio}</p>
+                              </div>
+                            )}
+
+                            {prof.profiles?.phone && (
+                              <div className="border-t pt-3">
+                                <p className="text-sm"><strong>Telefons:</strong> {prof.profiles.phone}</p>
                               </div>
                             )}
                             
@@ -287,31 +307,78 @@ const AdminDashboard = () => {
                   {professionals.map((prof) => (
                     <Card key={prof.id} className="border">
                       <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 className="font-semibold">{prof.profiles?.name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {prof.profiles?.phone || 'Nav telefona'}
-                            </p>
-                            <div className="flex gap-2 mt-2">
-                              <Badge variant="secondary">{prof.category}</Badge>
-                              <Badge variant="outline">{prof.city}</Badge>
-                              {prof.is_verified && (
-                                <Badge variant="default">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  {t.verified}
-                                </Badge>
-                              )}
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg">{prof.profiles?.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {prof.profiles?.phone || 'Nav telefona'}
+                              </p>
+                              <div className="flex gap-2 mt-2 flex-wrap">
+                                <Badge variant="secondary">{prof.category}</Badge>
+                                <Badge variant="outline">{prof.city}</Badge>
+                                {prof.is_verified && (
+                                  <Badge variant="default">
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    {t.verified}
+                                  </Badge>
+                                )}
+                                {prof.is_blocked && (
+                                  <Badge variant="destructive">Bloķēts</Badge>
+                                )}
+                                {!prof.approved && (
+                                  <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                    Gaida apstiprinājumu
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          
-                          <Button
-                            variant={prof.is_verified ? 'outline' : 'default'}
-                            size="sm"
-                            onClick={() => handleVerifyProfessional(prof.id, prof.is_verified)}
-                          >
-                            {prof.is_verified ? 'Atcelt verificēšanu' : t.verifyProfessional}
-                          </Button>
+
+                          {prof.address && (
+                            <div className="border-t pt-3">
+                              <div className="flex items-start gap-2 text-sm">
+                                <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                                <div>
+                                  <p className="font-medium">Adrese:</p>
+                                  <p className="text-muted-foreground">{prof.address}</p>
+                                  {prof.latitude && prof.longitude && (
+                                    <a
+                                      href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-primary hover:underline text-xs mt-1 inline-block"
+                                    >
+                                      Skatīt kartē →
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {prof.bio && (
+                            <div className="border-t pt-3">
+                              <p className="text-sm"><strong>Bio:</strong> {prof.bio}</p>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 border-t pt-3 flex-wrap">
+                            <Button
+                              variant={prof.is_verified ? 'outline' : 'default'}
+                              size="sm"
+                              onClick={() => handleVerifyProfessional(prof.id, prof.is_verified)}
+                            >
+                              {prof.is_verified ? 'Atcelt verificēšanu' : t.verifyProfessional}
+                            </Button>
+                            <Button
+                              variant={prof.is_blocked ? 'default' : 'destructive'}
+                              size="sm"
+                              onClick={() => handleBlockProfessional(prof.id, prof.is_blocked)}
+                            >
+                              {prof.is_blocked ? 'Atbloķēt' : 'Bloķēt'}
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

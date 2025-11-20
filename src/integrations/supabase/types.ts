@@ -85,6 +85,7 @@ export type Database = {
           created_at: string
           gallery: string[] | null
           id: string
+          is_blocked: boolean | null
           is_verified: boolean | null
           latitude: number | null
           longitude: number | null
@@ -102,6 +103,7 @@ export type Database = {
           created_at?: string
           gallery?: string[] | null
           id?: string
+          is_blocked?: boolean | null
           is_verified?: boolean | null
           latitude?: number | null
           longitude?: number | null
@@ -119,6 +121,7 @@ export type Database = {
           created_at?: string
           gallery?: string[] | null
           id?: string
+          is_blocked?: boolean | null
           is_verified?: boolean | null
           latitude?: number | null
           longitude?: number | null
