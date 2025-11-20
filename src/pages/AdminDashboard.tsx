@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2, Ban, Power, ShieldCheck, ShieldOff, Lock, Unlock } from 'lucide-react';
+import { LogOut, Users, Briefcase, Calendar, CheckCircle, Sparkles, XCircle, MapPin, Trash2, Ban, Power, ShieldCheck, ShieldOff, Lock, Unlock, Tags } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import LocationMap from '@/components/LocationMap';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import DeleteClientModal from '@/components/DeleteClientModal';
 import SuspendUserModal from '@/components/SuspendUserModal';
 import RestoreUserModal from '@/components/RestoreUserModal';
 import StatusBadge from '@/components/StatusBadge';
+import CategoryManager from '@/components/CategoryManager';
 
 const AdminDashboard = () => {
   const t = useTranslation('lv');
@@ -499,7 +500,7 @@ const AdminDashboard = () => {
 
         <Tabs defaultValue="pending" className="w-full">
           <div className="w-full mb-4 sm:mb-6 overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 bg-card/80 backdrop-blur-sm">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5 bg-card/80 backdrop-blur-sm">
               <TabsTrigger value="pending" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
                 <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden xs:inline sm:hidden">Gaida</span>
@@ -521,6 +522,10 @@ const AdminDashboard = () => {
                 <span className="hidden xs:inline sm:hidden">Rezerv.</span>
                 <span className="hidden sm:inline">{t.manageBookings}</span>
                 <span className="xs:hidden">Rezerv.</span>
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 sm:px-4 text-xs sm:text-sm">
+                <Tags className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span>Kategorijas</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -931,6 +936,10 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="categories" className="space-y-4">
+            <CategoryManager />
           </TabsContent>
         </Tabs>
       </main>
