@@ -110,24 +110,25 @@ const AllMastersMap = () => {
           </div>`
         );
 
-        // Hover popup (name, avatar and rating)
+        // Compact hover popup for mobile zoom (name, avatar and rating)
         const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
         
         const hoverPopup = new mapboxgl.Popup({ 
           offset: 25,
           closeButton: false,
-          closeOnClick: false
+          closeOnClick: false,
+          className: 'compact-marker-popup'
         }).setHTML(
-          `<div style="padding: 8px 12px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <div style="display: flex; align-items: center; gap: 10px;">
+          `<div style="padding: 6px 10px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; gap: 8px;">
               <img 
                 src="${avatarUrl}" 
                 alt="${master.profiles.name}"
-                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899;"
+                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
               />
-              <div>
-                <h3 style="font-weight: 600; margin-bottom: 2px; font-size: 14px; color: #1a1a1a;">${master.profiles.name}</h3>
-                <div style="display: flex; align-items: center; gap: 4px; font-size: 13px;">
+              <div style="min-width: 0;">
+                <h3 style="font-weight: 600; margin: 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${master.profiles.name}</h3>
+                <div style="display: flex; align-items: center; gap: 3px; font-size: 12px; margin-top: 2px;">
                   <span style="color: #f59e0b;">⭐</span>
                   <span style="color: #666;">${master.rating || 0}</span>
                 </div>
@@ -140,6 +141,7 @@ const AllMastersMap = () => {
         const markerEl = document.createElement('div');
         markerEl.className = 'custom-map-marker clickable-marker';
         markerEl.innerHTML = '✨';
+        markerEl.dataset.masterId = master.id;
 
         const marker = new mapboxgl.Marker({ 
           element: markerEl,
@@ -147,6 +149,10 @@ const AllMastersMap = () => {
         })
           .setLngLat([master.longitude, master.latitude])
           .addTo(map.current);
+
+        // Store marker reference for zoom handler
+        (marker as any).masterData = master;
+        (marker as any).hoverPopup = hoverPopup;
 
         // Hover popup - desktop only
         if (window.innerWidth >= 768) {
@@ -192,13 +198,76 @@ const AllMastersMap = () => {
             navigate(`/professional/${master.id}`);
           }
         });
+      });
+
+      // Auto-show popup on zoom for nearby markers
+      let activePopup: mapboxgl.Popup | null = null;
+      
+      map.current.on('zoom', () => {
+        if (!map.current) return;
         
-        // Close popup when clicking elsewhere on map (mobile only)
-        if (window.innerWidth < 768 && map.current) {
-          map.current.on('click', () => {
-            hoverPopup.remove();
-            clickPopup.remove();
+        const zoom = map.current.getZoom();
+        const center = map.current.getCenter();
+        
+        // Show popup when zoomed in enough (zoom > 13)
+        if (zoom > 13) {
+          // Find closest marker to center
+          let closestMarker: any = null;
+          let minDistance = Infinity;
+          
+          masters.forEach((master) => {
+            const dx = master.longitude - center.lng;
+            const dy = master.latitude - center.lat;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestMarker = master;
+            }
           });
+          
+          // Show popup for closest marker if within reasonable distance
+          if (closestMarker && minDistance < 0.01 && map.current) {
+            const avatarUrl = closestMarker.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + closestMarker.profiles.name;
+            
+            // Remove previous popup
+            if (activePopup) {
+              activePopup.remove();
+            }
+            
+            // Create and show new popup
+            activePopup = new mapboxgl.Popup({ 
+              offset: 25,
+              closeButton: false,
+              closeOnClick: false,
+              className: 'compact-marker-popup'
+            }).setHTML(
+              `<div style="padding: 6px 10px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <img 
+                    src="${avatarUrl}" 
+                    alt="${closestMarker.profiles.name}"
+                    style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                  />
+                  <div style="min-width: 0;">
+                    <h3 style="font-weight: 600; margin: 0; font-size: 13px; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${closestMarker.profiles.name}</h3>
+                    <div style="display: flex; align-items: center; gap: 3px; font-size: 12px; margin-top: 2px;">
+                      <span style="color: #f59e0b;">⭐</span>
+                      <span style="color: #666;">${closestMarker.rating || 0}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>`
+            )
+            .setLngLat([closestMarker.longitude, closestMarker.latitude])
+            .addTo(map.current);
+          }
+        } else {
+          // Remove popup when zoomed out
+          if (activePopup) {
+            activePopup.remove();
+            activePopup = null;
+          }
         }
       });
     } catch (error) {

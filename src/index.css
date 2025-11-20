@@ -380,6 +380,24 @@
     }
   }
   
+  /* Compact marker popup for mobile */
+  .compact-marker-popup .mapboxgl-popup-content {
+    padding: 0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    max-width: 220px !important;
+  }
+  
+  .compact-marker-popup .mapboxgl-popup-tip {
+    border-top-color: white !important;
+  }
+  
+  @media (max-width: 639px) {
+    .compact-marker-popup .mapboxgl-popup-content {
+      max-width: 200px !important;
+    }
+  }
+  
   /* ========================================
      CUSTOM MAP MARKERS
      ======================================== */
