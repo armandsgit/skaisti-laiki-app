@@ -26,6 +26,7 @@ const ProfessionalProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const t = useTranslation('lv');
+  const [emblaRef] = useEmblaCarousel({ loop: true, skipSnaps: false });
   
   const [professional, setProfessional] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
@@ -125,8 +126,6 @@ const ProfessionalProfile = () => {
       </div>
     );
   }
-
-  const [emblaRef] = useEmblaCarousel({ loop: true, skipSnaps: false });
 
   return (
     <div className="min-h-screen bg-background pb-20">
