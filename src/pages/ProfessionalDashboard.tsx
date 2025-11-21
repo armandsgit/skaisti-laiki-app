@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
 import SubscriptionStatusIndicator from '@/components/SubscriptionStatusIndicator';
 import WorkScheduleManager from '@/components/WorkScheduleManager';
+import ServiceDurationManager from '@/components/ServiceDurationManager';
 import { DashboardStats } from '@/components/DashboardStats';
 import { UpcomingBookingCard } from '@/components/UpcomingBookingCard';
 import { ServiceCard } from '@/components/ServiceCard';
@@ -911,6 +912,14 @@ const ProfessionalDashboard = () => {
               </p>
             </div>
             <WorkScheduleManager professionalId={profile.id} />
+            
+            <div className="mb-4 mt-8">
+              <h2 className="text-xl font-bold mb-2">Pakalpojumu ilgumi</h2>
+              <p className="text-sm text-muted-foreground">
+                Iestatiet katra pakalpojuma ilgumu minūtēs
+              </p>
+            </div>
+            <ServiceDurationManager professionalId={profile.id} />
           </TabsContent>
 
           {/* Profile Tab */}
