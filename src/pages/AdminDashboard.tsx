@@ -515,7 +515,20 @@ const AdminDashboard = () => {
         </div>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="p-5 rounded-2xl border-2 transition-all tap-feedback border-border bg-card hover:border-primary/30 hover:shadow-soft"
+          >
+            <LogOut
+              className="w-8 h-8 mx-auto mb-2 text-muted-foreground"
+            />
+            <p className="text-sm font-semibold text-center text-foreground">
+              Sākums
+            </p>
+            <p className="text-xs text-muted-foreground text-center mt-1">uz augšu</p>
+          </button>
+
           <button
             onClick={() => setSelectedTab("pending")}
             className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
