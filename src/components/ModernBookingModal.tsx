@@ -274,6 +274,9 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           const availableServiceIds = schedule.available_services || [];
           
           for (const serviceId of availableServiceIds) {
+            // If a service is selected, only generate slots for that service
+            if (formData.serviceId && serviceId !== formData.serviceId) continue;
+            
             const service = services.find(s => s.id === serviceId);
             if (!service) continue;
 
