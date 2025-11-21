@@ -27,6 +27,7 @@ const ProfessionalProfile = () => {
   
   const [professional, setProfessional] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
+  const [staffMembers, setStaffMembers] = useState<any[]>([]);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +38,7 @@ const ProfessionalProfile = () => {
     if (id) {
       loadProfessional();
       loadServices();
+      loadStaffMembers();
     }
   }, [id]);
 
@@ -61,6 +63,18 @@ const ProfessionalProfile = () => {
       .eq('professional_id', id);
     
     setServices(data || []);
+  };
+
+  const loadStaffMembers = async () => {
+    const { data } = await supabase
+      .from('staff_members')
+      .select('*')
+      .eq('professional_id', id)
+      .eq('is_active', true)
+      .eq('show_on_profile', true)
+      .order('created_at');
+    
+    setStaffMembers(data || []);
   };
 
   const handleBooking = async (formData: BookingFormData) => {
@@ -209,6 +223,41 @@ const ProfessionalProfile = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Staff Members / Team */}
+        {staffMembers.length > 0 && (
+          <Card className="border-0 shadow-sm animate-fade-in">
+            <CardContent className="p-4">
+              <h3 className="font-semibold mb-3">Mūsu komanda</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {staffMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex flex-col items-center p-3 bg-muted/30 rounded-2xl border border-border/40"
+                  >
+                    {member.avatar ? (
+                      <img
+                        src={member.avatar}
+                        alt={member.name}
+                        className="w-16 h-16 rounded-full object-cover mb-2"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl mb-2">
+                        {member.name.charAt(0)}
+                      </div>
+                    )}
+                    <p className="font-semibold text-sm text-center">{member.name}</p>
+                    {member.position && (
+                      <p className="text-xs text-muted-foreground text-center mt-0.5">
+                        {member.position}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
