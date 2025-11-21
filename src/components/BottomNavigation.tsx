@@ -25,7 +25,7 @@ const BottomNavigation = () => {
   const currentTab = searchParams.get('tab');
   
   const tabs = isAdminPanel ? [
-    { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab, isMain: false, scrollToTop: true },
+    { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab, scrollToTop: true },
     { icon: CheckCircle, label: 'Gaida', path: '/admin?tab=pending', isActive: currentTab === 'pending' },
     { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: currentTab === 'professionals' },
     { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: currentTab === 'bookings' },
@@ -33,12 +33,12 @@ const BottomNavigation = () => {
   ] : isProfessionalDashboard ? [
     { icon: Home, label: 'Sākums', path: '/professional/dashboard', isActive: location.pathname === '/professional/dashboard' },
     { icon: Calendar, label: 'Rezervācijas', path: '/professional/dashboard', isActive: false },
-    { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map', isMain: true },
+    { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map' },
     { icon: User, label: 'Profils', path: '/professional/settings', isActive: location.pathname === '/professional/settings' },
   ] : [
     { icon: Home, label: 'Sākums', path: '/client', isActive: location.pathname === '/client' || location.pathname === '/' },
     { icon: Search, label: 'Meklēt', path: '/client', isActive: false },
-    { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map', isMain: true },
+    { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map' },
     { icon: Calendar, label: 'Rezervācijas', path: '/bookings', isActive: location.pathname === '/bookings' },
     { icon: User, label: 'Konts', path: '/client/settings', isActive: location.pathname === '/client/settings' },
   ];
@@ -71,38 +71,25 @@ const BottomNavigation = () => {
               }}
               className={`
                 flex flex-col items-center justify-center transition-all duration-300 relative flex-1 max-w-[80px]
-                ${tab.isMain 
-                  ? 'bg-gradient-to-br from-primary to-secondary rounded-full shadow-elegant -mb-4' 
-                  : 'mb-0'
-                }
-                ${!tab.isMain && tab.isActive ? 'text-primary' : ''}
-                ${!tab.isMain && !tab.isActive ? 'text-foreground/60 active:text-primary' : ''}
-                ${!tab.isMain ? 'tap-feedback py-2' : ''}
-                ${tab.isActive && !tab.isMain ? 'glow-effect' : ''}
+                tap-feedback py-2
+                ${tab.isActive ? 'text-primary' : 'text-foreground/60 active:text-primary'}
+                ${tab.isActive ? 'glow-effect' : ''}
               `}
               style={{
-                minHeight: tab.isMain ? '56px' : '52px',
-                minWidth: tab.isMain ? '56px' : '44px',
-                width: tab.isMain ? '56px' : 'auto',
-                height: tab.isMain ? '56px' : 'auto',
+                minHeight: '52px',
+                minWidth: '44px',
               }}
             >
               <tab.icon 
-                className={`
-                  ${tab.isMain ? 'w-7 h-7 text-white' : 'w-[22px] h-[22px]'}
-                  transition-all duration-300 flex-shrink-0
-                  ${tab.isActive && !tab.isMain ? 'scale-110 drop-shadow-glow' : ''}
-                `}
+                className="w-[22px] h-[22px] transition-all duration-300 flex-shrink-0"
                 strokeWidth={2.5}
               />
-              {!tab.isMain && (
-                <span 
-                  className={`text-[10px] font-semibold tracking-wide mt-1 whitespace-nowrap ${tab.isActive ? 'text-primary' : ''}`}
-                  style={{ lineHeight: '1.2' }}
-                >
-                  {tab.label}
-                </span>
-              )}
+              <span 
+                className={`text-[10px] font-semibold tracking-wide mt-1 whitespace-nowrap ${tab.isActive ? 'text-primary' : ''}`}
+                style={{ lineHeight: '1.2' }}
+              >
+                {tab.label}
+              </span>
             </button>
           ))}
         </div>
