@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings, LayoutDashboard, CalendarDays, TrendingUp, Bell } from 'lucide-react';
+import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings, LayoutDashboard, CalendarDays, TrendingUp, Bell, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import EmptyStateAnimation from '@/components/EmptyStateAnimation';
@@ -429,6 +429,22 @@ const ProfessionalDashboard = () => {
     }
   };
 
+  const handleDeleteBooking = async (bookingId: string) => {
+    if (!confirm('Vai tiešām vēlaties dzēst šo rezervāciju?')) return;
+    
+    const { error } = await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', bookingId);
+    
+    if (!error) {
+      toast.success('Rezervācija dzēsta!');
+      loadBookings();
+    } else {
+      toast.error('Kļūda dzēšot rezervāciju');
+    }
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0 || !user?.id) return;
     
@@ -810,6 +826,18 @@ const ProfessionalDashboard = () => {
                             Atcelt
                           </Button>
                         </div>
+                      )}
+
+                      {(booking.status === 'completed' || booking.status === 'canceled') && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteBooking(booking.id)}
+                          className="w-full"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Dzēst rezervāciju
+                        </Button>
                       )}
                     </CardContent>
                   </Card>
