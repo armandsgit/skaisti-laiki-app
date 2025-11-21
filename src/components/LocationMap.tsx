@@ -46,7 +46,7 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
   }, [latitude, longitude]);
 
   const openInGoogleMaps = () => {
-    window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, '_blank');
+    window.open(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`, '_blank');
   };
 
   return (
