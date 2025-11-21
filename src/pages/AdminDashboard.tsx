@@ -75,6 +75,15 @@ const AdminDashboard = () => {
     }
   }, [location.search]);
 
+  // Scroll to section when tab changes
+  useEffect(() => {
+    const sectionId = `section-${selectedTab}`;
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedTab]);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -604,6 +613,7 @@ const AdminDashboard = () => {
         </div>
 
         {selectedTab === "pending" && (
+          <div id="section-pending">
           <Card className="shadow-card border">
             <CardHeader className="border-b bg-muted/20">
               <CardTitle className="text-lg">Meistari, kas gaida apstiprināšanu</CardTitle>
@@ -719,9 +729,11 @@ const AdminDashboard = () => {
               )}
             </CardContent>
           </Card>
+          </div>
         )}
 
         {selectedTab === "professionals" && (
+          <div id="section-professionals">
           <Card className="shadow-card border">
             <CardHeader className="border-b bg-muted/20">
               <CardTitle className="text-lg">{t.manageProfessionals}</CardTitle>
@@ -921,9 +933,11 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+          </div>
         )}
 
         {selectedTab === "clients" && (
+          <div id="section-clients">
           <Card className="shadow-card border">
             <CardHeader className="border-b bg-muted/20">
               <CardTitle className="text-lg">Klienti</CardTitle>
@@ -983,9 +997,11 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+          </div>
         )}
 
         {selectedTab === "bookings" && (
+          <div id="section-bookings">
           <Card className="shadow-card border">
             <CardHeader className="border-b bg-muted/20">
               <CardTitle className="text-lg">{t.manageBookings}</CardTitle>
@@ -1026,9 +1042,14 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+          </div>
         )}
 
-        {selectedTab === "categories" && <CategoryManager />}
+        {selectedTab === "categories" && (
+          <div id="section-categories">
+            <CategoryManager />
+          </div>
+        )}
       </main>
 
       <DeleteProfessionalModal
