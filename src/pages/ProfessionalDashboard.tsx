@@ -975,7 +975,7 @@ const ProfessionalDashboard = () => {
                   onClick={() => setSelectedStaffMember(null)}
                   className="mb-4"
                 >
-                  ← Atpakaļ uz meistaru sarakstu
+                  ← Atpakaļ
                 </Button>
                 <WorkScheduleManager
                   professionalId={profile.id}
@@ -983,14 +983,30 @@ const ProfessionalDashboard = () => {
                 />
               </div>
             ) : (
-              <Card className="mt-6">
-                <CardContent className="py-12 text-center">
-                  <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground">
-                    Izvēlieties meistaru no saraksta, lai pārvaldītu viņa darba grafiku
-                  </p>
-                </CardContent>
-              </Card>
+              <>
+                {/* Owner's own schedule */}
+                <div className="mb-8">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold">Tavs darba grafiks</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Iestatiet savu personīgo darba laiku
+                    </p>
+                  </div>
+                  <WorkScheduleManager professionalId={profile.id} staffMemberId={null} />
+                </div>
+
+                {/* Staff members section */}
+                {staffMembers.length > 0 && (
+                  <div className="mt-8 pt-8 border-t">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold">Darbinieku grafiki</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Izvēlieties darbinieku, lai pārvaldītu viņa darba grafiku
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
