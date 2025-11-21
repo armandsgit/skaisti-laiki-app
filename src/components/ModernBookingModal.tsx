@@ -546,9 +546,17 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                       return (
                         <div key={staff.id} className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
                           <div className="flex items-center gap-3 mb-3">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg">
-                              {staff.name.charAt(0)}
-                            </div>
+                            {staff.avatar ? (
+                              <img 
+                                src={staff.avatar} 
+                                alt={staff.name}
+                                className="w-12 h-12 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg">
+                                {staff.name.charAt(0)}
+                              </div>
+                            )}
                             <div>
                               <div className="font-semibold text-gray-900">{staff.name}</div>
                               {staff.position && (
