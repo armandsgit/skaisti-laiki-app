@@ -102,7 +102,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
     }
   }, [isOpen]);
 
-  // Load available staff and their time slots when date changes
+  // Load available staff and their time slots when date or service changes
   useEffect(() => {
     if (formData.date) {
       loadStaffAndTimeSlots(formData.date);
@@ -110,7 +110,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       setAvailableStaff([]);
       setStaffTimeSlots({});
     }
-  }, [formData.date, services, professionalId]);
+  }, [formData.date, formData.serviceId, services, professionalId]);
 
   // Realtime subscription for bookings changes
   useEffect(() => {
@@ -153,12 +153,29 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       const dayOfWeek = date.getDay();
       const dateStr = date.toISOString().split('T')[0];
 
-      // Fetch all active staff members for this professional
-      const { data: staff, error: staffError } = await supabase
+      // If a service is selected, filter staff by service assignment
+      let staffQuery = supabase
         .from('staff_members')
         .select('*')
         .eq('professional_id', professionalId)
         .eq('is_active', true);
+
+      // If a specific service is selected, only show staff assigned to that service
+      if (formData.serviceId) {
+        const { data: selectedService } = await supabase
+          .from('services')
+          .select('staff_member_id')
+          .eq('id', formData.serviceId)
+          .single();
+
+        // If service is assigned to a specific staff member, show only that staff member
+        if (selectedService?.staff_member_id) {
+          staffQuery = staffQuery.eq('id', selectedService.staff_member_id);
+        }
+        // If service has no staff assignment (null), show all staff members
+      }
+
+      const { data: staff, error: staffError } = await staffQuery;
 
       if (staffError) throw staffError;
 
