@@ -377,7 +377,7 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary animate-pulse" />
           <p className="text-muted-foreground">{t.loading}</p>
@@ -387,226 +387,226 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
-      <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft flex-shrink-0">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+    <div className="min-h-screen bg-background">
+      <header className="bg-card/95 backdrop-blur-sm border-b shadow-soft sticky top-0 z-10">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center shadow-elegant flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">
+                <h1 className="text-xl sm:text-2xl font-bold">
                   BeautyOn Admin
                 </h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">Administratora panelis</p>
+                <p className="text-sm text-muted-foreground hidden sm:block">Administratora panelis</p>
               </div>
             </div>
 
-            <Button variant="ghost" size="sm" onClick={signOut} className="flex-shrink-0">
-              <LogOut className="w-4 h-4 sm:mr-2" />
+            <Button variant="outline" size="sm" onClick={signOut} className="flex-shrink-0">
+              <LogOut className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">{t.logout}</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
+      <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 overflow-x-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="shadow-card border bg-gradient-to-br from-primary/5 to-accent/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalUsers}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
+                <Users className="w-6 h-6 text-primary" />
                 <span className="text-3xl font-bold">{stats.totalUsers}</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
+          <Card className="shadow-card border bg-gradient-to-br from-primary/5 to-accent/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalProfessionals}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-primary" />
+                <Briefcase className="w-6 h-6 text-primary" />
                 <span className="text-3xl font-bold">{stats.totalProfessionals}</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5">
+          <Card className="shadow-card border bg-gradient-to-br from-primary/5 to-accent/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalBookings}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
+                <Calendar className="w-6 h-6 text-primary" />
                 <span className="text-3xl font-bold">{stats.totalBookings}</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 bg-gradient-to-br from-green-500/10 to-green-600/10">
+          <Card className="shadow-card border bg-gradient-to-br from-green-50 to-emerald-50">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">Aktīvie abonēšanas</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-3xl font-bold">{stats.activeSubscriptions}</span>
+                <CheckCircle className="w-6 h-6 text-green-600" />
+                <span className="text-3xl font-bold text-green-600">{stats.activeSubscriptions}</span>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <Card className="shadow-card border-0">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <Card className="shadow-card border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Starter plāns</CardTitle>
+              <CardTitle className="text-base">Starter plāns</CardTitle>
             </CardHeader>
             <CardContent>
-              <span className="text-2xl font-bold">{stats.starterPlan}</span>
-              <p className="text-xs text-muted-foreground mt-1">meistari</p>
+              <span className="text-3xl font-bold">{stats.starterPlan}</span>
+              <p className="text-sm text-muted-foreground mt-1">meistari</p>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0">
+          <Card className="shadow-card border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Pro plāns</CardTitle>
+              <CardTitle className="text-base">Pro plāns</CardTitle>
             </CardHeader>
             <CardContent>
-              <span className="text-2xl font-bold">{stats.proPlan}</span>
-              <p className="text-xs text-muted-foreground mt-1">meistari</p>
+              <span className="text-3xl font-bold">{stats.proPlan}</span>
+              <p className="text-sm text-muted-foreground mt-1">meistari</p>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0">
+          <Card className="shadow-card border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Premium plāns</CardTitle>
+              <CardTitle className="text-base">Premium plāns</CardTitle>
             </CardHeader>
             <CardContent>
-              <span className="text-2xl font-bold">{stats.premiumPlan}</span>
-              <p className="text-xs text-muted-foreground mt-1">meistari</p>
+              <span className="text-3xl font-bold">{stats.premiumPlan}</span>
+              <p className="text-sm text-muted-foreground mt-1">meistari</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Modern grid navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        {/* Navigation Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           <button
             onClick={() => setSelectedTab("pending")}
-            className={`p-4 rounded-xl border-2 transition-all ${
+            className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "pending"
-                ? "border-primary bg-primary/10 shadow-lg"
-                : "border-border hover:border-primary/50 hover:shadow-md"
+                ? "border-primary bg-primary/10 shadow-card"
+                : "border-border bg-card hover:border-primary/30 hover:shadow-soft"
             }`}
           >
             <CheckCircle
-              className={`w-6 h-6 mx-auto mb-2 ${selectedTab === "pending" ? "text-primary" : "text-muted-foreground"}`}
+              className={`w-8 h-8 mx-auto mb-2 ${selectedTab === "pending" ? "text-primary" : "text-muted-foreground"}`}
             />
             <p
-              className={`text-xs sm:text-sm font-medium text-center ${selectedTab === "pending" ? "text-primary" : "text-foreground"}`}
+              className={`text-sm font-semibold text-center ${selectedTab === "pending" ? "text-primary" : "text-foreground"}`}
             >
               Gaida
             </p>
-            <p className="text-xs text-muted-foreground text-center hidden sm:block">apstiprināšanu</p>
+            <p className="text-xs text-muted-foreground text-center mt-1">apstiprināšanu</p>
           </button>
 
           <button
             onClick={() => setSelectedTab("professionals")}
-            className={`p-4 rounded-xl border-2 transition-all ${
+            className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "professionals"
-                ? "border-primary bg-primary/10 shadow-lg"
-                : "border-border hover:border-primary/50 hover:shadow-md"
+                ? "border-primary bg-primary/10 shadow-card"
+                : "border-border bg-card hover:border-primary/30 hover:shadow-soft"
             }`}
           >
             <Briefcase
-              className={`w-6 h-6 mx-auto mb-2 ${selectedTab === "professionals" ? "text-primary" : "text-muted-foreground"}`}
+              className={`w-8 h-8 mx-auto mb-2 ${selectedTab === "professionals" ? "text-primary" : "text-muted-foreground"}`}
             />
             <p
-              className={`text-xs sm:text-sm font-medium text-center ${selectedTab === "professionals" ? "text-primary" : "text-foreground"}`}
+              className={`text-sm font-semibold text-center ${selectedTab === "professionals" ? "text-primary" : "text-foreground"}`}
             >
               Meistari
             </p>
-            <p className="text-xs text-muted-foreground text-center hidden sm:block">pārvaldīt</p>
+            <p className="text-xs text-muted-foreground text-center mt-1">pārvaldīt</p>
           </button>
 
           <button
             onClick={() => setSelectedTab("clients")}
-            className={`p-4 rounded-xl border-2 transition-all ${
+            className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "clients"
-                ? "border-primary bg-primary/10 shadow-lg"
-                : "border-border hover:border-primary/50 hover:shadow-md"
+                ? "border-primary bg-primary/10 shadow-card"
+                : "border-border bg-card hover:border-primary/30 hover:shadow-soft"
             }`}
           >
             <Users
-              className={`w-6 h-6 mx-auto mb-2 ${selectedTab === "clients" ? "text-primary" : "text-muted-foreground"}`}
+              className={`w-8 h-8 mx-auto mb-2 ${selectedTab === "clients" ? "text-primary" : "text-muted-foreground"}`}
             />
             <p
-              className={`text-xs sm:text-sm font-medium text-center ${selectedTab === "clients" ? "text-primary" : "text-foreground"}`}
+              className={`text-sm font-semibold text-center ${selectedTab === "clients" ? "text-primary" : "text-foreground"}`}
             >
               Klienti
             </p>
-            <p className="text-xs text-muted-foreground text-center hidden sm:block">pārvaldīt</p>
+            <p className="text-xs text-muted-foreground text-center mt-1">pārvaldīt</p>
           </button>
 
           <button
             onClick={() => setSelectedTab("bookings")}
-            className={`p-4 rounded-xl border-2 transition-all ${
+            className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "bookings"
-                ? "border-primary bg-primary/10 shadow-lg"
-                : "border-border hover:border-primary/50 hover:shadow-md"
+                ? "border-primary bg-primary/10 shadow-card"
+                : "border-border bg-card hover:border-primary/30 hover:shadow-soft"
             }`}
           >
             <Calendar
-              className={`w-6 h-6 mx-auto mb-2 ${selectedTab === "bookings" ? "text-primary" : "text-muted-foreground"}`}
+              className={`w-8 h-8 mx-auto mb-2 ${selectedTab === "bookings" ? "text-primary" : "text-muted-foreground"}`}
             />
             <p
-              className={`text-xs sm:text-sm font-medium text-center ${selectedTab === "bookings" ? "text-primary" : "text-foreground"}`}
+              className={`text-sm font-semibold text-center ${selectedTab === "bookings" ? "text-primary" : "text-foreground"}`}
             >
               Rezervācijas
             </p>
-            <p className="text-xs text-muted-foreground text-center hidden sm:block">pārvaldīt</p>
+            <p className="text-xs text-muted-foreground text-center mt-1">pārvaldīt</p>
           </button>
 
           <button
             onClick={() => setSelectedTab("categories")}
-            className={`p-4 rounded-xl border-2 transition-all ${
+            className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "categories"
-                ? "border-primary bg-primary/10 shadow-lg"
-                : "border-border hover:border-primary/50 hover:shadow-md"
+                ? "border-primary bg-primary/10 shadow-card"
+                : "border-border bg-card hover:border-primary/30 hover:shadow-soft"
             }`}
           >
             <Tags
-              className={`w-6 h-6 mx-auto mb-2 ${selectedTab === "categories" ? "text-primary" : "text-muted-foreground"}`}
+              className={`w-8 h-8 mx-auto mb-2 ${selectedTab === "categories" ? "text-primary" : "text-muted-foreground"}`}
             />
             <p
-              className={`text-xs sm:text-sm font-medium text-center ${selectedTab === "categories" ? "text-primary" : "text-foreground"}`}
+              className={`text-sm font-semibold text-center ${selectedTab === "categories" ? "text-primary" : "text-foreground"}`}
             >
               Kategorijas
             </p>
-            <p className="text-xs text-muted-foreground text-center hidden sm:block">pārvaldīt</p>
+            <p className="text-xs text-muted-foreground text-center mt-1">pārvaldīt</p>
           </button>
         </div>
 
         {selectedTab === "pending" && (
-          <Card className="shadow-card border-0">
-            <CardHeader>
-              <CardTitle>Meistari, kas gaida apstiprināšanu</CardTitle>
+          <Card className="shadow-card border">
+            <CardHeader className="border-b bg-muted/20">
+              <CardTitle className="text-lg">Meistari, kas gaida apstiprināšanu</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {professionals.filter((p) => !p.approved).length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Nav meistaru, kas gaida apstiprināšanu</p>
+                <p className="text-center text-muted-foreground py-12 text-base">Nav meistaru, kas gaida apstiprināšanu</p>
               ) : (
                 <div className="space-y-4">
                   {professionals
                     .filter((p) => !p.approved)
                     .map((prof) => (
-                      <Card key={prof.id} className="border border-amber-200 bg-amber-50/50 overflow-hidden">
-                        <CardContent className="p-3 sm:p-4">
+                      <Card key={prof.id} className="border-2 border-amber-300 bg-amber-50 overflow-hidden shadow-soft">
+                        <CardContent className="p-4 sm:p-5">
                           <div className="space-y-2.5">
                             <div className="flex items-start gap-2">
                               <Avatar className="h-16 w-16 flex-shrink-0">
@@ -711,22 +711,22 @@ const AdminDashboard = () => {
         )}
 
         {selectedTab === "professionals" && (
-          <Card className="shadow-card border-0">
-            <CardHeader>
-              <CardTitle>{t.manageProfessionals}</CardTitle>
+          <Card className="shadow-card border">
+            <CardHeader className="border-b bg-muted/20">
+              <CardTitle className="text-lg">{t.manageProfessionals}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="space-y-4">
                 {professionals.map((prof) => (
                   <Card
                     key={prof.id}
                     className={
                       prof.is_blocked
-                        ? "border-2 border-destructive bg-destructive/5 rounded-[20px]"
-                        : "border rounded-[20px]"
+                        ? "border-2 border-destructive bg-red-50 shadow-soft"
+                        : "border shadow-card hover:shadow-elegant transition-shadow"
                     }
                   >
-                    <CardContent className="p-4">
+                    <CardContent className="p-5">
                       {/* Avatar + Vārds + Mobilais nr */}
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar className="h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0">
@@ -913,20 +913,22 @@ const AdminDashboard = () => {
         )}
 
         {selectedTab === "clients" && (
-          <Card className="shadow-card border-0">
-            <CardHeader>
-              <CardTitle>Klienti</CardTitle>
+          <Card className="shadow-card border">
+            <CardHeader className="border-b bg-muted/20">
+              <CardTitle className="text-lg">Klienti</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="space-y-4">
                 {clients.map((client) => (
                   <Card
                     key={client.id}
                     className={
-                      client.status === "suspended" ? "border-2 border-destructive bg-destructive/5" : "border"
+                      client.status === "suspended" 
+                        ? "border-2 border-destructive bg-red-50 shadow-soft" 
+                        : "border shadow-card hover:shadow-elegant transition-shadow"
                     }
                   >
-                    <CardContent className="p-4">
+                    <CardContent className="p-5">
                       <div className="space-y-3">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -973,15 +975,15 @@ const AdminDashboard = () => {
         )}
 
         {selectedTab === "bookings" && (
-          <Card className="shadow-card border-0">
-            <CardHeader>
-              <CardTitle>{t.manageBookings}</CardTitle>
+          <Card className="shadow-card border">
+            <CardHeader className="border-b bg-muted/20">
+              <CardTitle className="text-lg">{t.manageBookings}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="pt-6">
+                <div className="space-y-4">
                 {bookings.map((booking) => (
-                  <Card key={booking.id} className="border">
-                    <CardContent className="p-4">
+                  <Card key={booking.id} className="border shadow-card hover:shadow-elegant transition-shadow">
+                    <CardContent className="p-5">
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-semibold">
