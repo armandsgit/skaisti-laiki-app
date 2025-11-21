@@ -542,7 +542,6 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                   <div className="space-y-4">
                     {availableStaff.map((staff) => {
                       const slots = staffTimeSlots[staff.id] || [];
-                      const availableSlots = slots.filter(s => !s.isBooked);
 
                       return (
                         <div key={staff.id} className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
@@ -557,17 +556,13 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                               )}
                             </div>
                           </div>
-                           {availableSlots.length === 0 ? (
-                            <div className="text-sm text-center py-3 text-gray-500 bg-gray-100 rounded-xl">
-                              Visi laiki aizņemti
-                            </div>
-                           ) : (
-                            <div className="grid grid-cols-3 gap-2">
-                              {availableSlots.map((slot) => (
-                                <button
-                                  key={`${staff.id}-${slot.time}`}
-                                  type="button"
-                                  onClick={() => {
+                          <div className="grid grid-cols-3 gap-2">
+                            {slots.map((slot) => (
+                              <button
+                                key={`${staff.id}-${slot.time}`}
+                                type="button"
+                                onClick={() => {
+                                  if (!slot.isBooked) {
                                     triggerHaptic('light');
                                     setFormData({ 
                                       ...formData, 
@@ -575,19 +570,22 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                                       serviceId: slot.serviceId,
                                       time: slot.time 
                                     });
-                                  }}
-                                  className={cn(
-                                    "p-3 rounded-xl border-2 text-sm font-medium transition-all",
-                                    formData.time === slot.time && formData.staffMemberId === staff.id
-                                      ? "border-primary bg-primary text-white"
-                                      : "border-gray-200 bg-white hover:border-primary/50"
-                                  )}
-                                >
-                                  {slot.time}
-                                </button>
-                              ))}
-                            </div>
-                          )}
+                                  }
+                                }}
+                                disabled={slot.isBooked}
+                                className={cn(
+                                  "p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200",
+                                  slot.isBooked
+                                    ? "bg-gray-100 border-gray-300 text-gray-400 line-through pointer-events-none"
+                                    : formData.time === slot.time && formData.staffMemberId === staff.id
+                                      ? "border-primary bg-primary text-white shadow-md"
+                                      : "border-gray-200 bg-white hover:border-primary/50 hover:scale-105 active:scale-95"
+                                )}
+                              >
+                                {slot.time}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       );
                     })}
