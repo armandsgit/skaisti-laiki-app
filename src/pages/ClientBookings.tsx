@@ -35,7 +35,8 @@ const ClientBookings = () => {
         professional_profiles(
           id,
           profiles!professional_profiles_user_id_fkey(name, avatar)
-        )
+        ),
+        staff_members(id, name, avatar, position)
       `)
       .eq('client_id', user?.id)
       .order('booking_date', { ascending: false });
@@ -105,11 +106,29 @@ const ClientBookings = () => {
               >
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-2">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3">
+                      {/* Staff Member Avatar */}
+                      {booking.staff_members?.avatar ? (
+                        <img 
+                          src={booking.staff_members.avatar} 
+                          alt={booking.staff_members.name}
+                          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                          {booking.staff_members?.name?.charAt(0) || booking.professional_profiles?.profiles?.name?.charAt(0)}
+                        </div>
+                      )}
+                      
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-base">
-                          {booking.professional_profiles?.profiles?.name}
+                          {booking.staff_members?.name || booking.professional_profiles?.profiles?.name}
                         </h4>
+                        {booking.staff_members?.position && (
+                          <p className="text-xs text-muted-foreground">
+                            {booking.staff_members.position}
+                          </p>
+                        )}
                         <p className="text-sm text-muted-foreground mt-0.5">
                           {booking.services?.name}
                         </p>
@@ -121,7 +140,7 @@ const ClientBookings = () => {
                           booking.status === 'completed' ? 'secondary' :
                           booking.status === 'canceled' ? 'destructive' : 'outline'
                         }
-                        className="text-xs px-2.5 py-1 whitespace-nowrap flex-shrink-0"
+                        className="text-xs px-2.5 py-1 whitespace-nowrap flex-shrink-0 self-start"
                       >
                         {t[booking.status as keyof typeof t] || booking.status}
                       </Badge>
