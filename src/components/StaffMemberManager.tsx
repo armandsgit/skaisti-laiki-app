@@ -107,10 +107,10 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
         if (error) throw error;
         staffId = editingStaff.id;
 
-        // Unassign all previous services from this staff member
+        // Delete all previous service assignments from master_services
         await supabase
-          .from('services')
-          .update({ staff_member_id: null })
+          .from('master_services')
+          .delete()
           .eq('staff_member_id', staffId);
 
         toast.success('Meistars atjaunināts');
@@ -131,14 +131,18 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
         toast.success('Meistars pievienots');
       }
 
-      // Assign selected services to this staff member
+      // Assign selected services to this staff member via master_services
       if (selectedServiceIds.length > 0) {
-        const { error: servicesError } = await supabase
-          .from('services')
-          .update({ staff_member_id: staffId })
-          .in('id', selectedServiceIds);
+        const { error: masterServicesError } = await supabase
+          .from('master_services')
+          .insert(
+            selectedServiceIds.map(serviceId => ({
+              staff_member_id: staffId,
+              service_id: serviceId
+            }))
+          );
 
-        if (servicesError) throw servicesError;
+        if (masterServicesError) throw masterServicesError;
       }
 
       setIsDialogOpen(false);
@@ -160,15 +164,15 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
       avatar: staff.avatar || '',
     });
 
-    // Load staff member's current services
+    // Load staff member's current services from master_services
     try {
       const { data, error } = await supabase
-        .from('services')
-        .select('id')
+        .from('master_services')
+        .select('service_id')
         .eq('staff_member_id', staff.id);
 
       if (error) throw error;
-      setSelectedServiceIds(data?.map(s => s.id) || []);
+      setSelectedServiceIds(data?.map(ms => ms.service_id) || []);
     } catch (error) {
       console.error('Error loading staff services:', error);
       setSelectedServiceIds([]);
@@ -183,22 +187,15 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     if (!confirm('Vai tiešām vēlaties dzēst šo meistaru?')) return;
 
     try {
-      // First, unassign this staff member from all services
-      const { error: servicesError } = await supabase
-        .from('services')
-        .update({ staff_member_id: null })
-        .eq('staff_member_id', staffId);
-
-      if (servicesError) throw servicesError;
-
-      // Then soft-delete the staff member
+      // master_services will be deleted automatically due to CASCADE
+      // Just soft-delete the staff member
       const { error } = await supabase
         .from('staff_members')
         .update({ is_active: false })
         .eq('id', staffId);
 
       if (error) throw error;
-      toast.success('Meistars dzēsts un pakalpojumi atbrīvoti');
+      toast.success('Meistars dzēsts');
       loadStaffMembers();
     } catch (error) {
       console.error('Error deleting staff member:', error);

@@ -155,30 +155,24 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
 
       let staffToShow: any[] = [];
 
-      // If a service is selected, find staff members who have this service in their schedules
+      // If a service is selected, find staff members assigned to this service
       if (formData.serviceId) {
-        // Find staff members who have this service in their schedules
-        const { data: schedules } = await supabase
-          .from('professional_schedules')
-          .select('staff_member_id, available_services')
-          .eq('professional_id', professionalId)
-          .eq('day_of_week', dayOfWeek)
-          .eq('is_active', true)
-          .not('staff_member_id', 'is', null);
+        // Get staff members assigned to this service via master_services
+        const { data: masterServices, error: msError } = await supabase
+          .from('master_services')
+          .select('staff_member_id')
+          .eq('service_id', formData.serviceId);
 
-        // Filter schedules that include this service
-        const staffIdsWithService = schedules
-          ?.filter(schedule => 
-            (schedule.available_services || []).includes(formData.serviceId)
-          )
-          .map(schedule => schedule.staff_member_id)
-          .filter((id, index, self) => id && self.indexOf(id) === index) || [];
+        if (msError) throw msError;
 
-        if (staffIdsWithService.length > 0) {
+        const staffIds = masterServices?.map(ms => ms.staff_member_id) || [];
+
+        if (staffIds.length > 0) {
+          // Get the actual staff member details
           const { data: staff, error: staffError } = await supabase
             .from('staff_members')
             .select('*')
-            .in('id', staffIdsWithService)
+            .in('id', staffIds)
             .eq('is_active', true);
 
           if (staffError) throw staffError;
