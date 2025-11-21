@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 import { Button } from '@/components/ui/button';
+import MasterBottomSheet from '@/components/MasterBottomSheet';
 
 // Izmanto SortedMaster no master-sorting.ts
 
@@ -32,6 +33,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedMaster, setSelectedMaster] = useState<SortedMaster | null>(null);
 
   useEffect(() => {
     initializeMap();
@@ -175,165 +177,43 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           
           if (!map.current) return;
 
-          // Remove any existing hover popup
-          const existingHoverPopup = (marker as any).hoverPopup;
-          if (existingHoverPopup) {
-            existingHoverPopup.remove();
-          }
-
           // Fly to marker with animation
           map.current.flyTo({
             center: [master.longitude, master.latitude],
-            zoom: 16,
-            duration: 1500,
+            zoom: 15,
+            duration: 1000,
             essential: true
           });
 
-          // Show popup after animation (no bounce - causes position issues)
+          // Show bottom sheet after brief animation
           setTimeout(() => {
-            if (!map.current) return;
-
-            const avatarUrl = master.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
-            const shortAddress = master.address ? (master.address.length > 40 ? master.address.substring(0, 40) + '...' : master.address) : master.city;
-            
-            // Remove previous popup if exists
-            if (currentActivePopup) {
-              currentActivePopup.remove();
-            }
-            
-            const selectedPopup = new mapboxgl.Popup({ 
-              offset: 25,
-              anchor: 'bottom',
-              closeButton: true,
-              closeOnClick: false,
-              className: 'selected-master-popup modern-popup',
-              maxWidth: '320px'
-            }).setHTML(
-              `<div style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 20px;">
-                <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
-                  <img 
-                    src="${avatarUrl}" 
-                    alt="${master.profiles.name}"
-                    style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #ec4899; flex-shrink: 0; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);"
-                  />
-                  <div style="min-width: 0; flex: 1;">
-                    <h3 style="font-weight: 700; margin: 0 0 6px 0; font-size: 17px; color: #1a1a1a; line-height: 1.3;">${master.profiles.name}</h3>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                      <span style="color: #f59e0b; font-size: 15px;">⭐</span>
-                      <span style="color: #666; font-weight: 600; font-size: 15px;">${master.rating || 0}</span>
-                    </div>
-                  </div>
-                </div>
-                <div style="display: flex; align-items: start; gap: 8px; font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 14px; padding: 10px; background: white; border-radius: 12px;">
-                  <span style="font-size: 16px; margin-top: 2px;">📍</span>
-                  <span style="font-weight: 500;">${shortAddress}</span>
-                </div>
-                <button 
-                  onclick="window.location.href='/professional/${master.id}'" 
-                  style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);"
-                  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(236, 72, 153, 0.4)'"
-                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(236, 72, 153, 0.3)'"
-                >
-                  Skatīt profilu →
-                </button>
-              </div>`
-            )
-            .setLngLat([master.longitude, master.latitude])
-            .addTo(map.current);
-            
-            // Store reference and handle close
-            currentActivePopup = selectedPopup;
-            selectedPopup.on('close', () => {
-              currentActivePopup = null;
-            });
-          }, 1600);
+            setSelectedMaster(master);
+          }, 800);
         });
       });
 
-      // Close popups when user starts dragging the map (mobile fix)
-      let currentActivePopup: mapboxgl.Popup | null = null;
-      
+      // Close bottom sheet when user starts dragging the map
       map.current.on('dragstart', () => {
-        if (currentActivePopup) {
-          currentActivePopup.remove();
-          currentActivePopup = null;
-        }
+        setSelectedMaster(null);
       });
 
-      // Handle selected master
+      // Handle selected master from URL
       if (selectedMasterId && masters.length > 0) {
-        const selectedMaster = masters.find(m => m.id === selectedMasterId);
-        if (selectedMaster && map.current) {
-          // Fly to the selected master with smooth animation
+        const master = masters.find(m => m.id === selectedMasterId);
+        if (master && map.current) {
           setTimeout(() => {
             if (!map.current) return;
             
             map.current.flyTo({
-              center: [selectedMaster.longitude, selectedMaster.latitude],
-              zoom: 16,
-              duration: 2000,
+              center: [master.longitude, master.latitude],
+              zoom: 15,
+              duration: 1500,
               essential: true
             });
 
-            // Add bounce animation to marker
-            const selectedMarker = markersRef.current.get(selectedMasterId);
-            if (selectedMarker) {
-              const markerEl = selectedMarker.getElement();
-              markerEl.classList.add('marker-bounce');
-              
-              // Remove bounce class after animation
-              setTimeout(() => {
-                markerEl.classList.remove('marker-bounce');
-              }, 1000);
-            }
-
-            // Show popup after fly animation completes
             setTimeout(() => {
-              if (!map.current) return;
-              
-              const avatarUrl = selectedMaster.profiles.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedMaster.profiles.name;
-              const shortAddress = selectedMaster.address ? (selectedMaster.address.length > 40 ? selectedMaster.address.substring(0, 40) + '...' : selectedMaster.address) : selectedMaster.city;
-              
-              const selectedPopup = new mapboxgl.Popup({ 
-                offset: 25,
-                anchor: 'bottom',
-                closeButton: true,
-                closeOnClick: false,
-                className: 'selected-master-popup modern-popup',
-                maxWidth: '320px'
-              }).setHTML(
-                `<div style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 20px;">
-                  <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
-                    <img 
-                      src="${avatarUrl}" 
-                      alt="${selectedMaster.profiles.name}"
-                      style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #ec4899; flex-shrink: 0; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);"
-                    />
-                    <div style="min-width: 0; flex: 1;">
-                      <h3 style="font-weight: 700; margin: 0 0 6px 0; font-size: 17px; color: #1a1a1a; line-height: 1.3;">${selectedMaster.profiles.name}</h3>
-                      <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #f59e0b; font-size: 15px;">⭐</span>
-                        <span style="color: #666; font-weight: 600; font-size: 15px;">${selectedMaster.rating || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div style="display: flex; align-items: start; gap: 8px; font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 14px; padding: 10px; background: white; border-radius: 12px;">
-                    <span style="font-size: 16px; margin-top: 2px;">📍</span>
-                    <span style="font-weight: 500;">${shortAddress}</span>
-                  </div>
-                  <button 
-                    onclick="window.location.href='/professional/${selectedMaster.id}'" 
-                    style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);"
-                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(236, 72, 153, 0.4)'"
-                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(236, 72, 153, 0.3)'"
-                  >
-                    Skatīt profilu →
-                  </button>
-                </div>`
-              )
-              .setLngLat([selectedMaster.longitude, selectedMaster.latitude])
-              .addTo(map.current);
-            }, 2100);
+              setSelectedMaster(master);
+            }, 1200);
           }, 100);
         }
       }
@@ -378,12 +258,12 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         }}
       />
       
-      {/* Category filter - floating above bottom navigation */}
+      {/* Category filter - floating at top */}
       <div 
         className="fixed left-0 right-0 px-3 pointer-events-none"
         style={{
-          bottom: 'calc(68px + env(safe-area-inset-bottom, 12px) + 20px)',
-          zIndex: 9999
+          top: 'max(env(safe-area-inset-top), 20px)',
+          zIndex: 9997
         }}
       >
         <div className="bg-white/95 backdrop-blur-md rounded-[24px] shadow-lg border border-gray-200 p-2.5 pointer-events-auto">
@@ -422,6 +302,8 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           </div>
         </div>
       </div>
+
+      {/* Empty state */}
       {filteredMasters.length === 0 && !loading && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
           <div className="bg-white/98 backdrop-blur-md p-5 rounded-3xl shadow-elegant border border-border/20 max-w-[280px] text-center">
@@ -435,6 +317,12 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           </div>
         </div>
       )}
+
+      {/* Bottom Sheet */}
+      <MasterBottomSheet 
+        master={selectedMaster}
+        onClose={() => setSelectedMaster(null)}
+      />
     </div>
   );
 };
