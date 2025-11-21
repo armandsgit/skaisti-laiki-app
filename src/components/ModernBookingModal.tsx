@@ -85,9 +85,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState<Partial<BookingFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [timeSlots, setTimeSlots] = useState<Array<{ time: string; isBooked: boolean }>>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [availableServices, setAvailableServices] = useState<any[]>([]);
   const [availableStaff, setAvailableStaff] = useState<any[]>([]);
   const [staffTimeSlots, setStaffTimeSlots] = useState<Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>>>({});
 
@@ -160,57 +158,64 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       const dayOfWeek = date.getDay();
       const dateStr = date.toISOString().split('T')[0];
 
-      let staffToShow: any[] = [];
-
-      // If a service is selected, find staff members assigned to this service
-      if (formData.serviceId) {
-        // Get staff members assigned to this service via master_services
-        const { data: masterServices, error: msError } = await supabase
-          .from('master_services')
-          .select('staff_member_id')
-          .eq('service_id', formData.serviceId);
-
-        if (msError) throw msError;
-
-        const staffIds = masterServices?.map(ms => ms.staff_member_id) || [];
-
-        if (staffIds.length > 0) {
-          // Get the actual staff member details
-          const { data: staff, error: staffError } = await supabase
-            .from('staff_members')
-            .select('*')
-            .in('id', staffIds)
-            .eq('is_active', true);
-
-          if (staffError) throw staffError;
-          if (staff) staffToShow = staff;
-        }
-      } else {
-        // No service selected, show all active staff
-        const { data: staff, error: staffError } = await supabase
-          .from('staff_members')
-          .select('*')
-          .eq('professional_id', professionalId)
-          .eq('is_active', true);
-
-        if (staffError) throw staffError;
-        if (staff) staffToShow = staff;
-      }
-
-      const staff = staffToShow;
-
-      if (!staff || staff.length === 0) {
+      // CRITICAL: Must have a service selected to show staff
+      if (!formData.serviceId) {
         setAvailableStaff([]);
         setStaffTimeSlots({});
+        setLoadingSlots(false);
         return;
       }
 
-      setAvailableStaff(staff);
+      // Step 1: Get the selected service details
+      const selectedService = services.find(s => s.id === formData.serviceId);
+      if (!selectedService) {
+        setAvailableStaff([]);
+        setStaffTimeSlots({});
+        setLoadingSlots(false);
+        return;
+      }
 
-      // For each staff member, fetch their schedules and time slots
+      const serviceDuration = selectedService.duration || 60;
+
+      // Step 2: Get staff members assigned to this specific service via master_services
+      const { data: masterServices, error: msError } = await supabase
+        .from('master_services')
+        .select('staff_member_id')
+        .eq('service_id', formData.serviceId);
+
+      if (msError) throw msError;
+
+      const staffIds = masterServices?.map(ms => ms.staff_member_id) || [];
+
+      if (staffIds.length === 0) {
+        setAvailableStaff([]);
+        setStaffTimeSlots({});
+        setLoadingSlots(false);
+        return;
+      }
+
+      // Step 3: Get the actual staff member details (only active ones for this professional)
+      const { data: allStaff, error: staffError } = await supabase
+        .from('staff_members')
+        .select('*')
+        .in('id', staffIds)
+        .eq('professional_id', professionalId)
+        .eq('is_active', true);
+
+      if (staffError) throw staffError;
+
+      if (!allStaff || allStaff.length === 0) {
+        setAvailableStaff([]);
+        setStaffTimeSlots({});
+        setLoadingSlots(false);
+        return;
+      }
+
+      // Step 4: For each staff member, check if they have schedules for this day with this service
+      const staffWithSchedules: any[] = [];
       const staffSlotsMap: Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>> = {};
 
-      for (const staffMember of staff) {
+      for (const staffMember of allStaff) {
         // Fetch schedules for this staff member on this day
         const { data: schedules, error: scheduleError } = await supabase
           .from('professional_schedules')
@@ -225,12 +230,17 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           continue;
         }
 
-        if (!schedules || schedules.length === 0) continue;
+        // Filter schedules that include this specific service
+        const relevantSchedules = (schedules || []).filter(schedule =>
+          (schedule.available_services || []).includes(formData.serviceId)
+        );
+
+        if (relevantSchedules.length === 0) continue;
 
         // Fetch existing bookings for this staff member on this date
         const { data: bookings, error: bookingsError } = await supabase
           .from('bookings')
-          .select('booking_time, booking_end_time, service_id')
+          .select('booking_time, booking_end_time')
           .eq('professional_id', professionalId)
           .eq('staff_member_id', staffMember.id)
           .eq('booking_date', dateStr)
@@ -268,236 +278,77 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           });
         };
 
-        // Generate time slots for each schedule/service combination
+        // Generate time slots based on the service duration
         const slots: Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }> = [];
         
-        for (const schedule of schedules) {
-          const availableServiceIds = schedule.available_services || [];
-          
-          for (const serviceId of availableServiceIds) {
-            // If a service is selected, only generate slots for that service
-            if (formData.serviceId && serviceId !== formData.serviceId) continue;
+        for (const schedule of relevantSchedules) {
+          const startHour = parseInt(schedule.start_time.split(':')[0]);
+          const startMinute = parseInt(schedule.start_time.split(':')[1]);
+          const endHour = parseInt(schedule.end_time.split(':')[0]);
+          const endMinute = parseInt(schedule.end_time.split(':')[1]);
+          const interval = schedule.time_slot_interval || 30;
+
+          let currentHour = startHour;
+          let currentMinute = startMinute;
+
+          while (
+            currentHour < endHour || 
+            (currentHour === endHour && currentMinute < endMinute)
+          ) {
+            const timeSlot = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
             
-            const service = services.find(s => s.id === serviceId);
-            if (!service) continue;
+            // Calculate end time based on service duration
+            let slotEndMinute = currentMinute + serviceDuration;
+            let slotEndHour = currentHour;
+            if (slotEndMinute >= 60) {
+              slotEndHour += Math.floor(slotEndMinute / 60);
+              slotEndMinute = slotEndMinute % 60;
+            }
+            const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMinute).padStart(2, '0')}`;
 
-            const serviceDuration = service.duration || 60;
-            const startHour = parseInt(schedule.start_time.split(':')[0]);
-            const startMinute = parseInt(schedule.start_time.split(':')[1]);
-            const endHour = parseInt(schedule.end_time.split(':')[0]);
-            const endMinute = parseInt(schedule.end_time.split(':')[1]);
-            const interval = schedule.time_slot_interval || 30;
+            // Check if service fits within schedule
+            const slotEndTimeMin = slotEndHour * 60 + slotEndMinute;
+            const scheduleEndTimeMin = endHour * 60 + endMinute;
+            const serviceFits = slotEndTimeMin <= scheduleEndTimeMin;
 
-            let currentHour = startHour;
-            let currentMinute = startMinute;
-
-            while (
-              currentHour < endHour || 
-              (currentHour === endHour && currentMinute < endMinute)
-            ) {
-              const timeSlot = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+            if (serviceFits) {
+              const isBooked = hasOverlap(timeSlot, slotEndTime);
               
-              let slotEndMinute = currentMinute + serviceDuration;
-              let slotEndHour = currentHour;
-              if (slotEndMinute >= 60) {
-                slotEndHour += Math.floor(slotEndMinute / 60);
-                slotEndMinute = slotEndMinute % 60;
+              // Avoid duplicates
+              const existingSlot = slots.find(s => s.time === timeSlot);
+              if (!existingSlot) {
+                slots.push({
+                  time: timeSlot,
+                  isBooked,
+                  serviceId: selectedService.id,
+                  serviceName: selectedService.name
+                });
               }
-              const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMinute).padStart(2, '0')}`;
+            }
 
-              const slotEndTimeMin = slotEndHour * 60 + slotEndMinute;
-              const scheduleEndTimeMin = endHour * 60 + endMinute;
-              const serviceFits = slotEndTimeMin <= scheduleEndTimeMin;
-
-              if (serviceFits) {
-                const isBooked = hasOverlap(timeSlot, slotEndTime);
-                
-                // Check if this time slot already exists for a different service
-                const existingSlot = slots.find(s => s.time === timeSlot);
-                if (!existingSlot) {
-                  slots.push({
-                    time: timeSlot,
-                    isBooked,
-                    serviceId: service.id,
-                    serviceName: service.name
-                  });
-                }
-              }
-
-              currentMinute += interval;
-              if (currentMinute >= 60) {
-                currentHour += Math.floor(currentMinute / 60);
-                currentMinute = currentMinute % 60;
-              }
+            // Move to next interval
+            currentMinute += interval;
+            if (currentMinute >= 60) {
+              currentHour += Math.floor(currentMinute / 60);
+              currentMinute = currentMinute % 60;
             }
           }
         }
 
-        staffSlotsMap[staffMember.id] = slots.sort((a, b) => a.time.localeCompare(b.time));
+        // Only include staff if they have at least one time slot
+        if (slots.length > 0) {
+          staffWithSchedules.push(staffMember);
+          staffSlotsMap[staffMember.id] = slots.sort((a, b) => a.time.localeCompare(b.time));
+        }
       }
 
+      setAvailableStaff(staffWithSchedules);
       setStaffTimeSlots(staffSlotsMap);
     } catch (error) {
       console.error('Error loading staff and time slots:', error);
       toast.error('Neizdevās ielādēt pieejamos laikus');
       setAvailableStaff([]);
       setStaffTimeSlots({});
-    } finally {
-      setLoadingSlots(false);
-    }
-  };
-
-  const loadAvailableTimeSlots = async (professionalId: string, date: Date, service: any, staffMemberId?: string) => {
-    setLoadingSlots(true);
-    console.log('Loading available time slots for:', professionalId, date);
-    try {
-      const dayOfWeek = date.getDay();
-      const dateStr = date.toISOString().split('T')[0];
-
-      // Fetch professional's schedule for this day that includes this service
-      let scheduleQuery = supabase
-        .from('professional_schedules')
-        .select('*')
-        .eq('professional_id', professionalId)
-        .eq('day_of_week', dayOfWeek)
-        .eq('is_active', true);
-
-      // Filter by staff member if provided
-      if (staffMemberId) {
-        scheduleQuery = scheduleQuery.eq('staff_member_id', staffMemberId);
-      } else {
-        scheduleQuery = scheduleQuery.is('staff_member_id', null);
-      }
-
-      const { data: schedules, error: scheduleError } = await scheduleQuery;
-
-      // Filter schedules that include this service
-      const filteredSchedules = (schedules || []).filter(schedule =>
-        (schedule.available_services || []).includes(service.id)
-      );
-
-      console.log('Schedules loaded:', filteredSchedules);
-      if (scheduleError) throw scheduleError;
-
-      if (!filteredSchedules || filteredSchedules.length === 0) {
-        console.log('No schedules found for this day with this service');
-        setTimeSlots([]);
-        return;
-      }
-
-      // Get service duration (default 60 minutes if not set)
-      const serviceDuration = service.duration || 60;
-
-      // Fetch existing bookings for this date with start and end times
-      let bookingsQuery = supabase
-        .from('bookings')
-        .select('booking_time, booking_end_time')
-        .eq('professional_id', professionalId)
-        .eq('booking_date', dateStr)
-        .in('status', ['pending', 'confirmed']);
-
-      // Filter by staff member if provided
-      if (staffMemberId) {
-        bookingsQuery = bookingsQuery.eq('staff_member_id', staffMemberId);
-      } else {
-        bookingsQuery = bookingsQuery.is('staff_member_id', null);
-      }
-
-      const { data: bookings, error: bookingsError } = await bookingsQuery;
-
-      console.log('Bookings loaded for date:', dateStr, bookings);
-      if (bookingsError) throw bookingsError;
-
-      // Create array of booked time ranges
-      const bookedRanges = (bookings || []).map(b => {
-        const startTime = b.booking_time.substring(0, 5); // HH:MM
-        const endTime = b.booking_end_time.substring(0, 5); // HH:MM
-        return { start: startTime, end: endTime };
-      });
-      console.log('Booked time ranges:', bookedRanges);
-
-      // Helper function to convert time string to minutes
-      const timeToMinutes = (time: string): number => {
-        const [hours, minutes] = time.split(':').map(Number);
-        return hours * 60 + minutes;
-      };
-
-      // Helper function to check if a time range overlaps with any booked range
-      const hasOverlap = (slotStart: string, slotEnd: string): boolean => {
-        const slotStartMin = timeToMinutes(slotStart);
-        const slotEndMin = timeToMinutes(slotEnd);
-        
-        return bookedRanges.some(range => {
-          const rangeStartMin = timeToMinutes(range.start);
-          const rangeEndMin = timeToMinutes(range.end);
-          
-          // Check if ranges overlap
-          return (
-            (slotStartMin >= rangeStartMin && slotStartMin < rangeEndMin) ||
-            (slotEndMin > rangeStartMin && slotEndMin <= rangeEndMin) ||
-            (slotStartMin <= rangeStartMin && slotEndMin >= rangeEndMin)
-          );
-        });
-      };
-
-      // Generate ALL time slots (both available and booked) with status
-      const slots: Array<{ time: string; isBooked: boolean }> = [];
-      filteredSchedules.forEach(schedule => {
-        const startHour = parseInt(schedule.start_time.split(':')[0]);
-        const startMinute = parseInt(schedule.start_time.split(':')[1]);
-        const endHour = parseInt(schedule.end_time.split(':')[0]);
-        const endMinute = parseInt(schedule.end_time.split(':')[1]);
-        const interval = schedule.time_slot_interval || 30;
-
-        let currentHour = startHour;
-        let currentMinute = startMinute;
-
-        while (
-          currentHour < endHour || 
-          (currentHour === endHour && currentMinute < endMinute)
-        ) {
-          const timeSlot = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-          
-          // Calculate end time for this slot based on service duration
-          let slotEndMinute = currentMinute + serviceDuration;
-          let slotEndHour = currentHour;
-          if (slotEndMinute >= 60) {
-            slotEndHour += Math.floor(slotEndMinute / 60);
-            slotEndMinute = slotEndMinute % 60;
-          }
-          const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMinute).padStart(2, '0')}`;
-
-          // Check if service fits within schedule end time
-          const slotEndTimeMin = slotEndHour * 60 + slotEndMinute;
-          const scheduleEndTimeMin = endHour * 60 + endMinute;
-          const serviceFits = slotEndTimeMin <= scheduleEndTimeMin;
-
-          // Check if this slot overlaps with any booked time range
-          const isBooked = serviceFits && hasOverlap(timeSlot, slotEndTime);
-
-          // Only add slot if service fits
-          if (serviceFits) {
-            slots.push({
-              time: timeSlot,
-              isBooked: isBooked
-            });
-          }
-
-          // Increment by time slot interval
-          currentMinute += interval;
-          if (currentMinute >= 60) {
-            currentHour += Math.floor(currentMinute / 60);
-            currentMinute = currentMinute % 60;
-          }
-        }
-      });
-
-      console.log('All time slots with status:', slots);
-      setTimeSlots(slots.sort((a, b) => a.time.localeCompare(b.time)));
-    } catch (error) {
-      console.error('Error loading time slots:', error);
-      toast.error('Neizdevās ielādēt pieejamos laikus');
-      setTimeSlots([]);
     } finally {
       setLoadingSlots(false);
     }
@@ -612,7 +463,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                 <Calendar
                   mode="single"
                   selected={formData.date}
-                  onSelect={(date) => setFormData({ ...formData, date, serviceId: undefined, time: undefined })}
+                  onSelect={(date) => setFormData({ ...formData, date, time: undefined, staffMemberId: undefined })}
                   disabled={(date) => date < new Date()}
                   className={cn("rounded-xl pointer-events-auto")}
                 />
@@ -634,7 +485,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                   </div>
                 ) : availableStaff.length === 0 ? (
                   <div className="text-sm text-amber-600 text-center py-4 bg-amber-50 rounded-xl">
-                    Šajā dienā nav pieejamu meistaru
+                    Nav pieejamu meistaru šim pakalpojumam vai datumam
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -657,7 +508,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                           </div>
                           {availableSlots.length === 0 ? (
                             <div className="text-sm text-center py-3 text-gray-500 bg-gray-100 rounded-xl">
-                              Šajā dienā nav pieejamu pakalpojumu
+                              Nav pieejamu laiku
                             </div>
                           ) : (
                             <div className="grid grid-cols-3 gap-2">
