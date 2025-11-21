@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import LoadingAnimation from '@/components/LoadingAnimation';
+import EmptyStateAnimation from '@/components/EmptyStateAnimation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import LocationMap from '@/components/LocationMap';
 import EditableLocationMap from '@/components/EditableLocationMap';
@@ -498,10 +500,7 @@ const ProfessionalDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center">
-        <div className="text-center">
-          <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary animate-pulse" />
-          <p className="text-muted-foreground">{t.loading}</p>
-        </div>
+        <LoadingAnimation size={100} text={t.loading} />
       </div>
     );
   }
@@ -908,9 +907,11 @@ const ProfessionalDashboard = () => {
               </CardHeader>
               <CardContent>
                 {bookings.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    Nav rezervāciju
-                  </p>
+                  <EmptyStateAnimation 
+                    size={100}
+                    title="Nav rezervāciju"
+                    description="Kad klienti veiks rezervācijas, tās parādīsies šeit"
+                  />
                 ) : (
                   <div className="space-y-4">
                     {bookings.map((booking) => (
@@ -1054,9 +1055,11 @@ const ProfessionalDashboard = () => {
               </CardHeader>
               <CardContent>
                 {services.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    Jums vēl nav pievienotu pakalpojumu
-                  </p>
+                  <EmptyStateAnimation 
+                    size={100}
+                    title="Jums vēl nav pievienotu pakalpojumu"
+                    description="Pievienojiet savus pakalpojumus, lai klienti varētu veikt rezervācijas"
+                  />
                 ) : (
                   <div className="space-y-4">
                     {services.map((service) => (

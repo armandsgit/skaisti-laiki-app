@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, CheckCircle } from 'lucide-react';
+import { X } from 'lucide-react';
+import Lottie from 'lottie-react';
+import successAnimation from '@/assets/animations/success-confetti.json';
+import { triggerSuccessHaptic } from '@/lib/haptic';
 
 interface BookingSuccessModalProps {
   open: boolean;
@@ -13,6 +16,9 @@ export default function BookingSuccessModal({ open, onClose }: BookingSuccessMod
 
   useEffect(() => {
     if (open) {
+      // Trigger success haptic feedback
+      triggerSuccessHaptic();
+      
       // Trigger opening animation
       setTimeout(() => setIsVisible(true), 10);
       
@@ -51,7 +57,7 @@ export default function BookingSuccessModal({ open, onClose }: BookingSuccessMod
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
         <div
           className={`bg-white rounded-[24px] shadow-2xl p-8 max-w-sm w-full pointer-events-auto transition-all duration-300 ease-out ${
-            isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+            isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
           }`}
           style={{
             transformOrigin: 'center',
@@ -68,10 +74,14 @@ export default function BookingSuccessModal({ open, onClose }: BookingSuccessMod
 
           {/* Content */}
           <div className="text-center">
-            {/* Success Icon */}
-            <div className="mb-5 flex justify-center">
-              <div className={`transition-all duration-500 ${isVisible ? 'scale-100 rotate-0' : 'scale-0 rotate-45'}`}>
-                <CheckCircle className="w-16 h-16 text-green-500" strokeWidth={2} />
+            {/* Success Animation */}
+            <div className="mb-4 flex justify-center">
+              <div className={`transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+                <Lottie 
+                  animationData={successAnimation} 
+                  loop={false}
+                  style={{ width: 120, height: 120 }}
+                />
               </div>
             </div>
 

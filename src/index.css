@@ -298,11 +298,48 @@
   /* Tap Feedback */
   .tap-feedback {
     -webkit-tap-highlight-color: transparent;
-    transition: transform 0.1s ease;
+    transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .tap-feedback:active {
     transform: scale(0.97);
+  }
+
+  /* Button Press Animation - Enhanced */
+  .button-press {
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .button-press:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+
+  /* Button Bounce Animation */
+  .button-bounce {
+    -webkit-tap-highlight-color: transparent;
+    animation: button-idle 2s ease-in-out infinite;
+  }
+  
+  @keyframes button-idle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+  }
+  
+  .button-bounce:active {
+    animation: none;
+    transform: scale(0.95);
+  }
+
+  /* Subtle Pulse on Load */
+  .pulse-on-load {
+    animation: pulse-gentle 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-gentle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
   }
 
   .glow-effect {
