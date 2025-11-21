@@ -147,7 +147,15 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
               <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold text-gray-900 mb-1.5 leading-tight">
+              <h3 
+                onClick={() => {
+                  setIsVisible(false);
+                  setTimeout(() => {
+                    navigate(`/professional/${master.id}`);
+                  }, 150);
+                }}
+                className="text-xl font-bold text-gray-900 mb-1.5 leading-tight cursor-pointer hover:text-primary transition-colors active:scale-[0.98]"
+              >
                 {master.profiles.name}
               </h3>
               <div className="flex items-center gap-2">
