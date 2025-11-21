@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Plus, Edit2, Trash2, User } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptic';
@@ -18,6 +19,11 @@ interface StaffMember {
   is_active: boolean;
 }
 
+interface Service {
+  id: string;
+  name: string;
+}
+
 
 interface StaffMemberManagerProps {
   professionalId: string;
@@ -27,9 +33,11 @@ interface StaffMemberManagerProps {
 
 const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaffMemberId }: StaffMemberManagerProps) => {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     position: '',
@@ -38,7 +46,23 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
 
   useEffect(() => {
     loadStaffMembers();
+    loadServices();
   }, [professionalId]);
+
+  const loadServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name')
+        .eq('professional_id', professionalId)
+        .order('name');
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error('Error loading services:', error);
+    }
+  };
 
   const loadStaffMembers = async () => {
     try {
@@ -70,6 +94,8 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     }
 
     try {
+      let staffId: string;
+
       if (editingStaff) {
         const { error } = await supabase
           .from('staff_members')
@@ -81,24 +107,50 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
           .eq('id', editingStaff.id);
 
         if (error) throw error;
+        staffId = editingStaff.id;
+
+        // Delete previous service assignments
+        await supabase
+          .from('master_services')
+          .delete()
+          .eq('staff_member_id', staffId);
+
         toast.success('Meistars atjaunināts');
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('staff_members')
           .insert({
             professional_id: professionalId,
             name: formData.name,
             position: formData.position || null,
             avatar: formData.avatar || null,
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+        staffId = data.id;
         toast.success('Meistars pievienots');
+      }
+
+      // Assign services to staff member
+      if (selectedServiceIds.length > 0) {
+        const { error: masterServicesError } = await supabase
+          .from('master_services')
+          .insert(
+            selectedServiceIds.map(serviceId => ({
+              staff_member_id: staffId,
+              service_id: serviceId
+            }))
+          );
+
+        if (masterServicesError) throw masterServicesError;
       }
 
       setIsDialogOpen(false);
       setEditingStaff(null);
       setFormData({ name: '', position: '', avatar: '' });
+      setSelectedServiceIds([]);
       loadStaffMembers();
     } catch (error) {
       console.error('Error saving staff member:', error);
@@ -106,13 +158,28 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     }
   };
 
-  const handleEdit = (staff: StaffMember) => {
+  const handleEdit = async (staff: StaffMember) => {
     setEditingStaff(staff);
     setFormData({
       name: staff.name,
       position: staff.position || '',
       avatar: staff.avatar || '',
     });
+
+    // Load staff member's current services
+    try {
+      const { data, error } = await supabase
+        .from('master_services')
+        .select('service_id')
+        .eq('staff_member_id', staff.id);
+
+      if (error) throw error;
+      setSelectedServiceIds(data?.map(ms => ms.service_id) || []);
+    } catch (error) {
+      console.error('Error loading staff services:', error);
+      setSelectedServiceIds([]);
+    }
+
     setIsDialogOpen(true);
   };
 
@@ -141,6 +208,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
   const openDialog = () => {
     setEditingStaff(null);
     setFormData({ name: '', position: '', avatar: '' });
+    setSelectedServiceIds([]);
     setIsDialogOpen(true);
   };
 
@@ -211,6 +279,41 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                     onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
                     placeholder="https://..."
                   />
+                </div>
+                <div>
+                  <Label>Pakalpojumi</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Atlasiet pakalpojumus, ko šis meistars piedāvā
+                  </p>
+                  {services.length === 0 ? (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Nav pieejamu pakalpojumu. Vispirms pievienojiet pakalpojumus.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 mt-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                      {services.map((service) => (
+                        <div key={service.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={service.id}
+                            checked={selectedServiceIds.includes(service.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedServiceIds([...selectedServiceIds, service.id]);
+                              } else {
+                                setSelectedServiceIds(selectedServiceIds.filter(id => id !== service.id));
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={service.id}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {service.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">
