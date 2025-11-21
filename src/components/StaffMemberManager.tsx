@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Plus, Edit2, Trash2, User } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptic';
@@ -290,28 +289,78 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                       Nav pieejamu pakalpojumu. Vispirms pievienojiet pakalpojumus.
                     </p>
                   ) : (
-                    <div className="space-y-2 mt-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                      {services.map((service) => (
-                        <div key={service.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={service.id}
-                            checked={selectedServiceIds.includes(service.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedServiceIds([...selectedServiceIds, service.id]);
-                              } else {
+                    <div className="space-y-2 mt-3">
+                      {services.map((service) => {
+                        const isChecked = selectedServiceIds.includes(service.id);
+                        return (
+                          <div
+                            key={service.id}
+                            onClick={() => {
+                              triggerHaptic('light');
+                              if (isChecked) {
                                 setSelectedServiceIds(selectedServiceIds.filter(id => id !== service.id));
+                              } else {
+                                setSelectedServiceIds([...selectedServiceIds, service.id]);
                               }
                             }}
-                          />
-                          <label
-                            htmlFor={service.id}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            className={`
+                              flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer
+                              transition-all duration-200 active:scale-[0.98]
+                              ${isChecked
+                                ? 'border-primary bg-gradient-to-r from-primary/10 to-secondary/10 shadow-sm'
+                                : 'border-gray-200 bg-white hover:border-primary/40 hover:bg-gray-50'
+                              }
+                            `}
                           >
-                            {service.name}
-                          </label>
-                        </div>
-                      ))}
+                            {/* Modern Pill Checkbox */}
+                            <div
+                              className={`
+                                w-16 h-8 rounded-full relative flex-shrink-0
+                                transition-all duration-300 ease-out
+                                ${isChecked
+                                  ? 'bg-gradient-to-r from-primary to-secondary'
+                                  : 'bg-gray-300'
+                                }
+                              `}
+                            >
+                              <div
+                                className={`
+                                  absolute top-0.5 w-7 h-7 rounded-full bg-white shadow-md
+                                  transition-all duration-300 ease-out flex items-center justify-center
+                                  ${isChecked ? 'left-[calc(100%-28px-2px)]' : 'left-0.5'}
+                                `}
+                              >
+                                {isChecked && (
+                                  <svg
+                                    className="w-4 h-4 text-primary animate-in zoom-in duration-200"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={3}
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Service Name */}
+                            <label
+                              className={`
+                                text-base font-medium cursor-pointer select-none
+                                transition-colors duration-200
+                                ${isChecked ? 'text-foreground' : 'text-muted-foreground'}
+                              `}
+                            >
+                              {service.name}
+                            </label>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
