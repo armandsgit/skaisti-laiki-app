@@ -271,10 +271,10 @@ const ProfessionalProfile = () => {
         {professional.latitude && professional.longitude && (
           <Card className="border-0 shadow-sm overflow-hidden animate-fade-in">
             <CardContent className="p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
-                Atrašanās vieta
-              </h3>
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
+                <h3 className="font-semibold">Atrašanās vieta</h3>
+              </div>
               {professional.address && (
                 <p className="text-sm text-muted-foreground mb-3">{professional.address}</p>
               )}
