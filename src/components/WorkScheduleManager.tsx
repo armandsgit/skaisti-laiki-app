@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Clock, Calendar, Plus, X } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptic';
@@ -340,67 +339,6 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
                         </SelectContent>
                       </Select>
                     </div>
-
-                    {/* Available Services */}
-                    {services.length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-xs text-muted-foreground">
-                            Pieejamie pakalpojumi šajā dienā
-                          </Label>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (schedule.id) {
-                                const allServiceIds = services.map(s => s.id);
-                                const allSelected = allServiceIds.every(id => 
-                                  (schedule.available_services || []).includes(id)
-                                );
-                                updateSchedule(schedule.id, { 
-                                  available_services: allSelected ? [] : allServiceIds 
-                                });
-                              }
-                            }}
-                            className="h-6 text-xs"
-                          >
-                            {(schedule.available_services || []).length === services.length 
-                              ? 'Noņemt visus' 
-                              : 'Atlasīt visus'}
-                          </Button>
-                        </div>
-                        <div className="space-y-2 max-h-40 overflow-y-auto p-2 bg-background rounded-lg">
-                          {services.map((service) => (
-                            <div key={service.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`${schedule.id}-${service.id}`}
-                                checked={(schedule.available_services || []).includes(service.id)}
-                                onCheckedChange={(checked) => {
-                                  if (schedule.id) {
-                                    const currentServices = schedule.available_services || [];
-                                    const newServices = checked
-                                      ? [...currentServices, service.id]
-                                      : currentServices.filter(id => id !== service.id);
-                                    updateSchedule(schedule.id, { available_services: newServices });
-                                  }
-                                }}
-                              />
-                              <label
-                                htmlFor={`${schedule.id}-${service.id}`}
-                                className="text-sm cursor-pointer"
-                              >
-                                {service.name} ({service.duration} min, €{service.price})
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                        {(schedule.available_services || []).length === 0 && (
-                          <p className="text-xs text-amber-600 mt-1">
-                            ⚠️ Nav izvēlēts neviens pakalpojums - klients nevarēs rezervēt
-                          </p>
-                        )}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
