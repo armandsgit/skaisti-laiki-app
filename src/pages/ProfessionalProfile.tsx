@@ -72,6 +72,14 @@ const ProfessionalProfile = () => {
     triggerHaptic('medium');
 
     try {
+      // Calculate booking end time based on service duration
+      const [hours, minutes] = formData.time.split(':').map(Number);
+      const startMinutes = hours * 60 + minutes;
+      const endMinutes = startMinutes + selectedService.duration;
+      const endHours = Math.floor(endMinutes / 60);
+      const endMins = endMinutes % 60;
+      const bookingEndTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+
       const { error } = await supabase
         .from('bookings')
         .insert({
@@ -80,6 +88,7 @@ const ProfessionalProfile = () => {
           service_id: selectedService.id,
           booking_date: formData.date.toISOString().split('T')[0],
           booking_time: formData.time,
+          booking_end_time: bookingEndTime,
           notes: formData.notes || '',
           status: 'pending'
         });

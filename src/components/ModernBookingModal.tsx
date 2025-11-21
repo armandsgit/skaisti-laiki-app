@@ -167,10 +167,10 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
       // Get service duration
       const serviceDuration = service.duration || 30;
 
-      // Fetch existing bookings for this date
+      // Fetch existing bookings for this date with start and end times
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select('booking_time')
+        .select('booking_time, booking_end_time')
         .eq('professional_id', professionalId)
         .eq('booking_date', dateStr)
         .in('status', ['pending', 'confirmed']);
@@ -178,14 +178,37 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
       console.log('Bookings loaded for date:', dateStr, bookings);
       if (bookingsError) throw bookingsError;
 
-      // Extract booked times and normalize format (remove seconds)
-      const bookedTimes = new Set(
-        bookings?.map(b => {
-          const time = b.booking_time.substring(0, 5); // Extract HH:MM from HH:MM:SS
-          return time;
-        }) || []
-      );
-      console.log('Booked times (normalized):', Array.from(bookedTimes));
+      // Create array of booked time ranges
+      const bookedRanges = (bookings || []).map(b => {
+        const startTime = b.booking_time.substring(0, 5); // HH:MM
+        const endTime = b.booking_end_time.substring(0, 5); // HH:MM
+        return { start: startTime, end: endTime };
+      });
+      console.log('Booked time ranges:', bookedRanges);
+
+      // Helper function to convert time string to minutes
+      const timeToMinutes = (time: string): number => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+      };
+
+      // Helper function to check if a time range overlaps with any booked range
+      const hasOverlap = (slotStart: string, slotEnd: string): boolean => {
+        const slotStartMin = timeToMinutes(slotStart);
+        const slotEndMin = timeToMinutes(slotEnd);
+        
+        return bookedRanges.some(range => {
+          const rangeStartMin = timeToMinutes(range.start);
+          const rangeEndMin = timeToMinutes(range.end);
+          
+          // Check if ranges overlap
+          return (
+            (slotStartMin >= rangeStartMin && slotStartMin < rangeEndMin) ||
+            (slotEndMin > rangeStartMin && slotEndMin <= rangeEndMin) ||
+            (slotStartMin <= rangeStartMin && slotEndMin >= rangeEndMin)
+          );
+        });
+      };
 
       // Generate ALL time slots (both available and booked) with status
       const slots: Array<{ time: string; isBooked: boolean }> = [];
@@ -205,24 +228,28 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         ) {
           const timeSlot = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
           
-          // Calculate end time for this slot
+          // Calculate end time for this slot based on service duration
           let slotEndMinute = currentMinute + serviceDuration;
           let slotEndHour = currentHour;
           if (slotEndMinute >= 60) {
             slotEndHour += Math.floor(slotEndMinute / 60);
             slotEndMinute = slotEndMinute % 60;
           }
+          const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMinute).padStart(2, '0')}`;
 
           // Check if service fits within schedule end time
-          const slotEndTime = slotEndHour * 60 + slotEndMinute;
-          const scheduleEndTime = endHour * 60 + endMinute;
-          const serviceFits = slotEndTime <= scheduleEndTime;
+          const slotEndTimeMin = slotEndHour * 60 + slotEndMinute;
+          const scheduleEndTimeMin = endHour * 60 + endMinute;
+          const serviceFits = slotEndTimeMin <= scheduleEndTimeMin;
+
+          // Check if this slot overlaps with any booked time range
+          const isBooked = serviceFits && hasOverlap(timeSlot, slotEndTime);
 
           // Only add slot if service fits
           if (serviceFits) {
             slots.push({
               time: timeSlot,
-              isBooked: bookedTimes.has(timeSlot)
+              isBooked: isBooked
             });
           }
 
