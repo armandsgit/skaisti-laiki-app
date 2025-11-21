@@ -61,8 +61,7 @@ const ProfessionalDashboard = () => {
     name: '',
     price: '',
     duration: '',
-    description: '',
-    staff_member_id: ''
+    description: ''
   });
   const [userProfile, setUserProfile] = useState<any>(null);
   const [editedProfile, setEditedProfile] = useState({
@@ -172,14 +171,7 @@ const ProfessionalDashboard = () => {
     
     const { data } = await supabase
       .from('services')
-      .select(`
-        *,
-        staff_members:staff_member_id (
-          id,
-          name,
-          position
-        )
-      `)
+      .select('*')
       .eq('professional_id', profile.id);
     
     setServices(data || []);
@@ -258,8 +250,7 @@ const ProfessionalDashboard = () => {
             name: validatedData.name,
             price: validatedData.price,
             duration: validatedData.duration,
-            description: validatedData.description,
-            staff_member_id: newService.staff_member_id || null
+            description: validatedData.description
           })
           .eq('id', editingService.id);
 
@@ -267,7 +258,7 @@ const ProfessionalDashboard = () => {
           toast.success('Pakalpojums atjaunināts!');
           setServiceDialogOpen(false);
           setEditingService(null);
-          setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: undefined });
+          setNewService({ name: '', price: '', duration: '', description: '' });
           loadServices();
         } else {
           toast.error(t.error);
@@ -280,14 +271,13 @@ const ProfessionalDashboard = () => {
             name: validatedData.name,
             price: validatedData.price,
             duration: validatedData.duration,
-            description: validatedData.description,
-            staff_member_id: newService.staff_member_id || null
+            description: validatedData.description
           });
         
         if (!error) {
           toast.success(t.serviceAdded);
           setServiceDialogOpen(false);
-          setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: undefined });
+          setNewService({ name: '', price: '', duration: '', description: '' });
           loadServices();
         } else {
           toast.error(t.error);
@@ -308,8 +298,7 @@ const ProfessionalDashboard = () => {
       name: service.name,
       price: service.price.toString(),
       duration: service.duration.toString(),
-      description: service.description || '',
-      staff_member_id: service.staff_member_id || undefined
+      description: service.description || ''
     });
     setServiceDialogOpen(true);
   };
@@ -651,7 +640,7 @@ const ProfessionalDashboard = () => {
                 label="Pievienot pakalpojumu"
                 onClick={() => {
                   setEditingService(null);
-                  setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: undefined });
+                  setNewService({ name: '', price: '', duration: '', description: '' });
                   setServiceDialogOpen(true);
                 }}
               />
@@ -837,9 +826,9 @@ const ProfessionalDashboard = () => {
                 <DialogTrigger asChild>
                   <Button
                     onClick={() => {
-                      setEditingService(null);
-                      setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: undefined });
-                    }}
+      setEditingService(null);
+      setNewService({ name: '', price: '', duration: '', description: '' });
+    }}
                     className="bg-gradient-to-r from-primary to-secondary border-0"
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -897,31 +886,6 @@ const ProfessionalDashboard = () => {
                         placeholder="Pakalpojuma apraksts..."
                         rows={3}
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="staff_member">Meistars (neobligāti)</Label>
-                      <Select
-                        value={newService.staff_member_id || "none"}
-                        onValueChange={(value) => setNewService({ 
-                          ...newService, 
-                          staff_member_id: value === "none" ? undefined : value 
-                        })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Izvēlieties meistaru vai atstājiet tukšu" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Nav piesaistīts</SelectItem>
-                          {staffMembers.map((staff) => (
-                            <SelectItem key={staff.id} value={staff.id}>
-                              {staff.name} {staff.position && `- ${staff.position}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Ja piesaistīsiet pakalpojumu konkrētam meistaram, tikai viņš varēs to sniegt
-                      </p>
                     </div>
                     <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary border-0">
                       {editingService ? 'Saglabāt izmaiņas' : 'Pievienot pakalpojumu'}
