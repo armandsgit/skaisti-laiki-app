@@ -36,7 +36,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     position: '',
@@ -135,16 +135,14 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
         toast.success('Meistars pievienots');
       }
 
-      // Assign services to staff member
-      if (selectedServiceIds.length > 0) {
+      // Assign service to staff member
+      if (selectedServiceId) {
         const { error: masterServicesError } = await supabase
           .from('master_services')
-          .insert(
-            selectedServiceIds.map(serviceId => ({
-              staff_member_id: staffId,
-              service_id: serviceId
-            }))
-          );
+          .insert({
+            staff_member_id: staffId,
+            service_id: selectedServiceId
+          });
 
         if (masterServicesError) throw masterServicesError;
       }
@@ -152,7 +150,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
       setIsDialogOpen(false);
       setEditingStaff(null);
       setFormData({ name: '', position: '', avatar: '', showOnProfile: true });
-      setSelectedServiceIds([]);
+      setSelectedServiceId(null);
       loadStaffMembers();
     } catch (error) {
       console.error('Error saving staff member:', error);
@@ -169,18 +167,19 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
       showOnProfile: (staff as any).show_on_profile ?? true,
     });
 
-    // Load staff member's current services
+    // Load staff member's current service (only one)
     try {
       const { data, error } = await supabase
         .from('master_services')
         .select('service_id')
-        .eq('staff_member_id', staff.id);
+        .eq('staff_member_id', staff.id)
+        .maybeSingle();
 
       if (error) throw error;
-      setSelectedServiceIds(data?.map(ms => ms.service_id) || []);
+      setSelectedServiceId(data?.service_id || null);
     } catch (error) {
-      console.error('Error loading staff services:', error);
-      setSelectedServiceIds([]);
+      console.error('Error loading staff service:', error);
+      setSelectedServiceId(null);
     }
 
     setIsDialogOpen(true);
@@ -211,7 +210,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
   const openDialog = () => {
     setEditingStaff(null);
     setFormData({ name: '', position: '', avatar: '', showOnProfile: true });
-    setSelectedServiceIds([]);
+    setSelectedServiceId(null);
     setIsDialogOpen(true);
   };
 
@@ -321,7 +320,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                 <div>
                   <Label>Pakalpojumi</Label>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Atlasiet pakalpojumus, ko šis meistars piedāvā
+                    Atlasiet pakalpojumu, ko šis meistars piedāvā
                   </p>
                   {services.length === 0 ? (
                     <p className="text-sm text-muted-foreground mt-2">
@@ -330,61 +329,37 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                   ) : (
                     <div className="space-y-2 mt-3">
                       {services.map((service) => {
-                        const isChecked = selectedServiceIds.includes(service.id);
+                        const isSelected = selectedServiceId === service.id;
                         return (
                           <div
                             key={service.id}
                             onClick={() => {
                               triggerHaptic('light');
-                              if (isChecked) {
-                                setSelectedServiceIds(selectedServiceIds.filter(id => id !== service.id));
-                              } else {
-                                setSelectedServiceIds([...selectedServiceIds, service.id]);
-                              }
+                              setSelectedServiceId(service.id);
                             }}
                             className={`
                               flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer
                               transition-all duration-200 active:scale-[0.98]
-                              ${isChecked
+                              ${isSelected
                                 ? 'border-primary bg-gradient-to-r from-primary/10 to-secondary/10 shadow-sm'
                                 : 'border-gray-200 bg-white hover:border-primary/40 hover:bg-gray-50'
                               }
                             `}
                           >
-                            {/* Modern Pill Checkbox */}
+                            {/* Radio Button */}
                             <div
                               className={`
-                                w-16 h-8 rounded-full relative flex-shrink-0
-                                transition-all duration-300 ease-out
-                                ${isChecked
-                                  ? 'bg-gradient-to-r from-primary to-secondary'
-                                  : 'bg-gray-300'
+                                w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center
+                                transition-all duration-200
+                                ${isSelected
+                                  ? 'border-primary bg-primary'
+                                  : 'border-gray-300'
                                 }
                               `}
                             >
-                              <div
-                                className={`
-                                  absolute top-0.5 w-7 h-7 rounded-full bg-white shadow-md
-                                  transition-all duration-300 ease-out flex items-center justify-center
-                                  ${isChecked ? 'left-[calc(100%-28px-2px)]' : 'left-0.5'}
-                                `}
-                              >
-                                {isChecked && (
-                                  <svg
-                                    className="w-4 h-4 text-primary animate-in zoom-in duration-200"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={3}
-                                      d="M5 13l4 4L19 7"
-                                    />
-                                  </svg>
-                                )}
-                              </div>
+                              {isSelected && (
+                                <div className="w-3 h-3 rounded-full bg-white animate-in zoom-in duration-200" />
+                              )}
                             </div>
 
                             {/* Service Name */}
@@ -392,7 +367,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                               className={`
                                 text-base font-medium cursor-pointer select-none
                                 transition-colors duration-200
-                                ${isChecked ? 'text-foreground' : 'text-muted-foreground'}
+                                ${isSelected ? 'text-foreground' : 'text-muted-foreground'}
                               `}
                             >
                               {service.name}
