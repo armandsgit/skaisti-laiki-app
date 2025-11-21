@@ -21,9 +21,10 @@ interface StaffMember {
 interface StaffMemberManagerProps {
   professionalId: string;
   onSelectStaffMember?: (staffMemberId: string | null) => void;
+  selectedStaffMemberId?: string | null;
 }
 
-const StaffMemberManager = ({ professionalId, onSelectStaffMember }: StaffMemberManagerProps) => {
+const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaffMemberId }: StaffMemberManagerProps) => {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -232,12 +233,18 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember }: StaffMember
           </div>
         ) : (
           <div className="space-y-3">
-            {staffMembers.map((staff) => (
-              <div
-                key={staff.id}
-                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => onSelectStaffMember?.(staff.id)}
-              >
+            {staffMembers.map((staff) => {
+              const isSelected = selectedStaffMemberId === staff.id;
+              return (
+                <div
+                  key={staff.id}
+                  className={`flex items-center gap-3 p-3 border-2 rounded-lg transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
+                      : 'border-border hover:bg-muted/50 hover:border-primary/30'
+                  }`}
+                  onClick={() => onSelectStaffMember?.(staff.id)}
+                >
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={staff.avatar || undefined} />
                   <AvatarFallback>
@@ -274,7 +281,8 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember }: StaffMember
                   </Button>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </CardContent>

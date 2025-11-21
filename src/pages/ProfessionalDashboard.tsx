@@ -963,6 +963,7 @@ const ProfessionalDashboard = () => {
             
             <StaffMemberManager
               professionalId={profile.id}
+              selectedStaffMemberId={selectedStaffMember}
               onSelectStaffMember={(staffId) => {
                 setSelectedStaffMember(staffId);
               }}
