@@ -153,31 +153,71 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       const dayOfWeek = date.getDay();
       const dateStr = date.toISOString().split('T')[0];
 
-      // If a service is selected, filter staff by service assignment
-      let staffQuery = supabase
-        .from('staff_members')
-        .select('*')
-        .eq('professional_id', professionalId)
-        .eq('is_active', true);
+      let staffToShow: any[] = [];
 
-      // If a specific service is selected, only show staff assigned to that service
+      // If a service is selected, filter staff by service assignment
       if (formData.serviceId) {
+        // First, check if the service has a direct staff assignment
         const { data: selectedService } = await supabase
           .from('services')
           .select('staff_member_id')
           .eq('id', formData.serviceId)
           .single();
 
-        // If service is assigned to a specific staff member, show only that staff member
         if (selectedService?.staff_member_id) {
-          staffQuery = staffQuery.eq('id', selectedService.staff_member_id);
+          // Service is assigned to a specific staff member
+          const { data: staff, error: staffError } = await supabase
+            .from('staff_members')
+            .select('*')
+            .eq('id', selectedService.staff_member_id)
+            .eq('is_active', true)
+            .single();
+
+          if (staffError) throw staffError;
+          if (staff) staffToShow = [staff];
+        } else {
+          // Service is not assigned to a specific staff member
+          // Find staff members who have this service in their schedules
+          const { data: schedules } = await supabase
+            .from('professional_schedules')
+            .select('staff_member_id, available_services')
+            .eq('professional_id', professionalId)
+            .eq('day_of_week', dayOfWeek)
+            .eq('is_active', true)
+            .not('staff_member_id', 'is', null);
+
+          // Filter schedules that include this service
+          const staffIdsWithService = schedules
+            ?.filter(schedule => 
+              (schedule.available_services || []).includes(formData.serviceId)
+            )
+            .map(schedule => schedule.staff_member_id)
+            .filter((id, index, self) => id && self.indexOf(id) === index) || [];
+
+          if (staffIdsWithService.length > 0) {
+            const { data: staff, error: staffError } = await supabase
+              .from('staff_members')
+              .select('*')
+              .in('id', staffIdsWithService)
+              .eq('is_active', true);
+
+            if (staffError) throw staffError;
+            if (staff) staffToShow = staff;
+          }
         }
-        // If service has no staff assignment (null), show all staff members
+      } else {
+        // No service selected, show all active staff
+        const { data: staff, error: staffError } = await supabase
+          .from('staff_members')
+          .select('*')
+          .eq('professional_id', professionalId)
+          .eq('is_active', true);
+
+        if (staffError) throw staffError;
+        if (staff) staffToShow = staff;
       }
 
-      const { data: staff, error: staffError } = await staffQuery;
-
-      if (staffError) throw staffError;
+      const staff = staffToShow;
 
       if (!staff || staff.length === 0) {
         setAvailableStaff([]);
