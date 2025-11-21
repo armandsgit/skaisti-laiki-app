@@ -7,8 +7,8 @@ const BottomNavigation = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  // Don't show on auth page or when viewing someone else's profile
-  if (location.pathname === '/auth' || !user) return null;
+  // Don't show on auth page, admin panel, or when not logged in
+  if (location.pathname === '/auth' || location.pathname.startsWith('/admin') || !user) return null;
 
   // Check if viewing a professional profile (not dashboard)
   const isViewingProfile = location.pathname.startsWith('/professional/') && 
