@@ -68,10 +68,11 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
     
     // Close if dragged down more than 80px
     if (deltaY > 80) {
+      setDragOffset(0); // Reset offset first for smooth transition
       setIsVisible(false);
       setTimeout(() => {
         onClose();
-      }, 200);
+      }, 300); // Match the transition duration
     } 
     // Expand if dragged up more than 50px
     else if (deltaY < -50 && !isExpanded) {
@@ -93,7 +94,7 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
   };
 
   const baseHeight = isExpanded ? '75vh' : '45vh';
-  const transform = dragOffset > 0 ? `translateY(${dragOffset}px)` : 'translateY(0)';
+  const transform = dragOffset !== 0 ? `translateY(${dragOffset}px)` : undefined;
 
   return (
     <>
@@ -106,21 +107,27 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
           zIndex: 9998,
           pointerEvents: isVisible ? 'auto' : 'none'
         }}
-        onClick={onClose}
+        onClick={() => {
+          setDragOffset(0);
+          setIsVisible(false);
+          setTimeout(() => {
+            onClose();
+          }, 300);
+        }}
       />
       
       {/* Bottom Sheet */}
       <div
         ref={sheetRef}
         className={`fixed left-0 right-0 bg-white rounded-t-[28px] shadow-2xl transition-all duration-300 ease-out ${
-          isVisible ? 'translate-y-0' : 'translate-y-full'
+          isVisible ? '' : 'translate-y-full'
         }`}
         style={{
           bottom: 0,
           height: baseHeight,
           zIndex: 9999,
           paddingBottom: `calc(68px + max(env(safe-area-inset-bottom), 12px))`,
-          transform: isVisible ? transform : 'translateY(100%)',
+          transform: transform,
           touchAction: 'none',
         }}
         onTouchStart={handleTouchStart}
