@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Clock, Calendar, Plus, X } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptic';
@@ -14,6 +15,7 @@ interface Schedule {
   start_time: string;
   end_time: string;
   is_active: boolean;
+  time_slot_interval?: number;
 }
 
 interface WorkScheduleManagerProps {
@@ -75,6 +77,7 @@ const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
       start_time: '09:00',
       end_time: '17:00',
       is_active: true,
+      time_slot_interval: 30,
     };
 
     try {
@@ -201,50 +204,71 @@ const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
                 {schedules[day.value].map((schedule) => (
                   <div
                     key={schedule.id}
-                    className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg"
+                    className="flex flex-col gap-3 bg-muted/50 p-3 rounded-lg"
                   >
-                    <div className="flex-1 grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">No</Label>
-                        <input
-                          type="time"
-                          value={schedule.start_time}
-                          onChange={(e) =>
-                            schedule.id &&
-                            updateSchedule(schedule.id, { start_time: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border rounded-lg text-sm"
-                        />
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">No</Label>
+                          <input
+                            type="time"
+                            value={schedule.start_time}
+                            onChange={(e) =>
+                              schedule.id &&
+                              updateSchedule(schedule.id, { start_time: e.target.value })
+                            }
+                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Līdz</Label>
+                          <input
+                            type="time"
+                            value={schedule.end_time}
+                            onChange={(e) =>
+                              schedule.id &&
+                              updateSchedule(schedule.id, { end_time: e.target.value })
+                            }
+                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Līdz</Label>
-                        <input
-                          type="time"
-                          value={schedule.end_time}
-                          onChange={(e) =>
-                            schedule.id &&
-                            updateSchedule(schedule.id, { end_time: e.target.value })
+
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={schedule.is_active}
+                          onCheckedChange={(checked) =>
+                            schedule.id && updateSchedule(schedule.id, { is_active: checked })
                           }
-                          className="w-full px-3 py-2 border rounded-lg text-sm"
                         />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => schedule.id && deleteSchedule(schedule.id, day.value)}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={schedule.is_active}
-                        onCheckedChange={(checked) =>
-                          schedule.id && updateSchedule(schedule.id, { is_active: checked })
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Laika solis</Label>
+                      <Select
+                        value={String(schedule.time_slot_interval || 30)}
+                        onValueChange={(value) =>
+                          schedule.id && updateSchedule(schedule.id, { time_slot_interval: Number(value) })
                         }
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => schedule.id && deleteSchedule(schedule.id, day.value)}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
                       >
-                        <X className="w-4 h-4" />
-                      </Button>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15">15 minūtes</SelectItem>
+                          <SelectItem value="30">30 minūtes</SelectItem>
+                          <SelectItem value="60">60 minūtes</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 ))}

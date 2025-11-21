@@ -248,6 +248,7 @@ export type Database = {
           is_active: boolean | null
           professional_id: string
           start_time: string
+          time_slot_interval: number | null
           updated_at: string | null
         }
         Insert: {
@@ -258,6 +259,7 @@ export type Database = {
           is_active?: boolean | null
           professional_id: string
           start_time: string
+          time_slot_interval?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -268,6 +270,7 @@ export type Database = {
           is_active?: boolean | null
           professional_id?: string
           start_time?: string
+          time_slot_interval?: number | null
           updated_at?: string | null
         }
         Relationships: [

@@ -164,6 +164,9 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         return;
       }
 
+      // Get service duration
+      const serviceDuration = service.duration || 30;
+
       // Fetch existing bookings for this date
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
@@ -191,6 +194,7 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         const startMinute = parseInt(schedule.start_time.split(':')[1]);
         const endHour = parseInt(schedule.end_time.split(':')[0]);
         const endMinute = parseInt(schedule.end_time.split(':')[1]);
+        const interval = schedule.time_slot_interval || 30;
 
         let currentHour = startHour;
         let currentMinute = startMinute;
@@ -201,17 +205,32 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         ) {
           const timeSlot = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
           
-          // Add all slots with their booked status
-          slots.push({
-            time: timeSlot,
-            isBooked: bookedTimes.has(timeSlot)
-          });
+          // Calculate end time for this slot
+          let slotEndMinute = currentMinute + serviceDuration;
+          let slotEndHour = currentHour;
+          if (slotEndMinute >= 60) {
+            slotEndHour += Math.floor(slotEndMinute / 60);
+            slotEndMinute = slotEndMinute % 60;
+          }
 
-          // Increment by service duration (default 30 min intervals)
-          currentMinute += 30;
+          // Check if service fits within schedule end time
+          const slotEndTime = slotEndHour * 60 + slotEndMinute;
+          const scheduleEndTime = endHour * 60 + endMinute;
+          const serviceFits = slotEndTime <= scheduleEndTime;
+
+          // Only add slot if service fits
+          if (serviceFits) {
+            slots.push({
+              time: timeSlot,
+              isBooked: bookedTimes.has(timeSlot)
+            });
+          }
+
+          // Increment by time slot interval
+          currentMinute += interval;
           if (currentMinute >= 60) {
-            currentHour += 1;
-            currentMinute -= 60;
+            currentHour += Math.floor(currentMinute / 60);
+            currentMinute = currentMinute % 60;
           }
         }
       });
