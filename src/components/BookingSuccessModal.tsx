@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
-import Lottie from 'lottie-react';
-import successAnimation from '@/assets/animations/success-confetti.json';
+import { X, CheckCircle } from 'lucide-react';
 import { triggerSuccessHaptic } from '@/lib/haptic';
 
 interface BookingSuccessModalProps {
@@ -76,12 +74,32 @@ export default function BookingSuccessModal({ open, onClose }: BookingSuccessMod
           <div className="text-center">
             {/* Success Animation */}
             <div className="mb-4 flex justify-center">
-              <div className={`transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-                <Lottie 
-                  animationData={successAnimation} 
-                  loop={false}
-                  style={{ width: 120, height: 120 }}
-                />
+              <div className={`transition-all duration-500 ${isVisible ? 'scale-100 rotate-0 opacity-100' : 'scale-0 rotate-45 opacity-0'}`}>
+                <div className="relative">
+                  {/* Success Circle */}
+                  <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle className="w-16 h-16 text-green-500" strokeWidth={2} />
+                  </div>
+                  
+                  {/* Confetti particles */}
+                  <div className="absolute inset-0">
+                    {[...Array(8)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`absolute w-2 h-2 rounded-full ${
+                          i % 3 === 0 ? 'bg-pink-400' : i % 3 === 1 ? 'bg-blue-400' : 'bg-yellow-400'
+                        }`}
+                        style={{
+                          top: '50%',
+                          left: '50%',
+                          animation: `confetti-${i} 0.8s ease-out forwards`,
+                          animationDelay: `${0.2 + i * 0.05}s`,
+                          opacity: 0
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 

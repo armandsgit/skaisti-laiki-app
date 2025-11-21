@@ -151,6 +151,55 @@
     @apply shadow-[var(--shadow-hover)];
   }
   
+  /* Confetti Animation Keyframes */
+  @keyframes confetti-0 {
+    0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(-40px, -60px) rotate(180deg); opacity: 0; }
+  }
+  
+  @keyframes confetti-1 {
+    0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(40px, -50px) rotate(-180deg); opacity: 0; }
+  }
+  
+  @keyframes confetti-2 {
+    0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(0, -70px) rotate(90deg); opacity: 0; }
+  }
+  
+  @keyframes confetti-3 {
+    0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(50px, -40px) rotate(-90deg); opacity: 0; }
+  }
+  
+  @keyframes confetti-4 {
+    0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(-50px, -45px) rotate(270deg); opacity: 0; }
+  }
+  
+  @keyframes confetti-5 {
+    0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(60px, -30px) rotate(180deg); opacity: 0; }
+  }
+  
+  @keyframes confetti-6 {
+    0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(-60px, -35px) rotate(-270deg); opacity: 0; }
+  }
+  
+  @keyframes confetti-7 {
+    0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(30px, -65px) rotate(360deg); opacity: 0; }
+  }
+  
   /* Touch Ripple Effect */
   .touch-ripple {
     position: relative;
