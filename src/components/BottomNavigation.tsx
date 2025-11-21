@@ -21,11 +21,14 @@ const BottomNavigation = () => {
                                   location.pathname === '/professional/settings';
   const isClient = !isProfessionalDashboard && !isViewingProfile && !isAdminPanel;
   
+  const searchParams = new URLSearchParams(location.search);
+  const currentTab = searchParams.get('tab') || 'pending';
+  
   const tabs = isAdminPanel ? [
-    { icon: Home, label: 'Dashboard', path: '/admin', isActive: location.pathname === '/admin', isMain: false },
-    { icon: User, label: 'Meistari', path: '/admin', isActive: false },
-    { icon: Calendar, label: 'Rezervācijas', path: '/admin', isActive: false },
-    { icon: Search, label: 'Klienti', path: '/admin', isActive: false },
+    { icon: Home, label: 'Gaida', path: '/admin?tab=pending', isActive: currentTab === 'pending', isMain: false },
+    { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: currentTab === 'professionals' },
+    { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: currentTab === 'bookings' },
+    { icon: Search, label: 'Klienti', path: '/admin?tab=clients', isActive: currentTab === 'clients' },
   ] : isProfessionalDashboard ? [
     { icon: Home, label: 'Sākums', path: '/professional/dashboard', isActive: location.pathname === '/professional/dashboard' },
     { icon: Calendar, label: 'Rezervācijas', path: '/professional/dashboard', isActive: false },

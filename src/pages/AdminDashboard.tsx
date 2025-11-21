@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/translations";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +39,7 @@ import CategoryManager from "@/components/CategoryManager";
 const AdminDashboard = () => {
   const t = useTranslation("lv");
   const { signOut, user } = useAuth();
+  const location = useLocation();
 
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -63,6 +65,15 @@ const AdminDashboard = () => {
   const [selectedTab, setSelectedTab] = useState<"pending" | "professionals" | "clients" | "bookings" | "categories">(
     "pending",
   );
+
+  // Sync selectedTab with URL parameter
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tab = searchParams.get('tab');
+    if (tab && ["pending", "professionals", "clients", "bookings", "categories"].includes(tab)) {
+      setSelectedTab(tab as any);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     loadData();
