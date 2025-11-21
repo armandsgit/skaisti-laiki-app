@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, LogOut, Search, Star, MapPin, Sparkles, Map, Settings } from 'lucide-react';
+import { Calendar, Search, Star, MapPin, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -139,37 +139,19 @@ const ClientDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
-      <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft flex-shrink-0">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
-              </div>
-              <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">
-                BeautyOn
-              </h1>
+    <div className="min-h-screen bg-background pb-24">
+      <header className="bg-card border-b sticky top-0 z-10 backdrop-blur-sm bg-card/80">
+        <div className="max-w-screen-sm mx-auto px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center shadow-elegant flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-black" />
             </div>
-            
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <Button variant="outline" size="sm" onClick={() => navigate('/map')} className="px-2 sm:px-4">
-                <Map className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline text-xs sm:text-sm">Skatīt kartē</span>
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/client/settings')} className="px-2 sm:px-3">
-                <Settings className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={signOut} className="px-2 sm:px-3">
-                <LogOut className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline text-xs sm:text-sm">{t.logout}</span>
-              </Button>
-            </div>
+            <h1 className="text-xl font-bold">BeautyOn</h1>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
+      <main className="max-w-screen-sm mx-auto px-4 py-6 overflow-x-hidden">
         <Tabs defaultValue="search" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm">
             <TabsTrigger value="search">

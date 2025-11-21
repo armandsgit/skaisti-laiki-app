@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientSettings from './pages/ClientSettings';
+import ClientBookings from './pages/ClientBookings';
 import ProfessionalSettings from './pages/ProfessionalSettings';
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
@@ -51,6 +52,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="CLIENT">
                   <ClientSettings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/bookings" 
+              element={
+                <ProtectedRoute requiredRole="CLIENT">
+                  <ClientBookings />
                 </ProtectedRoute>
               } 
             />

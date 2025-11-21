@@ -26,41 +26,42 @@ const BottomNavigation = () => {
     { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map', isMain: true },
     { icon: User, label: 'Profils', path: '/professional/settings', isActive: location.pathname === '/professional/settings' },
   ] : [
-    { icon: Home, label: 'Sākums', path: '/', isActive: location.pathname === '/' },
-    { icon: Search, label: 'Meklēt', path: '/', isActive: false },
+    { icon: Home, label: 'Sākums', path: '/client', isActive: location.pathname === '/client' || location.pathname === '/' },
+    { icon: Search, label: 'Meklēt', path: '/client', isActive: false },
     { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map', isMain: true },
-    { icon: Calendar, label: 'Rezervācijas', path: '/', isActive: false },
+    { icon: Calendar, label: 'Rezervācijas', path: '/bookings', isActive: location.pathname === '/bookings' },
     { icon: User, label: 'Konts', path: '/client/settings', isActive: location.pathname === '/client/settings' },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 nav-blur border-t border-border/50 pb-safe">
-      <div className="max-w-screen-sm mx-auto px-2">
-        <div className="flex items-end justify-around py-2 min-h-[64px]">
+      <div className="max-w-screen-sm mx-auto px-0">
+        <div className="flex items-center justify-evenly py-3 h-[68px]">
           {tabs.map((tab, index) => (
             <button
               key={index}
               onClick={() => navigate(tab.path)}
               className={`
-                flex flex-col items-center gap-1 transition-all duration-200
+                flex flex-col items-center justify-center gap-1 transition-all duration-300 relative
                 ${tab.isMain 
-                  ? 'bg-gradient-to-br from-primary to-secondary p-3 rounded-full shadow-elegant -mb-4' 
+                  ? 'bg-gradient-to-br from-primary to-secondary p-4 rounded-full shadow-elegant -mt-6 scale-110' 
                   : tab.isActive 
-                    ? 'text-primary px-3 py-2 rounded-2xl' 
-                    : 'text-muted-foreground active:text-primary px-3 py-2 rounded-2xl'
+                    ? 'text-primary' 
+                    : 'text-muted-foreground active:text-primary'
                 }
-                ${tab.isMain ? '' : 'tap-feedback'}
+                ${tab.isMain ? '' : 'tap-feedback px-4 py-2'}
+                ${tab.isActive && !tab.isMain ? 'glow-effect' : ''}
               `}
             >
               <tab.icon 
                 className={`
                   ${tab.isMain ? 'w-7 h-7 text-black' : 'w-5 h-5'}
-                  transition-transform duration-200
-                  ${tab.isActive && !tab.isMain ? 'scale-110' : ''}
+                  transition-all duration-300
+                  ${tab.isActive && !tab.isMain ? 'scale-125 drop-shadow-glow' : ''}
                 `}
               />
               {!tab.isMain && (
-                <span className={`text-[10px] font-medium ${tab.isActive ? 'text-primary' : ''}`}>
+                <span className={`text-[10px] font-semibold tracking-wide ${tab.isActive ? 'text-primary' : ''}`}>
                   {tab.label}
                 </span>
               )}
