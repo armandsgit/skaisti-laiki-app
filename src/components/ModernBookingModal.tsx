@@ -80,12 +80,12 @@ export interface BookingFormData {
 }
 
 const ModernBookingModal = ({ isOpen, onClose, services, professionalId, professionalName, onSubmit }: ModernBookingModalProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [formData, setFormData] = useState<Partial<BookingFormData>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [timeSlots, setTimeSlots] = useState<Array<{ time: string; isBooked: boolean }>>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [availableServices, setAvailableServices] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedService, setSelectedService] = useState<string>('');
+  const [selectedStaffMember, setSelectedStaffMember] = useState<string>('');
+  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableStaff, setAvailableStaff] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -108,21 +108,26 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
     }
   }, [formData.date, services]);
 
-  // Load available time slots when service and date are selected
   useEffect(() => {
-    if (formData.date && formData.serviceId && professionalId) {
+    if (formData.serviceId) {
+      loadAvailableStaff();
+    }
+  }, [formData.serviceId]);
+
+  useEffect(() => {
+    if (formData.date && formData.serviceId && formData.staffMemberId) {
       const selectedService = services.find(s => s.id === formData.serviceId);
       if (selectedService) {
-        loadAvailableTimeSlots(professionalId, formData.date, selectedService);
+        loadAvailableTimeSlots(professionalId, formData.date, selectedService, formData.staffMemberId);
       }
     } else {
       setTimeSlots([]);
     }
-  }, [formData.date, formData.serviceId, professionalId, services]);
+  }, [formData.date, formData.serviceId, formData.staffMemberId, professionalId, services]);
 
   // Realtime subscription for bookings changes
   useEffect(() => {
-    if (!formData.date || !formData.serviceId || !professionalId) return;
+    if (!formData.date || !formData.serviceId || !formData.staffMemberId || !professionalId) return;
 
     const selectedService = services.find(s => s.id === formData.serviceId);
     if (!selectedService) return;
@@ -143,8 +148,8 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
         (payload) => {
           console.log('Booking changed via realtime:', payload);
           // Reload time slots when any booking changes for this professional
-          if (formData.date && formData.serviceId) {
-            loadAvailableTimeSlots(professionalId, formData.date, selectedService);
+          if (formData.date && formData.serviceId && formData.staffMemberId) {
+            loadAvailableTimeSlots(professionalId, formData.date, selectedService, formData.staffMemberId);
           }
         }
       )
@@ -156,7 +161,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       console.log('Removing realtime channel');
       supabase.removeChannel(channel);
     };
-  }, [formData.date, formData.serviceId, professionalId]);
+  }, [formData.date, formData.serviceId, formData.staffMemberId, professionalId]);
 
   const loadAvailableServices = async (date: Date) => {
     try {

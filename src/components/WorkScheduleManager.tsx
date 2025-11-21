@@ -29,6 +29,7 @@ interface Service {
 
 interface WorkScheduleManagerProps {
   professionalId: string;
+  staffMemberId?: string | null;
 }
 
 const DAYS = [
@@ -41,7 +42,7 @@ const DAYS = [
   { value: 0, label: 'Svētdiena' },
 ];
 
-const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
+const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleManagerProps) => {
   const [schedules, setSchedules] = useState<Record<number, Schedule[]>>({});
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,15 +50,22 @@ const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
   useEffect(() => {
     loadSchedules();
     loadServices();
-  }, [professionalId]);
+  }, [professionalId, staffMemberId]);
 
   const loadServices = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('services')
         .select('*')
-        .eq('professional_id', professionalId)
-        .order('name');
+        .eq('professional_id', professionalId);
+
+      if (staffMemberId) {
+        query = query.eq('staff_member_id', staffMemberId);
+      } else {
+        query = query.is('staff_member_id', null);
+      }
+
+      const { data, error } = await query.order('name');
 
       if (error) throw error;
       setServices(data || []);
@@ -69,10 +77,18 @@ const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
 
   const loadSchedules = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('professional_schedules')
         .select('*')
-        .eq('professional_id', professionalId)
+        .eq('professional_id', professionalId);
+
+      if (staffMemberId) {
+        query = query.eq('staff_member_id', staffMemberId);
+      } else {
+        query = query.is('staff_member_id', null);
+      }
+
+      const { data, error } = await query
         .order('day_of_week')
         .order('start_time');
 
@@ -113,6 +129,7 @@ const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
         .from('professional_schedules')
         .insert({
           professional_id: professionalId,
+          staff_member_id: staffMemberId || null,
           ...newSchedule,
         })
         .select()
