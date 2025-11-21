@@ -509,14 +509,16 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
               <Label className="text-sm font-semibold text-gray-700 mb-2 block">
                 Izvēlies datumu <span className="text-red-500">*</span>
               </Label>
-              <div className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
-                <Calendar
-                  mode="single"
-                  selected={formData.date}
-                  onSelect={(date) => setFormData({ ...formData, date, time: undefined, staffMemberId: undefined })}
-                  disabled={(date) => date < new Date()}
-                  className={cn("rounded-xl pointer-events-auto")}
-                />
+              <div className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50 flex items-center justify-center overflow-hidden">
+                <div className="w-full max-w-full flex justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={formData.date}
+                    onSelect={(date) => setFormData({ ...formData, date, time: undefined, staffMemberId: undefined })}
+                    disabled={(date) => date < new Date()}
+                    className={cn("pointer-events-auto")}
+                  />
+                </div>
               </div>
               {errors.date && (
                 <p className="text-xs text-red-500 mt-1">{errors.date}</p>
