@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_time_slots: {
+        Row: {
+          block_date: string
+          created_at: string | null
+          end_time: string | null
+          id: string
+          is_all_day: boolean | null
+          professional_id: string
+          reason: string | null
+          start_time: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          block_date: string
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_all_day?: boolean | null
+          professional_id: string
+          reason?: string | null
+          start_time?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          block_date?: string
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_all_day?: boolean | null
+          professional_id?: string
+          reason?: string | null
+          start_time?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_time_slots_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booking_date: string
@@ -191,6 +235,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_schedules: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean | null
+          professional_id: string
+          start_time: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          professional_id: string
+          start_time: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          professional_id?: string
+          start_time?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_schedules_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
             referencedColumns: ["id"]
           },
         ]
