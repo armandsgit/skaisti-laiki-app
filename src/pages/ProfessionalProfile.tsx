@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
-import { Star, MapPin, Clock, Euro, CheckCircle, Award } from 'lucide-react';
+import { Star, MapPin, Clock, Euro, CheckCircle, Award, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationMap from '@/components/LocationMap';
 import { bookingSchema } from '@/lib/validation';
@@ -20,6 +20,7 @@ import ReviewsList from '@/components/ReviewsList';
 import { triggerHaptic } from '@/lib/haptic';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import useEmblaCarousel from 'embla-carousel-react';
+import NavigationPicker from '@/components/NavigationPicker';
 
 const ProfessionalProfile = () => {
   const { id } = useParams();
@@ -36,6 +37,7 @@ const ProfessionalProfile = () => {
   const [bookingTime, setBookingTime] = useState('');
   const [loading, setLoading] = useState(true);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [showNavigationPicker, setShowNavigationPicker] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -285,13 +287,10 @@ const ProfessionalProfile = () => {
                   className="rounded-[18px] border-2 border-primary bg-background hover:bg-primary/5 px-3 py-1.5 h-auto flex-shrink-0"
                   onClick={() => {
                     triggerHaptic('light');
-                    window.open(
-                      `https://www.google.com/maps/search/?api=1&query=${professional.latitude},${professional.longitude}`,
-                      '_blank'
-                    );
+                    setShowNavigationPicker(true);
                   }}
                 >
-                  <MapPin className="w-4 h-4 text-foreground" />
+                  <Navigation className="w-4 h-4 text-foreground" />
                 </Button>
               </div>
               
@@ -385,6 +384,16 @@ const ProfessionalProfile = () => {
         open={successModalOpen} 
         onClose={() => setSuccessModalOpen(false)} 
       />
+
+      {/* Navigation Picker */}
+      {professional?.latitude && professional?.longitude && (
+        <NavigationPicker
+          latitude={professional.latitude}
+          longitude={professional.longitude}
+          isOpen={showNavigationPicker}
+          onClose={() => setShowNavigationPicker(false)}
+        />
+      )}
     </div>
   );
 };
