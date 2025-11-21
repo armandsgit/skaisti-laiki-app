@@ -34,20 +34,20 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 nav-blur border-t border-border/50 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 nav-blur border-t border-border pb-safe">
       <div className="max-w-screen-sm mx-auto px-0">
-        <div className="flex items-center justify-evenly py-3 h-[68px]">
+        <div className="flex items-center justify-evenly py-2.5 h-[72px]">
           {tabs.map((tab, index) => (
             <button
               key={index}
               onClick={() => navigate(tab.path)}
               className={`
-                flex flex-col items-center justify-center gap-1 transition-all duration-300 relative
+                flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative
                 ${tab.isMain 
-                  ? 'bg-gradient-to-br from-primary to-secondary p-4 rounded-full shadow-elegant -mt-6 scale-110' 
+                  ? 'bg-gradient-to-br from-primary to-secondary p-4 rounded-full shadow-elegant -mt-7 scale-110' 
                   : tab.isActive 
                     ? 'text-primary' 
-                    : 'text-muted-foreground active:text-primary'
+                    : 'text-foreground/60 active:text-primary'
                 }
                 ${tab.isMain ? '' : 'tap-feedback px-4 py-2'}
                 ${tab.isActive && !tab.isMain ? 'glow-effect' : ''}
@@ -55,13 +55,13 @@ const BottomNavigation = () => {
             >
               <tab.icon 
                 className={`
-                  ${tab.isMain ? 'w-7 h-7 text-black' : 'w-5 h-5'}
+                  ${tab.isMain ? 'w-7 h-7 text-white' : 'w-6 h-6'}
                   transition-all duration-300
-                  ${tab.isActive && !tab.isMain ? 'scale-125 drop-shadow-glow' : ''}
+                  ${tab.isActive && !tab.isMain ? 'scale-110 drop-shadow-glow' : ''}
                 `}
               />
               {!tab.isMain && (
-                <span className={`text-[10px] font-semibold tracking-wide ${tab.isActive ? 'text-primary' : ''}`}>
+                <span className={`text-[11px] font-semibold tracking-wide ${tab.isActive ? 'text-primary' : ''}`}>
                   {tab.label}
                 </span>
               )}
