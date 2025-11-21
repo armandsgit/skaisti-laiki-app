@@ -8,56 +8,56 @@
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
   
-  /* Dark mode colors - Bolt/Wolt inspired */
-  --background: 0 0% 0%; /* Pure black #000000 */
-  --foreground: 0 0% 98%; /* Almost white text */
+  /* Light mode colors */
+  --background: 0 0% 98%; /* #FAFAFA */
+  --foreground: 0 0% 13%; /* #222 dark gray text */
 
-  --card: 0 0% 7%; /* Dark card #121212 */
-  --card-foreground: 0 0% 98%;
+  --card: 0 0% 100%; /* White cards */
+  --card-foreground: 0 0% 13%;
 
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 98%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 13%;
 
-  --primary: 142 76% 64%; /* Neon green #4BFF87 */
-  --primary-foreground: 0 0% 0%;
-  --primary-soft: 142 76% 10%;
+  --primary: 330 81% 60%; /* Pink #EC4899 */
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 330 81% 95%;
   
-  --secondary: 320 85% 65%; /* Neon pink #FF4DD8 */
-  --secondary-foreground: 0 0% 0%;
+  --secondary: 280 87% 65%; /* Purple accent */
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 0 0% 15%; /* Soft gray for muted areas */
-  --muted-foreground: 0 0% 54%; /* #8A8A8A */
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
 
-  --accent: 47 100% 55%; /* Gold/amber for stars */
-  --accent-foreground: 0 0% 0%;
+  --accent: 47 96% 53%; /* Gold/amber for stars */
+  --accent-foreground: 0 0% 13%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 0 0% 10%; /* rgba(255,255,255,0.06) equivalent */
-  --input: 0 0% 15%;
-  --ring: 142 76% 64%;
+  --border: 0 0% 90%;
+  --input: 0 0% 96%;
+  --ring: 330 81% 60%;
 
-  --radius: 1.5rem; /* 24px default */
+  --radius: 1rem; /* 16px */
 
   /* Sidebar Colors */
-  --sidebar-background: 0 0% 6%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 142 76% 64%;
-  --sidebar-primary-foreground: 0 0% 0%;
-  --sidebar-accent: 0 0% 10%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 10%;
-  --sidebar-ring: 142 76% 64%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 0 0% 13%;
+  --sidebar-primary: 330 81% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 96%;
+  --sidebar-accent-foreground: 0 0% 13%;
+  --sidebar-border: 0 0% 90%;
+  --sidebar-ring: 330 81% 60%;
   
   /* Shadows */
-  --shadow-soft: 0 4px 20px rgba(75, 255, 135, 0.08);
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --shadow-elegant: 0 10px 40px rgba(75, 255, 135, 0.12);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-elegant: 0 8px 24px rgba(0, 0, 0, 0.12);
   
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
-  --gradient-card: linear-gradient(180deg, rgba(18,18,18,1) 0%, rgba(10,10,10,1) 100%);
+  --gradient-card: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
 }
 
 @layer base {
@@ -116,15 +116,15 @@
     }
   }
   
-  /* Mobile text scaling */
+  /* Mobile text scaling - Larger fonts */
   @media (max-width: 640px) {
-    h1 { font-size: clamp(1.5rem, 5vw, 2rem); }
-    h2 { font-size: clamp(1.25rem, 4vw, 1.5rem); }
-    h3 { font-size: clamp(1.125rem, 3.5vw, 1.25rem); }
-    h4 { font-size: clamp(1rem, 3vw, 1.125rem); }
+    h1 { font-size: clamp(1.75rem, 5vw, 2.25rem); }
+    h2 { font-size: clamp(1.5rem, 4.5vw, 1.875rem); }
+    h3 { font-size: clamp(1.25rem, 4vw, 1.5rem); }
+    h4 { font-size: clamp(1.125rem, 3.5vw, 1.375rem); }
     
-    body { font-size: 15px; }
-    button { font-size: 14px; }
+    body { font-size: 16px; }
+    button { font-size: 15px; }
     input, textarea, select { font-size: 16px; } /* Prevents iOS zoom */
   }
 
@@ -177,12 +177,12 @@
     opacity: 0.3;
   }
 
-  /* Bottom nav blur effect */
+  /* Bottom nav blur effect - Light mode */
   .nav-blur {
-    background: rgba(6, 6, 6, 0.95);
+    background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
   }
 
   /* Safe area padding for notched devices */
@@ -231,17 +231,16 @@
   .glow-effect::before {
     content: '';
     position: absolute;
-    inset: -4px;
+    inset: -6px;
     border-radius: 12px;
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--secondary) / 0.2));
-    filter: blur(8px);
-    opacity: 0.6;
+    background: hsl(var(--primary) / 0.15);
+    filter: blur(6px);
+    opacity: 0.8;
     z-index: -1;
-    animation: pulse 2s ease-in-out infinite;
   }
 
   .drop-shadow-glow {
-    filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.6));
+    filter: drop-shadow(0 2px 4px hsl(var(--primary) / 0.4));
   }
   
   /* Icon Tap Animation */

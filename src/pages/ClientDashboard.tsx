@@ -140,20 +140,15 @@ const ClientDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="bg-card border-b sticky top-0 z-10 backdrop-blur-sm bg-card/80">
+      <header className="bg-card/95 backdrop-blur-sm border-b sticky top-0 z-10 shadow-soft">
         <div className="max-w-screen-sm mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center shadow-elegant flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-black" />
-            </div>
-            <h1 className="text-xl font-bold">BeautyOn</h1>
-          </div>
+          <h1 className="text-xl font-bold text-center">BeautyOn</h1>
         </div>
       </header>
 
       <main className="max-w-screen-sm mx-auto px-4 py-6 overflow-x-hidden">
         <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
               {t.searchProfessionals}
@@ -165,11 +160,11 @@ const ClientDashboard = () => {
           </TabsList>
 
           <TabsContent value="search" className="space-y-6">
-            <Card className="shadow-card border-0">
-              <CardHeader>
-                <CardTitle>{t.searchProfessionals}</CardTitle>
+            <Card className="shadow-card border">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">{t.searchProfessionals}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4">
+              <CardContent className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <div className="flex-1 w-full">
                     <Input
@@ -195,30 +190,30 @@ const ClientDashboard = () => {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {filteredProfessionals.map((prof) => (
                 <Card 
                   key={prof.id} 
-                  className={`touch-ripple tap-feedback cursor-pointer border-0 overflow-hidden ${
+                  className={`touch-ripple tap-feedback cursor-pointer border shadow-card overflow-hidden hover:shadow-elegant transition-shadow ${
                     prof.plan === 'premium' ? 'ring-2 ring-amber-400' : ''
                   }`}
                   onClick={() => navigate(`/professional/${prof.id}`)}
                 >
-                  <CardContent className="p-3 sm:p-4">
-                    <div className="flex items-start gap-2 sm:gap-3 mb-2">
-                      <Avatar className="w-12 h-12 sm:w-14 sm:h-14 border-2 border-primary/20 flex-shrink-0">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3 mb-3">
+                      <Avatar className="w-16 h-16 border-2 border-primary/20 flex-shrink-0">
                         <AvatarImage src={prof.profiles?.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm sm:text-base">
+                        <AvatarFallback className="bg-primary/10 text-primary text-lg">
                           {prof.profiles?.name?.charAt(0) || '?'}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm sm:text-base truncate">
+                        <h3 className="font-semibold text-lg truncate">
                           {prof.profiles?.name}
                         </h3>
-                        <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5 whitespace-nowrap">
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <Badge variant="secondary" className="text-sm px-2.5 py-0.5 whitespace-nowrap">
                             {prof.category}
                           </Badge>
                           <PlanBadge 
@@ -229,23 +224,23 @@ const ClientDashboard = () => {
                       </div>
                     </div>
                     
-                    <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 flex-shrink-0" />
                         <span className="truncate">{prof.city}</span>
                         {prof.distance < 9999 && (
-                          <span className="text-xs whitespace-nowrap flex-shrink-0">• {prof.distance} km</span>
+                          <span className="text-sm whitespace-nowrap flex-shrink-0">• {prof.distance} km</span>
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-accent text-accent flex-shrink-0" />
-                        <span className="truncate text-xs sm:text-sm">{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 fill-accent text-accent flex-shrink-0" />
+                        <span className="truncate text-sm">{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
                       </div>
                     </div>
                     
                     {prof.bio && (
-                      <p className="mt-2 sm:mt-3 text-xs text-muted-foreground line-clamp-2">
+                      <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
                         {prof.bio}
                       </p>
                     )}
@@ -255,28 +250,28 @@ const ClientDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="bookings" className="space-y-3 sm:space-y-4">
-            <Card className="shadow-card border-0">
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl">{t.bookings}</CardTitle>
+          <TabsContent value="bookings" className="space-y-4">
+            <Card className="shadow-card border">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">{t.bookings}</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0">
+              <CardContent className="pt-0">
                 {bookings.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8 text-sm sm:text-base">
+                  <p className="text-center text-muted-foreground py-8 text-base">
                     Jums vēl nav nevienas rezervācijas
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {bookings.map((booking) => (
-                      <Card key={booking.id} className="border overflow-hidden">
-                        <CardContent className="p-3">
-                          <div className="flex flex-col gap-2">
+                      <Card key={booking.id} className="border shadow-soft overflow-hidden">
+                        <CardContent className="p-4">
+                          <div className="flex flex-col gap-2.5">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm truncate">
+                                <h4 className="font-semibold text-base truncate">
                                   {booking.professional_profiles?.profiles?.name}
                                 </h4>
-                                <p className="text-xs text-muted-foreground truncate">
+                                <p className="text-sm text-muted-foreground truncate mt-0.5">
                                   {booking.services?.name}
                                 </p>
                               </div>
@@ -287,13 +282,13 @@ const ClientDashboard = () => {
                                   booking.status === 'completed' ? 'secondary' :
                                   booking.status === 'canceled' ? 'destructive' : 'outline'
                                 }
-                                className="text-xs px-2 py-0.5 whitespace-nowrap flex-shrink-0"
+                                className="text-sm px-2.5 py-1 whitespace-nowrap flex-shrink-0"
                               >
                                 {t[booking.status as keyof typeof t] || booking.status}
                               </Badge>
                             </div>
                             
-                            <p className="text-xs">
+                            <p className="text-sm text-muted-foreground">
                               {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
                             </p>
                           </div>

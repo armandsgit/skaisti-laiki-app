@@ -52,24 +52,24 @@ const ClientBookings = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="bg-card border-b sticky top-0 z-10 backdrop-blur-sm bg-card/80">
+      <header className="bg-card/95 backdrop-blur-sm border-b sticky top-0 z-10 shadow-soft">
         <div className="max-w-screen-sm mx-auto px-4 py-4">
-          <h1 className="text-xl font-bold">Manas rezervācijas</h1>
+          <h1 className="text-xl font-bold text-center">Manas rezervācijas</h1>
         </div>
       </header>
 
       <main className="max-w-screen-sm mx-auto px-4 py-6">
         {bookings.length === 0 ? (
           <div className="text-center py-16">
-            <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground/40" />
-            <p className="text-muted-foreground text-lg">Jums vēl nav nevienas rezervācijas</p>
+            <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+            <p className="text-muted-foreground text-base">Jums vēl nav nevienas rezervācijas</p>
           </div>
         ) : (
           <div className="space-y-3">
             {bookings.map((booking) => (
               <Card 
                 key={booking.id} 
-                className="border-border/50 overflow-hidden tap-feedback cursor-pointer"
+                className="border shadow-card overflow-hidden tap-feedback cursor-pointer hover:shadow-elegant transition-shadow"
                 onClick={() => navigate(`/professional/${booking.professional_id}`)}
               >
                 <CardContent className="p-4">

@@ -193,25 +193,25 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-elegant border-border/50 bg-card">
+    <div className="min-h-screen bg-gradient-to-br from-primary-soft via-background to-muted flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-elegant border">
         <CardHeader className="text-center space-y-3 pb-4">
           <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center mb-2 shadow-elegant">
-            <Sparkles className="w-10 h-10 text-black" />
+            <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold">
             BeautyOn
           </CardTitle>
-          <CardDescription className="text-muted-foreground">
+          <CardDescription className="text-muted-foreground text-base">
             Skaistumkopšanas pakalpojumu platforma
           </CardDescription>
         </CardHeader>
         
         <CardContent className="px-6 pb-6">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/30 h-12">
-              <TabsTrigger value="login" className="rounded-xl">{t.login}</TabsTrigger>
-              <TabsTrigger value="register" className="rounded-xl">{t.register}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50 h-12">
+              <TabsTrigger value="login" className="rounded-xl text-base">{t.login}</TabsTrigger>
+              <TabsTrigger value="register" className="rounded-xl text-base">{t.register}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -225,7 +225,7 @@ const Auth = () => {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
-                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
+                    className="h-12 bg-background border rounded-2xl text-base"
                   />
                 </div>
                 
@@ -238,13 +238,13 @@ const Auth = () => {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
-                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
+                    className="h-12 bg-background border rounded-2xl text-base"
                   />
                 </div>
                 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-black font-semibold rounded-2xl shadow-soft mt-6"
+                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-white font-semibold rounded-2xl shadow-soft mt-6 text-base"
                   disabled={loading}
                 >
                   {loading ? t.loading : t.login}
@@ -263,7 +263,7 @@ const Auth = () => {
                     value={registerName}
                     onChange={(e) => setRegisterName(e.target.value)}
                     required
-                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
+                    className="h-12 bg-background border rounded-2xl text-base"
                   />
                 </div>
                 
@@ -276,7 +276,7 @@ const Auth = () => {
                     value={registerEmail}
                     onChange={(e) => setRegisterEmail(e.target.value)}
                     required
-                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
+                    className="h-12 bg-background border rounded-2xl text-base"
                   />
                 </div>
                 
@@ -290,7 +290,7 @@ const Auth = () => {
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
+                    className="h-12 bg-background border rounded-2xl text-base"
                   />
                 </div>
                 
@@ -301,7 +301,7 @@ const Auth = () => {
                       type="button"
                       variant={registerRole === 'CLIENT' ? 'default' : 'outline'}
                       onClick={() => setRegisterRole('CLIENT')}
-                      className={`h-12 rounded-2xl ${registerRole === 'CLIENT' ? 'bg-primary text-black' : 'border-border/50'}`}
+                      className={`h-12 rounded-2xl text-base ${registerRole === 'CLIENT' ? 'bg-primary text-white' : ''}`}
                     >
                       {t.client}
                     </Button>
@@ -309,7 +309,7 @@ const Auth = () => {
                       type="button"
                       variant={registerRole === 'PROFESSIONAL' ? 'default' : 'outline'}
                       onClick={() => setRegisterRole('PROFESSIONAL')}
-                      className={`h-12 rounded-2xl ${registerRole === 'PROFESSIONAL' ? 'bg-primary text-black' : 'border-border/50'}`}
+                      className={`h-12 rounded-2xl text-base ${registerRole === 'PROFESSIONAL' ? 'bg-primary text-white' : ''}`}
                     >
                       {t.professional}
                     </Button>
@@ -322,7 +322,7 @@ const Auth = () => {
                       <Label htmlFor="register-category" className="text-sm font-medium">Kategorija *</Label>
                       <select
                         id="register-category"
-                        className="w-full h-12 px-4 rounded-2xl border border-border/50 bg-muted/30 text-foreground"
+                        className="w-full h-12 px-4 rounded-2xl border bg-background text-foreground text-base"
                         value={registerCategory}
                         onChange={(e) => setRegisterCategory(e.target.value)}
                         required
@@ -348,7 +348,7 @@ const Auth = () => {
                         value={registerCity}
                         onChange={(e) => setRegisterCity(e.target.value)}
                         required
-                        className="h-12 bg-muted/30 border-border/50 rounded-2xl"
+                        className="h-12 bg-background border rounded-2xl text-base"
                       />
                     </div>
                     
@@ -367,7 +367,7 @@ const Auth = () => {
                         onChange={(e) => setRegisterAddress(e.target.value)}
                         disabled={geocoding}
                         required
-                        className="h-12 bg-muted/30 border-border/50 rounded-2xl"
+                        className="h-12 bg-background border rounded-2xl text-base"
                       />
                       <p className="text-xs text-muted-foreground">
                         Ievadiet savu darba vietas adresi
@@ -378,7 +378,7 @@ const Auth = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-black font-semibold rounded-2xl shadow-soft mt-6"
+                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-white font-semibold rounded-2xl shadow-soft mt-6 text-base"
                   disabled={loading || geocoding}
                 >
                   {loading || geocoding ? t.loading : t.createAccount}
