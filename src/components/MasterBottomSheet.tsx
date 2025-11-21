@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from 'react';
-import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SortedMaster } from '@/lib/master-sorting';
 
@@ -55,8 +54,11 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
     const newY = e.touches[0].clientY;
     setCurrentY(newY);
     const delta = newY - startY;
-    // Only allow dragging down, not up beyond initial position
+    
+    // Allow dragging down always, and dragging up when not expanded
     if (delta > 0) {
+      setDragOffset(delta);
+    } else if (!isExpanded && delta < 0) {
       setDragOffset(delta);
     }
   };
@@ -64,8 +66,8 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
   const handleTouchEnd = () => {
     const deltaY = currentY - startY;
     
-    // Close if dragged down more than 100px
-    if (deltaY > 100) {
+    // Close if dragged down more than 80px
+    if (deltaY > 80) {
       setIsVisible(false);
       setTimeout(() => {
         onClose();
@@ -75,7 +77,12 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
     else if (deltaY < -50 && !isExpanded) {
       setIsExpanded(true);
       setDragOffset(0);
-    } 
+    }
+    // Collapse if expanded and dragged down
+    else if (deltaY > 50 && isExpanded) {
+      setIsExpanded(false);
+      setDragOffset(0);
+    }
     // Reset position
     else {
       setDragOffset(0);
@@ -124,18 +131,6 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
         <div className="flex justify-center pt-3 pb-3 cursor-grab active:cursor-grabbing">
           <div className="w-12 h-1.5 bg-gray-300 rounded-full transition-all duration-200 hover:bg-gray-400" />
         </div>
-
-        {/* Close Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 active:scale-95"
-          aria-label="Aizvērt"
-        >
-          <X className="w-5 h-5 text-gray-600" />
-        </button>
 
         {/* Content */}
         <div className="px-5 pb-4 overflow-y-auto" style={{ maxHeight: 'calc(100% - 60px)' }}>
