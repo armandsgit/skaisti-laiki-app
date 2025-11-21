@@ -103,6 +103,36 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
     }
   }, [formData.date, service.professional_id]);
 
+  // Realtime subscription for bookings changes
+  useEffect(() => {
+    if (!formData.date || !service.professional_id) return;
+
+    const dateStr = formData.date.toISOString().split('T')[0];
+
+    // Subscribe to bookings changes
+    const channel = supabase
+      .channel('bookings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `professional_id=eq.${service.professional_id}`
+        },
+        (payload) => {
+          console.log('Booking changed:', payload);
+          // Reload time slots when any booking changes for this professional
+          loadAvailableTimeSlots(service.professional_id, formData.date);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [formData.date, service.professional_id]);
+
   const loadAvailableTimeSlots = async (professionalId: string, date: Date) => {
     setLoadingSlots(true);
     try {
