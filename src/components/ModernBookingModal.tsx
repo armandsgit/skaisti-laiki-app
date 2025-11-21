@@ -88,6 +88,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [availableServices, setAvailableServices] = useState<any[]>([]);
   const [availableStaff, setAvailableStaff] = useState<any[]>([]);
+  const [staffTimeSlots, setStaffTimeSlots] = useState<Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>>>({});
 
   useEffect(() => {
     if (isOpen) {
@@ -101,40 +102,19 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
     }
   }, [isOpen]);
 
-  // Load available services when date changes
+  // Load available staff and their time slots when date changes
   useEffect(() => {
     if (formData.date) {
-      loadAvailableServices(formData.date);
+      loadStaffAndTimeSlots(formData.date);
     } else {
-      setAvailableServices([]);
+      setAvailableStaff([]);
+      setStaffTimeSlots({});
     }
-  }, [formData.date, services]);
-
-  // Load available staff when service is selected
-  useEffect(() => {
-    if (formData.serviceId) {
-      loadAvailableStaff();
-    }
-  }, [formData.serviceId]);
-
-  // Load available time slots when service, staff, and date are selected
-  useEffect(() => {
-    if (formData.date && formData.serviceId && formData.staffMemberId) {
-      const selectedService = services.find(s => s.id === formData.serviceId);
-      if (selectedService) {
-        loadAvailableTimeSlots(professionalId, formData.date, selectedService, formData.staffMemberId);
-      }
-    } else {
-      setTimeSlots([]);
-    }
-  }, [formData.date, formData.serviceId, formData.staffMemberId, professionalId, services]);
+  }, [formData.date, services, professionalId]);
 
   // Realtime subscription for bookings changes
   useEffect(() => {
-    if (!formData.date || !formData.serviceId || !professionalId) return;
-
-    const selectedService = services.find(s => s.id === formData.serviceId);
-    if (!selectedService) return;
+    if (!formData.date || !professionalId) return;
 
     console.log('Setting up realtime subscription for professional:', professionalId);
 
@@ -151,9 +131,9 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
         },
         (payload) => {
           console.log('Booking changed via realtime:', payload);
-          // Reload time slots when any booking changes for this professional
-          if (formData.date && formData.serviceId && formData.staffMemberId) {
-            loadAvailableTimeSlots(professionalId, formData.date, selectedService, formData.staffMemberId);
+          // Reload staff time slots when any booking changes
+          if (formData.date) {
+            loadStaffAndTimeSlots(formData.date);
           }
         }
       )
@@ -165,93 +145,165 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       console.log('Removing realtime channel');
       supabase.removeChannel(channel);
     };
-  }, [formData.date, formData.serviceId, formData.staffMemberId, professionalId]);
+  }, [formData.date, professionalId]);
 
-  const loadAvailableServices = async (date: Date) => {
+  const loadStaffAndTimeSlots = async (date: Date) => {
+    setLoadingSlots(true);
     try {
       const dayOfWeek = date.getDay();
+      const dateStr = date.toISOString().split('T')[0];
 
-      // Fetch schedules for this day to get available_services
-      const { data: schedules, error } = await supabase
-        .from('professional_schedules')
-        .select('available_services')
+      // Fetch all active staff members for this professional
+      const { data: staff, error: staffError } = await supabase
+        .from('staff_members')
+        .select('*')
         .eq('professional_id', professionalId)
-        .eq('day_of_week', dayOfWeek)
         .eq('is_active', true);
 
-      if (error) throw error;
+      if (staffError) throw staffError;
 
-      // Collect all available service IDs for this day
-      const serviceIds = new Set<string>();
-      schedules?.forEach(schedule => {
-        (schedule.available_services || []).forEach((id: string) => serviceIds.add(id));
-      });
-
-      // Filter services that are available on this day
-      const filtered = services.filter(s => serviceIds.has(s.id));
-      setAvailableServices(filtered);
-
-      // If currently selected service is not available, clear it
-      if (formData.serviceId && !serviceIds.has(formData.serviceId)) {
-        setFormData(prev => ({ ...prev, serviceId: undefined, time: undefined }));
+      if (!staff || staff.length === 0) {
+        setAvailableStaff([]);
+        setStaffTimeSlots({});
+        return;
       }
-    } catch (error) {
-      console.error('Error loading available services:', error);
-      setAvailableServices([]);
-    }
-  };
 
-  const loadAvailableStaff = async () => {
-    try {
-      if (!formData.serviceId) return;
+      setAvailableStaff(staff);
 
-      // Get the service to check if it's assigned to a specific staff member
-      const { data: serviceData, error: serviceError } = await supabase
-        .from('services')
-        .select('staff_member_id')
-        .eq('id', formData.serviceId)
-        .single();
+      // For each staff member, fetch their schedules and time slots
+      const staffSlotsMap: Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>> = {};
 
-      if (serviceError) throw serviceError;
-
-      if (serviceData.staff_member_id) {
-        // Service is assigned to a specific staff member
-        const { data: staffData, error: staffError } = await supabase
-          .from('staff_members')
-          .select('*')
-          .eq('id', serviceData.staff_member_id)
-          .eq('is_active', true)
-          .single();
-
-        if (staffError) throw staffError;
-        
-        if (staffData) {
-          setAvailableStaff([staffData]);
-          setFormData(prev => ({ ...prev, staffMemberId: staffData.id }));
-        }
-      } else {
-        // Service is not assigned to any specific staff, show all staff from this professional
-        const { data: allStaff, error: staffError } = await supabase
-          .from('staff_members')
+      for (const staffMember of staff) {
+        // Fetch schedules for this staff member on this day
+        const { data: schedules, error: scheduleError } = await supabase
+          .from('professional_schedules')
           .select('*')
           .eq('professional_id', professionalId)
+          .eq('staff_member_id', staffMember.id)
+          .eq('day_of_week', dayOfWeek)
           .eq('is_active', true);
 
-        if (staffError) throw staffError;
-        
-        setAvailableStaff(allStaff || []);
-        
-        // Auto-select if only one staff member or no staff (direct booking)
-        if (allStaff && allStaff.length === 1) {
-          setFormData(prev => ({ ...prev, staffMemberId: allStaff[0].id }));
-        } else if (!allStaff || allStaff.length === 0) {
-          // No staff members, allow direct booking to professional
-          setFormData(prev => ({ ...prev, staffMemberId: undefined }));
+        if (scheduleError) {
+          console.error('Error loading schedules:', scheduleError);
+          continue;
         }
+
+        if (!schedules || schedules.length === 0) continue;
+
+        // Fetch existing bookings for this staff member on this date
+        const { data: bookings, error: bookingsError } = await supabase
+          .from('bookings')
+          .select('booking_time, booking_end_time, service_id')
+          .eq('professional_id', professionalId)
+          .eq('staff_member_id', staffMember.id)
+          .eq('booking_date', dateStr)
+          .in('status', ['pending', 'confirmed']);
+
+        if (bookingsError) {
+          console.error('Error loading bookings:', bookingsError);
+          continue;
+        }
+
+        // Create booked time ranges
+        const bookedRanges = (bookings || []).map(b => ({
+          start: b.booking_time.substring(0, 5),
+          end: b.booking_end_time.substring(0, 5)
+        }));
+
+        const timeToMinutes = (time: string): number => {
+          const [hours, minutes] = time.split(':').map(Number);
+          return hours * 60 + minutes;
+        };
+
+        const hasOverlap = (slotStart: string, slotEnd: string): boolean => {
+          const slotStartMin = timeToMinutes(slotStart);
+          const slotEndMin = timeToMinutes(slotEnd);
+          
+          return bookedRanges.some(range => {
+            const rangeStartMin = timeToMinutes(range.start);
+            const rangeEndMin = timeToMinutes(range.end);
+            
+            return (
+              (slotStartMin >= rangeStartMin && slotStartMin < rangeEndMin) ||
+              (slotEndMin > rangeStartMin && slotEndMin <= rangeEndMin) ||
+              (slotStartMin <= rangeStartMin && slotEndMin >= rangeEndMin)
+            );
+          });
+        };
+
+        // Generate time slots for each schedule/service combination
+        const slots: Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }> = [];
+        
+        for (const schedule of schedules) {
+          const availableServiceIds = schedule.available_services || [];
+          
+          for (const serviceId of availableServiceIds) {
+            const service = services.find(s => s.id === serviceId);
+            if (!service) continue;
+
+            const serviceDuration = service.duration || 60;
+            const startHour = parseInt(schedule.start_time.split(':')[0]);
+            const startMinute = parseInt(schedule.start_time.split(':')[1]);
+            const endHour = parseInt(schedule.end_time.split(':')[0]);
+            const endMinute = parseInt(schedule.end_time.split(':')[1]);
+            const interval = schedule.time_slot_interval || 30;
+
+            let currentHour = startHour;
+            let currentMinute = startMinute;
+
+            while (
+              currentHour < endHour || 
+              (currentHour === endHour && currentMinute < endMinute)
+            ) {
+              const timeSlot = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+              
+              let slotEndMinute = currentMinute + serviceDuration;
+              let slotEndHour = currentHour;
+              if (slotEndMinute >= 60) {
+                slotEndHour += Math.floor(slotEndMinute / 60);
+                slotEndMinute = slotEndMinute % 60;
+              }
+              const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMinute).padStart(2, '0')}`;
+
+              const slotEndTimeMin = slotEndHour * 60 + slotEndMinute;
+              const scheduleEndTimeMin = endHour * 60 + endMinute;
+              const serviceFits = slotEndTimeMin <= scheduleEndTimeMin;
+
+              if (serviceFits) {
+                const isBooked = hasOverlap(timeSlot, slotEndTime);
+                
+                // Check if this time slot already exists for a different service
+                const existingSlot = slots.find(s => s.time === timeSlot);
+                if (!existingSlot) {
+                  slots.push({
+                    time: timeSlot,
+                    isBooked,
+                    serviceId: service.id,
+                    serviceName: service.name
+                  });
+                }
+              }
+
+              currentMinute += interval;
+              if (currentMinute >= 60) {
+                currentHour += Math.floor(currentMinute / 60);
+                currentMinute = currentMinute % 60;
+              }
+            }
+          }
+        }
+
+        staffSlotsMap[staffMember.id] = slots.sort((a, b) => a.time.localeCompare(b.time));
       }
+
+      setStaffTimeSlots(staffSlotsMap);
     } catch (error) {
-      console.error('Error loading available staff:', error);
+      console.error('Error loading staff and time slots:', error);
+      toast.error('Neizdevās ielādēt pieejamos laikus');
       setAvailableStaff([]);
+      setStaffTimeSlots({});
+    } finally {
+      setLoadingSlots(false);
     }
   };
 
@@ -530,121 +582,71 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
               )}
             </div>
 
-            {/* Service Selection */}
+            {/* Staff Members and Time Slots */}
             {formData.date && (
               <div>
-                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Izvēlies pakalpojumu <span className="text-red-500">*</span>
+                <Label className="text-sm font-semibold text-gray-700 mb-3 block">
+                  Pieejamie meistari un laiki
                 </Label>
-                {availableServices.length === 0 ? (
+                {loadingSlots ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Ielādē pieejamos laikus...
+                  </div>
+                ) : availableStaff.length === 0 ? (
                   <div className="text-sm text-amber-600 text-center py-4 bg-amber-50 rounded-xl">
-                    Šajā dienā nav pieejami pakalpojumi
+                    Šajā dienā nav pieejamu meistaru
                   </div>
                 ) : (
-                  <div className="grid gap-2">
-                    {availableServices.map((svc) => (
-                      <button
-                        key={svc.id}
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic('light');
-                          setFormData({ ...formData, serviceId: svc.id, staffMemberId: undefined, time: undefined });
-                        }}
-                        className={cn(
-                          "p-4 rounded-xl border-2 text-left transition-all",
-                          formData.serviceId === svc.id
-                            ? "border-primary bg-primary/5"
-                            : "border-gray-200 hover:border-gray-300"
-                        )}
-                      >
-                        <div className="font-semibold text-gray-900">{svc.name}</div>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                          <span>💶 €{svc.price}</span>
-                          <span>•</span>
-                          <span>⏱️ {svc.duration} min</span>
+                  <div className="space-y-4">
+                    {availableStaff.map((staff) => {
+                      const slots = staffTimeSlots[staff.id] || [];
+                      const availableSlots = slots.filter(s => !s.isBooked);
+                      
+                      if (availableSlots.length === 0) return null;
+
+                      return (
+                        <div key={staff.id} className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg">
+                              {staff.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900">{staff.name}</div>
+                              {staff.position && (
+                                <div className="text-sm text-gray-500">{staff.position}</div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {availableSlots.map((slot) => (
+                              <button
+                                key={`${staff.id}-${slot.time}`}
+                                type="button"
+                                onClick={() => {
+                                  triggerHaptic('light');
+                                  setFormData({ 
+                                    ...formData, 
+                                    staffMemberId: staff.id, 
+                                    serviceId: slot.serviceId,
+                                    time: slot.time 
+                                  });
+                                }}
+                                className={cn(
+                                  "p-3 rounded-xl border-2 text-sm font-medium transition-all",
+                                  formData.time === slot.time && formData.staffMemberId === staff.id
+                                    ? "border-primary bg-primary text-white"
+                                    : "border-gray-200 bg-white hover:border-primary/50"
+                                )}
+                              >
+                                {slot.time}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
-                {errors.service && (
-                  <p className="text-xs text-red-500 mt-1">{errors.service}</p>
-                )}
-              </div>
-            )}
-
-            {/* Staff Member Selection */}
-            {formData.serviceId && availableStaff.length > 1 && (
-              <div>
-                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Izvēlieties meistaru <span className="text-red-500">*</span>
-                </Label>
-                <div className="grid gap-2">
-                  {availableStaff.map((staff) => (
-                    <button
-                      key={staff.id}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic('light');
-                        setFormData({ ...formData, staffMemberId: staff.id, time: undefined });
-                      }}
-                      className={cn(
-                        "p-4 rounded-xl border-2 text-left transition-all",
-                        formData.staffMemberId === staff.id
-                          ? "border-primary bg-primary/5"
-                          : "border-gray-200 hover:border-gray-300"
-                      )}
-                    >
-                      <div className="font-semibold text-gray-900">{staff.name}</div>
-                      {staff.position && (
-                        <div className="text-sm text-gray-500 mt-1">{staff.position}</div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Time Selection */}
-            {formData.date && formData.serviceId && (formData.staffMemberId || availableStaff.length <= 1) && timeSlots.length > 0 && (
-              <div>
-                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Izvēlies laiku <span className="text-red-500">*</span>
-                </Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map((slot) => (
-                    <button
-                      key={slot.time}
-                      type="button"
-                      disabled={slot.isBooked}
-                      onClick={() => {
-                        if (!slot.isBooked) {
-                          triggerHaptic('light');
-                          setFormData({ ...formData, time: slot.time });
-                        }
-                      }}
-                      className={cn(
-                        "p-3 rounded-xl border-2 text-sm font-medium transition-all",
-                        slot.isBooked
-                          ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : formData.time === slot.time
-                          ? "border-primary bg-primary text-white"
-                          : "border-gray-200 hover:border-gray-300"
-                      )}
-                    >
-                      {slot.time}
-                    </button>
-                  ))}
-                </div>
-                {errors.time && (
-                  <p className="text-xs text-red-500 mt-1">{errors.time}</p>
-                )}
-              </div>
-            )}
-
-            {formData.date && formData.serviceId && (formData.staffMemberId || availableStaff.length <= 1) && timeSlots.length === 0 && !loadingSlots && (
-              <div className="text-sm text-amber-600 text-center py-4 bg-amber-50 rounded-xl">
-                Šajā dienā nav pieejamu laiku
               </div>
             )}
 
@@ -709,51 +711,6 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
               )}
             </div>
 
-            {/* Time Slots */}
-            {formData.date && formData.serviceId && (
-              <div>
-                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Izvēlies laiku <span className="text-red-500">*</span>
-                </Label>
-                {loadingSlots ? (
-                  <div className="text-center py-8 text-gray-500">
-                    Ielādē pieejamos laikus...
-                  </div>
-                ) : timeSlots.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    Šajā dienā nav pieejamu laiku
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot.time}
-                        onClick={() => {
-                          if (!slot.isBooked) {
-                            triggerHaptic('light');
-                            setFormData({ ...formData, time: slot.time });
-                          }
-                        }}
-                        disabled={slot.isBooked}
-                        className={cn(
-                          "py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200",
-                          slot.isBooked
-                            ? "bg-gray-200 text-gray-400 cursor-not-allowed line-through opacity-60"
-                            : formData.time === slot.time
-                            ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg active:scale-95"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95"
-                        )}
-                      >
-                        {slot.time}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {errors.time && (
-                  <p className="text-xs text-red-500 mt-1">{errors.time}</p>
-                )}
-              </div>
-            )}
 
             {/* Notes */}
             <div>
