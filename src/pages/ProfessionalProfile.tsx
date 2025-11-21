@@ -304,9 +304,9 @@ const ProfessionalProfile = () => {
       </div>
 
       <ModernBookingModal
-        isOpen={bookingDialogOpen}
+        isOpen={bookingDialogOpen && !!selectedService}
         onClose={() => setBookingDialogOpen(false)}
-        service={selectedService}
+        service={selectedService || {}}
         professionalName={professional?.profiles?.name || ''}
         onSubmit={handleBooking}
       />
