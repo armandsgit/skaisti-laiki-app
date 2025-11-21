@@ -1,0 +1,264 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { Clock, Calendar, Plus, X } from 'lucide-react';
+import { triggerHaptic } from '@/lib/haptic';
+
+interface Schedule {
+  id?: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+}
+
+interface WorkScheduleManagerProps {
+  professionalId: string;
+}
+
+const DAYS = [
+  { value: 1, label: 'Pirmdiena' },
+  { value: 2, label: 'Otrdiena' },
+  { value: 3, label: 'Trešdiena' },
+  { value: 4, label: 'Ceturtdiena' },
+  { value: 5, label: 'Piektdiena' },
+  { value: 6, label: 'Sestdiena' },
+  { value: 0, label: 'Svētdiena' },
+];
+
+const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
+  const [schedules, setSchedules] = useState<Record<number, Schedule[]>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSchedules();
+  }, [professionalId]);
+
+  const loadSchedules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('professional_schedules')
+        .select('*')
+        .eq('professional_id', professionalId)
+        .order('day_of_week')
+        .order('start_time');
+
+      if (error) throw error;
+
+      // Group by day_of_week
+      const grouped = (data || []).reduce((acc, schedule) => {
+        if (!acc[schedule.day_of_week]) {
+          acc[schedule.day_of_week] = [];
+        }
+        acc[schedule.day_of_week].push(schedule);
+        return acc;
+      }, {} as Record<number, Schedule[]>);
+
+      setSchedules(grouped);
+    } catch (error) {
+      console.error('Error loading schedules:', error);
+      toast.error('Neizdevās ielādēt darba grafiku');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addTimeSlot = async (dayOfWeek: number) => {
+    triggerHaptic('light');
+    
+    const newSchedule: Schedule = {
+      day_of_week: dayOfWeek,
+      start_time: '09:00',
+      end_time: '17:00',
+      is_active: true,
+    };
+
+    try {
+      const { data, error } = await supabase
+        .from('professional_schedules')
+        .insert({
+          professional_id: professionalId,
+          ...newSchedule,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setSchedules(prev => ({
+        ...prev,
+        [dayOfWeek]: [...(prev[dayOfWeek] || []), data],
+      }));
+
+      toast.success('Darba laiks pievienots');
+    } catch (error) {
+      console.error('Error adding schedule:', error);
+      toast.error('Neizdevās pievienot darba laiku');
+    }
+  };
+
+  const updateSchedule = async (scheduleId: string, updates: Partial<Schedule>) => {
+    try {
+      const { error } = await supabase
+        .from('professional_schedules')
+        .update(updates)
+        .eq('id', scheduleId);
+
+      if (error) throw error;
+
+      // Update local state
+      setSchedules(prev => {
+        const newSchedules = { ...prev };
+        Object.keys(newSchedules).forEach(day => {
+          newSchedules[Number(day)] = newSchedules[Number(day)].map(s =>
+            s.id === scheduleId ? { ...s, ...updates } : s
+          );
+        });
+        return newSchedules;
+      });
+
+      toast.success('Darba laiks atjaunināts');
+    } catch (error) {
+      console.error('Error updating schedule:', error);
+      toast.error('Neizdevās atjaunināt darba laiku');
+    }
+  };
+
+  const deleteSchedule = async (scheduleId: string, dayOfWeek: number) => {
+    triggerHaptic('medium');
+
+    try {
+      const { error } = await supabase
+        .from('professional_schedules')
+        .delete()
+        .eq('id', scheduleId);
+
+      if (error) throw error;
+
+      setSchedules(prev => ({
+        ...prev,
+        [dayOfWeek]: prev[dayOfWeek].filter(s => s.id !== scheduleId),
+      }));
+
+      toast.success('Darba laiks dzēsts');
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      toast.error('Neizdevās dzēst darba laiku');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Darba grafiks
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            Ielādē...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="w-5 h-5" />
+          Darba grafiks
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Iestatiet savus darba laikus katrai nedēļas dienai
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {DAYS.map((day) => (
+          <div key={day.value} className="border rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-base">{day.label}</h4>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => addTimeSlot(day.value)}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Pievienot laiku
+              </Button>
+            </div>
+
+            {schedules[day.value]?.length > 0 ? (
+              <div className="space-y-2">
+                {schedules[day.value].map((schedule) => (
+                  <div
+                    key={schedule.id}
+                    className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg"
+                  >
+                    <div className="flex-1 grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">No</Label>
+                        <input
+                          type="time"
+                          value={schedule.start_time}
+                          onChange={(e) =>
+                            schedule.id &&
+                            updateSchedule(schedule.id, { start_time: e.target.value })
+                          }
+                          className="w-full px-3 py-2 border rounded-lg text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Līdz</Label>
+                        <input
+                          type="time"
+                          value={schedule.end_time}
+                          onChange={(e) =>
+                            schedule.id &&
+                            updateSchedule(schedule.id, { end_time: e.target.value })
+                          }
+                          className="w-full px-3 py-2 border rounded-lg text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={schedule.is_active}
+                        onCheckedChange={(checked) =>
+                          schedule.id && updateSchedule(schedule.id, { is_active: checked })
+                        }
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => schedule.id && deleteSchedule(schedule.id, day.value)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nav iestatīti darba laiki
+              </p>
+            )}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default WorkScheduleManager;

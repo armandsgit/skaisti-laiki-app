@@ -23,6 +23,7 @@ import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
 import SubscriptionStatusIndicator from '@/components/SubscriptionStatusIndicator';
+import WorkScheduleManager from '@/components/WorkScheduleManager';
 
 const ProfessionalDashboard = () => {
   const t = useTranslation('lv');
@@ -680,7 +681,7 @@ const ProfessionalDashboard = () => {
         </div>
 
         <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm text-xs sm:text-sm overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm text-xs sm:text-sm overflow-x-auto">
             <TabsTrigger value="profile" className="px-2 py-2 sm:px-4 sm:py-2.5">
               <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">Profils</span>
@@ -692,6 +693,10 @@ const ProfessionalDashboard = () => {
             <TabsTrigger value="services" className="px-2 py-2 sm:px-4 sm:py-2.5">
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">{t.myServices}</span>
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="px-2 py-2 sm:px-4 sm:py-2.5">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Grafiks</span>
             </TabsTrigger>
             <TabsTrigger value="gallery" className="px-2 py-2 sm:px-4 sm:py-2.5">
               <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
@@ -1110,6 +1115,10 @@ const ProfessionalDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="schedule" className="space-y-4">
+            <WorkScheduleManager professionalId={profile.id} />
           </TabsContent>
           
           <TabsContent value="gallery" className="space-y-4">
