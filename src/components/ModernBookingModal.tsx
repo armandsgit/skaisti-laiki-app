@@ -314,9 +314,8 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           });
         };
 
-        // Generate time slots with universal 10-minute intervals
+        // Generate time slots based on service duration
         const slots: Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }> = [];
-        const UNIVERSAL_INTERVAL = 10; // Fixed 10-minute interval
         
         for (const schedule of relevantSchedules) {
           const startHour = parseInt(schedule.start_time.split(':')[0]);
@@ -324,7 +323,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           const endHour = parseInt(schedule.end_time.split(':')[0]);
           const endMinute = parseInt(schedule.end_time.split(':')[1]);
 
-          console.log(`    ⏰ Generating slots for ${schedule.start_time}-${schedule.end_time}, interval: ${UNIVERSAL_INTERVAL}min, service duration: ${serviceDuration}min`);
+          console.log(`    ⏰ Generating slots for ${schedule.start_time}-${schedule.end_time}, interval: ${serviceDuration}min (service duration)`);
 
           let currentHour = startHour;
           let currentMinute = startMinute;
@@ -366,8 +365,8 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
               }
             }
 
-            // Move to next 10-minute interval
-            currentMinute += UNIVERSAL_INTERVAL;
+            // Move to next interval based on service duration
+            currentMinute += serviceDuration;
             if (currentMinute >= 60) {
               currentHour += Math.floor(currentMinute / 60);
               currentMinute = currentMinute % 60;
