@@ -7,20 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
 import { Star, MapPin, Clock, Euro, CheckCircle, Award, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationMap from '@/components/LocationMap';
-import { bookingSchema } from '@/lib/validation';
 import BookingSuccessModal from '@/components/BookingSuccessModal';
 import ReviewsList from '@/components/ReviewsList';
 import { triggerHaptic } from '@/lib/haptic';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import useEmblaCarousel from 'embla-carousel-react';
 import NavigationPicker from '@/components/NavigationPicker';
+import ModernBookingModal, { BookingFormData } from '@/components/ModernBookingModal';
 
 const ProfessionalProfile = () => {
   const { id } = useParams();
@@ -33,8 +29,6 @@ const ProfessionalProfile = () => {
   const [services, setServices] = useState<any[]>([]);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
-  const [bookingDate, setBookingDate] = useState<Date>();
-  const [bookingTime, setBookingTime] = useState('');
   const [loading, setLoading] = useState(true);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [showNavigationPicker, setShowNavigationPicker] = useState(false);
@@ -69,32 +63,24 @@ const ProfessionalProfile = () => {
     setServices(data || []);
   };
 
-  const handleBooking = async () => {
-    if (!user || !selectedService || !bookingDate || !bookingTime) {
-      toast.error('Lūdzu aizpildiet visus laukus');
+  const handleBooking = async (formData: BookingFormData) => {
+    if (!user) {
+      toast.error('Lūdzu piesakieties');
       return;
     }
 
-    // Trigger haptic feedback
     triggerHaptic('medium');
 
     try {
-      // Validate booking data
-      const validatedData = bookingSchema.parse({
-        service_id: selectedService.id,
-        booking_date: bookingDate.toISOString().split('T')[0],
-        booking_time: bookingTime,
-        notes: ''
-      });
-
       const { error } = await supabase
         .from('bookings')
         .insert({
           client_id: user.id,
           professional_id: id,
-          service_id: validatedData.service_id,
-          booking_date: validatedData.booking_date,
-          booking_time: validatedData.booking_time,
+          service_id: selectedService.id,
+          booking_date: formData.date.toISOString().split('T')[0],
+          booking_time: formData.time,
+          notes: formData.notes || '',
           status: 'pending'
         });
 
@@ -105,11 +91,7 @@ const ProfessionalProfile = () => {
         setSuccessModalOpen(true);
       }
     } catch (error: any) {
-      if (error.errors) {
-        toast.error(error.errors[0]?.message || 'Validācijas kļūda');
-      } else {
-        toast.error(t.error);
-      }
+      toast.error(t.error);
     }
   };
 
@@ -321,66 +303,15 @@ const ProfessionalProfile = () => {
         </div>
       </div>
 
-      <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">{t.bookNow}</DialogTitle>
-          </DialogHeader>
-          
-          {selectedService && (
-            <div className="space-y-3 sm:space-y-4">
-              <div className="p-3 sm:p-4 bg-primary-soft rounded-lg">
-                <h4 className="font-semibold text-sm sm:text-base break-words">{selectedService.name}</h4>
-                <div className="flex gap-3 sm:gap-4 mt-2 text-xs sm:text-sm flex-wrap">
-                  <span className="flex items-center gap-1 whitespace-nowrap">
-                    <Euro className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {selectedService.price}
-                  </span>
-                  <span className="flex items-center gap-1 whitespace-nowrap">
-                    <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {selectedService.duration} min
-                  </span>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="text-sm">{t.date}</Label>
-                <div className="w-full overflow-x-auto">
-                  <Calendar
-                    mode="single"
-                    selected={bookingDate}
-                    onSelect={setBookingDate}
-                    disabled={(date) => date < new Date()}
-                    className="rounded-md border mx-auto"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="time" className="text-sm">{t.time}</Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={bookingTime}
-                  onChange={(e) => setBookingTime(e.target.value)}
-                  className="w-full text-base"
-                  required
-                />
-              </div>
-              
-              <Button 
-                onClick={handleBooking} 
-                className="w-full button-press"
-                disabled={!bookingDate || !bookingTime}
-              >
-                {t.confirmBooking}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ModernBookingModal
+        isOpen={bookingDialogOpen}
+        onClose={() => setBookingDialogOpen(false)}
+        service={selectedService}
+        professionalName={professional?.profiles?.name || ''}
+        onSubmit={handleBooking}
+      />
 
-      <BookingSuccessModal 
+      <BookingSuccessModal
         open={successModalOpen} 
         onClose={() => setSuccessModalOpen(false)} 
       />

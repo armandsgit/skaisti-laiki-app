@@ -1,31 +1,81 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, CheckCircle } from 'lucide-react';
-import { triggerSuccessHaptic } from '@/lib/haptic';
+import { CheckCircle } from 'lucide-react';
+import Lottie from 'lottie-react';
+
+// Simple success animation
+const successAnimation = {
+  v: "5.7.4",
+  fr: 60,
+  ip: 0,
+  op: 60,
+  w: 100,
+  h: 100,
+  nm: "Success",
+  ddd: 0,
+  assets: [],
+  layers: [
+    {
+      ddd: 0,
+      ind: 1,
+      ty: 4,
+      nm: "Check",
+      sr: 1,
+      ks: {
+        o: { a: 0, k: 100 },
+        r: { a: 0, k: 0 },
+        p: { a: 0, k: [50, 50, 0] },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 1, k: [{ t: 0, s: [0, 0, 100], e: [120, 120, 100] }, { t: 20, s: [120, 120, 100], e: [100, 100, 100] }, { t: 30 }] }
+      },
+      ao: 0,
+      shapes: [
+        {
+          ty: "gr",
+          it: [
+            {
+              ty: "el",
+              d: 1,
+              s: { a: 0, k: [50, 50] },
+              p: { a: 0, k: [0, 0] }
+            },
+            {
+              ty: "fl",
+              c: { a: 0, k: [0.2, 0.8, 0.4, 1] },
+              o: { a: 0, k: 100 }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
 
 interface BookingSuccessModalProps {
   open: boolean;
   onClose: () => void;
+  bookingDetails?: {
+    service?: string;
+    date?: string;
+    time?: string;
+    address?: string;
+  };
 }
 
-export default function BookingSuccessModal({ open, onClose }: BookingSuccessModalProps) {
-  const navigate = useNavigate();
+const BookingSuccessModal = ({ open, onClose, bookingDetails }: BookingSuccessModalProps) => {
   const [isVisible, setIsVisible] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (open) {
-      // Trigger success haptic feedback
-      triggerSuccessHaptic();
+      setIsVisible(true);
       
-      // Trigger opening animation
-      setTimeout(() => setIsVisible(true), 10);
-      
-      // Auto-redirect after 2.5 seconds
-      const redirectTimer = setTimeout(() => {
+      // Auto close after 3 seconds with fade-out
+      const timer = setTimeout(() => {
         handleClose();
-      }, 2500);
+      }, 3000);
 
-      return () => clearTimeout(redirectTimer);
+      return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
     }
@@ -35,7 +85,7 @@ export default function BookingSuccessModal({ open, onClose }: BookingSuccessMod
     setIsVisible(false);
     setTimeout(() => {
       onClose();
-      navigate('/bookings');
+      navigate('/client/bookings');
     }, 300);
   };
 
@@ -45,81 +95,80 @@ export default function BookingSuccessModal({ open, onClose }: BookingSuccessMod
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-[9998] transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
           isVisible ? 'opacity-100' : 'opacity-0'
         }`}
-        style={{ pointerEvents: 'auto' }}
+        style={{ zIndex: 10002 }}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
-        <div
-          className={`bg-white rounded-[24px] shadow-2xl p-8 max-w-sm w-full pointer-events-auto transition-all duration-300 ease-out ${
-            isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
-          }`}
-          style={{
-            transformOrigin: 'center',
-          }}
-        >
-          {/* Close Button */}
-          <button
-            onClick={handleClose}
-            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Aizvērt"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Content */}
-          <div className="text-center">
-            {/* Success Animation */}
-            <div className="mb-4 flex justify-center">
-              <div className={`transition-all duration-500 ${isVisible ? 'scale-100 rotate-0 opacity-100' : 'scale-0 rotate-45 opacity-0'}`}>
-                <div className="relative">
-                  {/* Success Circle */}
-                  <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle className="w-16 h-16 text-green-500" strokeWidth={2} />
-                  </div>
-                  
-                  {/* Confetti particles */}
-                  <div className="absolute inset-0">
-                    {[...Array(8)].map((_, i) => (
-                      <div
-                        key={i}
-                        className={`absolute w-2 h-2 rounded-full ${
-                          i % 3 === 0 ? 'bg-pink-400' : i % 3 === 1 ? 'bg-blue-400' : 'bg-yellow-400'
-                        }`}
-                        style={{
-                          top: '50%',
-                          left: '50%',
-                          animation: `confetti-${i} 0.8s ease-out forwards`,
-                          animationDelay: `${0.2 + i * 0.05}s`,
-                          opacity: 0
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
+      <div
+        className={`fixed inset-0 flex items-center justify-center p-4 transition-all duration-500 ${
+          isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
+        style={{ zIndex: 10003 }}
+      >
+        <div className="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl">
+          {/* Lottie Animation */}
+          <div className="flex justify-center mb-4">
+            <div className="w-28 h-28 bg-green-50 rounded-full flex items-center justify-center">
+              <Lottie animationData={successAnimation} loop={false} className="w-24 h-24" />
             </div>
-
-            {/* Title */}
-            <h2 className="text-xl font-bold text-foreground mb-3">
-              Rezervācija veiksmīgi izveidota!
-            </h2>
-
-            {/* Subtitle */}
-            <p className="text-base text-muted-foreground mb-2">
-              Paldies! Jūsu rezervācija ir apstiprināta.
-            </p>
-
-            {/* Optional text */}
-            <p className="text-sm text-muted-foreground/80">
-              Jūs varat apskatīt savu rezervāciju sadaļā "Rezervācijas".
-            </p>
           </div>
+
+          {/* Success Icon */}
+          <div className="flex justify-center mb-4">
+            <CheckCircle className="w-16 h-16 text-green-500" />
+          </div>
+
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">
+            Vizīte veiksmīgi pieteikta!
+          </h2>
+
+          {/* Subtitle */}
+          <p className="text-center text-gray-600 mb-4">
+            Meistars drīzumā apstiprinās rezervāciju
+          </p>
+
+          {/* Info */}
+          {bookingDetails && (
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-4 space-y-2 mt-4">
+              {bookingDetails.service && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-600">Pakalpojums:</span>
+                  <span className="font-semibold text-gray-900">{bookingDetails.service}</span>
+                </div>
+              )}
+              {bookingDetails.date && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-600">Datums:</span>
+                  <span className="font-semibold text-gray-900">{bookingDetails.date}</span>
+                </div>
+              )}
+              {bookingDetails.time && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-600">Laiks:</span>
+                  <span className="font-semibold text-gray-900">{bookingDetails.time}</span>
+                </div>
+              )}
+              {bookingDetails.address && (
+                <div className="flex items-start gap-2 text-sm">
+                  <span className="text-gray-600">Adrese:</span>
+                  <span className="font-semibold text-gray-900">{bookingDetails.address}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Auto-close message */}
+          <p className="text-center text-sm text-gray-500 mt-4">
+            Automātiski pāriet uz rezervācijām pēc 3 sekundēm...
+          </p>
         </div>
       </div>
     </>
   );
-}
+};
+
+export default BookingSuccessModal;
