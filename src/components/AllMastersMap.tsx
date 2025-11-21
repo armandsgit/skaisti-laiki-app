@@ -120,19 +120,21 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
 
     // Calculate center and zoom based on filtered masters
     let center: [number, number] = [24.1052, 56.9496]; // Rīga default
-    let zoom = 11.5;
+    let zoom = 12.5; // Closer zoom on Riga
 
-    if (filteredMasters.length > 0 && selectedCategory !== 'all') {
-      // Calculate bounds for filtered markers
+    if (filteredMasters.length > 0) {
+      // Calculate bounds for all markers
       const bounds = new mapboxgl.LngLatBounds();
       filteredMasters.forEach(master => {
         bounds.extend([master.longitude, master.latitude]);
       });
       
-      // Use bounds center
-      const boundsCenter = bounds.getCenter();
-      center = [boundsCenter.lng, boundsCenter.lat];
-      zoom = 12;
+      // If filtering by category, fit to filtered bounds
+      if (selectedCategory !== 'all' && filteredMasters.length > 0) {
+        const boundsCenter = bounds.getCenter();
+        center = [boundsCenter.lng, boundsCenter.lat];
+        zoom = filteredMasters.length === 1 ? 14 : 12;
+      }
     }
 
     // Create map
@@ -150,11 +152,35 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       // Add markers for filtered masters
       filteredMasters.forEach((master) => {
 
-        // Create custom marker with gradient
+        // Create custom marker with modern design
         const markerEl = document.createElement('div');
         markerEl.className = 'custom-map-marker clickable-marker';
+        markerEl.style.cssText = `
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #ec4899, #f472b6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 22px;
+          box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 3px solid white;
+        `;
         markerEl.innerHTML = '✨';
         markerEl.dataset.masterId = master.id;
+
+        // Add hover effect
+        markerEl.addEventListener('mouseenter', () => {
+          markerEl.style.transform = 'scale(1.15)';
+          markerEl.style.boxShadow = '0 6px 20px rgba(236, 72, 153, 0.5)';
+        });
+        markerEl.addEventListener('mouseleave', () => {
+          markerEl.style.transform = 'scale(1)';
+          markerEl.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
+        });
 
         const marker = new mapboxgl.Marker({ 
           element: markerEl,
@@ -200,39 +226,39 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
             }
             
             const selectedPopup = new mapboxgl.Popup({ 
-              offset: 15,
+              offset: 25,
               anchor: 'bottom',
               closeButton: true,
               closeOnClick: false,
-              className: 'selected-master-popup',
-              maxWidth: window.innerWidth < 640 ? '240px' : '280px'
+              className: 'selected-master-popup modern-popup',
+              maxWidth: '320px'
             }).setHTML(
-              `<div style="padding: ${window.innerWidth < 640 ? '8px' : '12px'}; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: ${window.innerWidth < 640 ? '12px' : '16px'};">
-                <div style="display: flex; align-items: center; gap: ${window.innerWidth < 640 ? '8px' : '12px'}; margin-bottom: ${window.innerWidth < 640 ? '6px' : '10px'};">
+              `<div style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 20px;">
+                <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
                   <img 
                     src="${avatarUrl}" 
                     alt="${master.profiles.name}"
-                    style="width: ${window.innerWidth < 640 ? '36px' : '48px'}; height: ${window.innerWidth < 640 ? '36px' : '48px'}; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                    style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #ec4899; flex-shrink: 0; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);"
                   />
                   <div style="min-width: 0; flex: 1;">
-                    <h3 style="font-weight: 600; margin: 0 0 ${window.innerWidth < 640 ? '2px' : '4px'} 0; font-size: ${window.innerWidth < 640 ? '13px' : '15px'}; color: #1a1a1a; line-height: 1.3;">${master.profiles.name}</h3>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                      <span style="color: #f59e0b; font-size: ${window.innerWidth < 640 ? '11px' : '13px'};">⭐</span>
-                      <span style="color: #666; font-weight: 500; font-size: ${window.innerWidth < 640 ? '11px' : '13px'};">${master.rating || 0}</span>
+                    <h3 style="font-weight: 700; margin: 0 0 6px 0; font-size: 17px; color: #1a1a1a; line-height: 1.3;">${master.profiles.name}</h3>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                      <span style="color: #f59e0b; font-size: 15px;">⭐</span>
+                      <span style="color: #666; font-weight: 600; font-size: 15px;">${master.rating || 0}</span>
                     </div>
                   </div>
                 </div>
-                <div style="display: flex; align-items: start; gap: ${window.innerWidth < 640 ? '4px' : '6px'}; font-size: ${window.innerWidth < 640 ? '10px' : '12px'}; color: #666; line-height: 1.4; margin-bottom: ${window.innerWidth < 640 ? '6px' : '10px'};">
-                  <span style="font-size: ${window.innerWidth < 640 ? '11px' : '13px'}; margin-top: 1px;">📍</span>
-                  <span>${shortAddress}</span>
+                <div style="display: flex; align-items: start; gap: 8px; font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 14px; padding: 10px; background: white; border-radius: 12px;">
+                  <span style="font-size: 16px; margin-top: 2px;">📍</span>
+                  <span style="font-weight: 500;">${shortAddress}</span>
                 </div>
                 <button 
                   onclick="window.location.href='/professional/${master.id}'" 
-                  style="width: 100%; padding: ${window.innerWidth < 640 ? '6px' : '8px'}; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: ${window.innerWidth < 640 ? '6px' : '8px'}; font-weight: 600; font-size: ${window.innerWidth < 640 ? '11px' : '13px'}; cursor: pointer; transition: all 0.2s;"
-                  onmouseover="this.style.opacity='0.9'"
-                  onmouseout="this.style.opacity='1'"
+                  style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);"
+                  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(236, 72, 153, 0.4)'"
+                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(236, 72, 153, 0.3)'"
                 >
-                  Skatīt profilu
+                  Skatīt profilu →
                 </button>
               </div>`
             )
@@ -293,39 +319,39 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
               const shortAddress = selectedMaster.address ? (selectedMaster.address.length > 40 ? selectedMaster.address.substring(0, 40) + '...' : selectedMaster.address) : selectedMaster.city;
               
               const selectedPopup = new mapboxgl.Popup({ 
-                offset: 15,
+                offset: 25,
                 anchor: 'bottom',
                 closeButton: true,
                 closeOnClick: false,
-                className: 'selected-master-popup',
-                maxWidth: window.innerWidth < 640 ? '240px' : '280px'
+                className: 'selected-master-popup modern-popup',
+                maxWidth: '320px'
               }).setHTML(
-                `<div style="padding: ${window.innerWidth < 640 ? '8px' : '12px'}; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: ${window.innerWidth < 640 ? '12px' : '16px'};">
-                  <div style="display: flex; align-items: center; gap: ${window.innerWidth < 640 ? '8px' : '12px'}; margin-bottom: ${window.innerWidth < 640 ? '6px' : '10px'};">
+                `<div style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%); border-radius: 20px;">
+                  <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
                     <img 
                       src="${avatarUrl}" 
                       alt="${selectedMaster.profiles.name}"
-                      style="width: ${window.innerWidth < 640 ? '36px' : '48px'}; height: ${window.innerWidth < 640 ? '36px' : '48px'}; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; flex-shrink: 0;"
+                      style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #ec4899; flex-shrink: 0; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);"
                     />
                     <div style="min-width: 0; flex: 1;">
-                      <h3 style="font-weight: 600; margin: 0 0 ${window.innerWidth < 640 ? '2px' : '4px'} 0; font-size: ${window.innerWidth < 640 ? '13px' : '15px'}; color: #1a1a1a; line-height: 1.3;">${selectedMaster.profiles.name}</h3>
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: #f59e0b; font-size: ${window.innerWidth < 640 ? '11px' : '13px'};">⭐</span>
-                        <span style="color: #666; font-weight: 500; font-size: ${window.innerWidth < 640 ? '11px' : '13px'};">${selectedMaster.rating || 0}</span>
+                      <h3 style="font-weight: 700; margin: 0 0 6px 0; font-size: 17px; color: #1a1a1a; line-height: 1.3;">${selectedMaster.profiles.name}</h3>
+                      <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #f59e0b; font-size: 15px;">⭐</span>
+                        <span style="color: #666; font-weight: 600; font-size: 15px;">${selectedMaster.rating || 0}</span>
                       </div>
                     </div>
                   </div>
-                  <div style="display: flex; align-items: start; gap: ${window.innerWidth < 640 ? '4px' : '6px'}; font-size: ${window.innerWidth < 640 ? '10px' : '12px'}; color: #666; line-height: 1.4; margin-bottom: ${window.innerWidth < 640 ? '6px' : '10px'};">
-                    <span style="font-size: ${window.innerWidth < 640 ? '11px' : '13px'}; margin-top: 1px;">📍</span>
-                    <span>${shortAddress}</span>
+                  <div style="display: flex; align-items: start; gap: 8px; font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 14px; padding: 10px; background: white; border-radius: 12px;">
+                    <span style="font-size: 16px; margin-top: 2px;">📍</span>
+                    <span style="font-weight: 500;">${shortAddress}</span>
                   </div>
                   <button 
                     onclick="window.location.href='/professional/${selectedMaster.id}'" 
-                    style="width: 100%; padding: ${window.innerWidth < 640 ? '6px' : '8px'}; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: ${window.innerWidth < 640 ? '6px' : '8px'}; font-weight: 600; font-size: ${window.innerWidth < 640 ? '11px' : '13px'}; cursor: pointer; transition: all 0.2s;"
-                    onmouseover="this.style.opacity='0.9'"
-                    onmouseout="this.style.opacity='1'"
+                    style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(236, 72, 153, 0.4)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(236, 72, 153, 0.3)'"
                   >
-                    Skatīt profilu
+                    Skatīt profilu →
                   </button>
                 </div>`
               )
@@ -350,8 +376,11 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
 
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-muted/20 rounded-lg">
-        <p className="text-muted-foreground">Ielādē kartes datus...</p>
+      <div className="w-full h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary animate-pulse" />
+          <p className="text-base font-semibold text-foreground">Ielādē kartes datus...</p>
+        </div>
       </div>
     );
   }
@@ -361,53 +390,61 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
     : masters.filter(m => m.category === selectedCategory);
 
   return (
-    <div className="relative w-full h-[calc(100vh-12rem)] sm:h-full overflow-hidden">
-      {/* Category filter - moved to bottom */}
-      <div className="absolute bottom-3 left-3 right-3 z-10 bg-card/95 backdrop-blur-sm rounded-xl shadow-lg border p-2">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          <Button
-            size="sm"
-            variant={selectedCategory === 'all' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('all')}
-            className="whitespace-nowrap text-xs flex-shrink-0"
-          >
-            Visas
-          </Button>
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              size="sm"
-              variant={selectedCategory === category.name ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory(category.name)}
-              className="whitespace-nowrap text-xs flex-shrink-0"
-              style={{
-                backgroundColor: selectedCategory === category.name ? category.color : undefined,
-                borderColor: category.color,
-              }}
-            >
-              <span className="mr-1">{category.icon}</span>
-              {category.name}
-            </Button>
-          ))}
-        </div>
-      </div>
-      
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Full-screen map container */}
       <div 
         ref={mapContainer} 
-        className="map-container absolute inset-0 rounded-2xl overflow-hidden border shadow-sm"
+        className="map-container absolute inset-0"
         style={{ 
           width: '100%',
           height: '100%',
-          minHeight: '380px',
-          maxWidth: '100%',
           touchAction: 'pan-x pan-y'
         }}
       />
+      
+      {/* Category filter - floating above bottom navigation */}
+      <div className="absolute bottom-[88px] left-3 right-3 z-20 pointer-events-none">
+        <div className="bg-white/98 backdrop-blur-md rounded-[24px] shadow-elegant border border-border/20 p-2.5 pointer-events-auto">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <Button
+              size="sm"
+              variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+              onClick={() => setSelectedCategory('all')}
+              className={`whitespace-nowrap text-xs font-semibold flex-shrink-0 rounded-full px-4 h-9 transition-all ${
+                selectedCategory === 'all' 
+                  ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-card' 
+                  : 'text-foreground/70 hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              Visas
+            </Button>
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                size="sm"
+                variant={selectedCategory === category.name ? 'default' : 'ghost'}
+                onClick={() => setSelectedCategory(category.name)}
+                className={`whitespace-nowrap text-xs font-semibold flex-shrink-0 rounded-full px-4 h-9 transition-all ${
+                  selectedCategory === category.name
+                    ? 'shadow-card text-white'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-muted'
+                }`}
+                style={{
+                  backgroundColor: selectedCategory === category.name ? category.color : undefined,
+                }}
+              >
+                <span className="mr-1.5">{category.icon}</span>
+                {category.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
       {filteredMasters.length === 0 && !loading && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-3 sm:p-4">
-          <div className="bg-card/95 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg border max-w-sm text-center">
-            <p className="text-sm sm:text-base font-semibold mb-2">Nav pieejamu meistaru</p>
-            <p className="text-xs text-muted-foreground">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+          <div className="bg-white/98 backdrop-blur-md p-5 rounded-3xl shadow-elegant border border-border/20 max-w-[280px] text-center">
+            <p className="text-base font-bold mb-2 text-foreground">Nav pieejamu meistaru</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {selectedCategory === 'all' 
                 ? 'Pašlaik sistēmā nav reģistrētu meistaru ar adresi vai viņi gaida administratora apstiprinājumu.'
                 : `Pašlaik nav pieejamu meistaru kategorijā "${selectedCategory}".`

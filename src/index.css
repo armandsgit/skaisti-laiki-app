@@ -418,39 +418,46 @@
     }
   }
 
-  /* Selected master popup - Airbnb style */
-  .selected-master-popup .mapboxgl-popup-content {
+  /* Selected master popup - Modern Bolt Food / Airbnb style */
+  .selected-master-popup .mapboxgl-popup-content,
+  .modern-popup .mapboxgl-popup-content {
     padding: 0 !important;
     background: transparent !important;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 16px 48px rgba(236, 72, 153, 0.25) !important;
     border: none !important;
-    border-radius: 16px !important;
-    animation: fadeInPopup 0.4s ease-out;
+    border-radius: 24px !important;
+    animation: fadeInPopup 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .selected-master-popup .mapboxgl-popup-tip {
-    border-top-color: #ffffff !important;
+  .selected-master-popup .mapboxgl-popup-tip,
+  .modern-popup .mapboxgl-popup-tip {
+    border-top-color: #fef5f9 !important;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
   }
 
-  .selected-master-popup .mapboxgl-popup-close-button {
-    right: 8px;
-    top: 8px;
-    font-size: 20px;
+  .selected-master-popup .mapboxgl-popup-close-button,
+  .modern-popup .mapboxgl-popup-close-button {
+    right: 12px;
+    top: 12px;
+    font-size: 22px;
     color: #999;
     padding: 0;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
-  .selected-master-popup .mapboxgl-popup-close-button:hover {
+  .selected-master-popup .mapboxgl-popup-close-button:hover,
+  .modern-popup .mapboxgl-popup-close-button:hover {
     background: rgba(236, 72, 153, 0.1);
     color: #ec4899;
+    transform: scale(1.1);
   }
 
   /* Marker bounce animation - using scale instead of translateY to avoid positioning conflicts */
@@ -477,31 +484,32 @@
   }
   
   /* ========================================
-     CUSTOM MAP MARKERS
+     CUSTOM MAP MARKERS - Modern Design
      ======================================== */
   .custom-map-marker {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
-    max-width: 36px;
-    max-height: 36px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    max-width: 44px;
+    max-height: 44px;
     background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
     border-radius: 50%;
     border: 3px solid white;
-    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    overflow: hidden;
+    font-size: 22px;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   
-  .draggable-marker {
-    cursor: grab;
+  .custom-map-marker:hover {
+    transform: scale(1.15);
+    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
   }
   
-  .draggable-marker:active {
+  .mapboxgl-map:active .custom-map-marker {
     cursor: grabbing;
   }
   
@@ -512,14 +520,14 @@
   
   @media (max-width: 639px) {
     .custom-map-marker {
-      width: 28px !important;
-      height: 28px !important;
-      min-width: 28px !important;
-      min-height: 28px !important;
-      max-width: 28px !important;
-      max-height: 28px !important;
-      font-size: 16px !important;
-      border-width: 2px !important;
+      width: 38px !important;
+      height: 38px !important;
+      min-width: 38px !important;
+      min-height: 38px !important;
+      max-width: 38px !important;
+      max-height: 38px !important;
+      font-size: 20px !important;
+      border-width: 2.5px !important;
     }
     
     /* Force Mapbox marker container size on mobile */
