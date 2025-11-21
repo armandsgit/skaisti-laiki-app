@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, Euro, Edit, Trash2 } from 'lucide-react';
+import { Clock, Euro, Edit, Trash2, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ServiceCardProps {
@@ -11,6 +11,11 @@ interface ServiceCardProps {
     price: number;
     duration: number;
     description?: string;
+    staff_members?: {
+      id: string;
+      name: string;
+      position?: string;
+    } | null;
   };
   onEdit: (service: any) => void;
   onDelete: (id: string) => void;
@@ -30,6 +35,12 @@ export const ServiceCard = ({ service, onEdit, onDelete }: ServiceCardProps) => 
               <h3 className="font-semibold text-foreground mb-1">{service.name}</h3>
               {service.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2">{service.description}</p>
+              )}
+              {service.staff_members && (
+                <Badge variant="secondary" className="mt-2 gap-1">
+                  <User className="w-3 h-3" />
+                  {service.staff_members.name}
+                </Badge>
               )}
             </div>
           </div>

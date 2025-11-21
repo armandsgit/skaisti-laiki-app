@@ -41,6 +41,7 @@ const ProfessionalDashboard = () => {
   const [services, setServices] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [selectedStaffMember, setSelectedStaffMember] = useState<string | null>(null);
+  const [staffMembers, setStaffMembers] = useState<any[]>([]);
   const [stats, setStats] = useState({ 
     totalEarnings: 0, 
     completedBookings: 0,
@@ -60,7 +61,8 @@ const ProfessionalDashboard = () => {
     name: '',
     price: '',
     duration: '',
-    description: ''
+    description: '',
+    staff_member_id: ''
   });
   const [userProfile, setUserProfile] = useState<any>(null);
   const [editedProfile, setEditedProfile] = useState({
@@ -88,6 +90,7 @@ const ProfessionalDashboard = () => {
     if (profile) {
       loadServices();
       loadBookings();
+      loadStaffMembers();
     }
   }, [profile]);
 
@@ -169,10 +172,30 @@ const ProfessionalDashboard = () => {
     
     const { data } = await supabase
       .from('services')
-      .select('*')
+      .select(`
+        *,
+        staff_members:staff_member_id (
+          id,
+          name,
+          position
+        )
+      `)
       .eq('professional_id', profile.id);
     
     setServices(data || []);
+  };
+
+  const loadStaffMembers = async () => {
+    if (!profile?.id) return;
+    
+    const { data } = await supabase
+      .from('staff_members')
+      .select('*')
+      .eq('professional_id', profile.id)
+      .eq('is_active', true)
+      .order('name');
+    
+    setStaffMembers(data || []);
   };
 
   const loadBookings = async () => {
@@ -235,7 +258,8 @@ const ProfessionalDashboard = () => {
             name: validatedData.name,
             price: validatedData.price,
             duration: validatedData.duration,
-            description: validatedData.description
+            description: validatedData.description,
+            staff_member_id: newService.staff_member_id || null
           })
           .eq('id', editingService.id);
 
@@ -243,7 +267,7 @@ const ProfessionalDashboard = () => {
           toast.success('Pakalpojums atjaunināts!');
           setServiceDialogOpen(false);
           setEditingService(null);
-          setNewService({ name: '', price: '', duration: '', description: '' });
+          setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: '' });
           loadServices();
         } else {
           toast.error(t.error);
@@ -256,13 +280,14 @@ const ProfessionalDashboard = () => {
             name: validatedData.name,
             price: validatedData.price,
             duration: validatedData.duration,
-            description: validatedData.description
+            description: validatedData.description,
+            staff_member_id: newService.staff_member_id || null
           });
         
         if (!error) {
           toast.success(t.serviceAdded);
           setServiceDialogOpen(false);
-          setNewService({ name: '', price: '', duration: '', description: '' });
+          setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: '' });
           loadServices();
         } else {
           toast.error(t.error);
@@ -283,7 +308,8 @@ const ProfessionalDashboard = () => {
       name: service.name,
       price: service.price.toString(),
       duration: service.duration.toString(),
-      description: service.description || ''
+      description: service.description || '',
+      staff_member_id: service.staff_member_id || ''
     });
     setServiceDialogOpen(true);
   };
@@ -625,7 +651,7 @@ const ProfessionalDashboard = () => {
                 label="Pievienot pakalpojumu"
                 onClick={() => {
                   setEditingService(null);
-                  setNewService({ name: '', price: '', duration: '', description: '' });
+                  setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: '' });
                   setServiceDialogOpen(true);
                 }}
               />
@@ -812,7 +838,7 @@ const ProfessionalDashboard = () => {
                   <Button
                     onClick={() => {
                       setEditingService(null);
-                      setNewService({ name: '', price: '', duration: '', description: '' });
+                      setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: '' });
                     }}
                     className="bg-gradient-to-r from-primary to-secondary border-0"
                   >
@@ -871,6 +897,28 @@ const ProfessionalDashboard = () => {
                         placeholder="Pakalpojuma apraksts..."
                         rows={3}
                       />
+                    </div>
+                    <div>
+                      <Label htmlFor="staff_member">Meistars (neobligāti)</Label>
+                      <Select
+                        value={newService.staff_member_id}
+                        onValueChange={(value) => setNewService({ ...newService, staff_member_id: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Izvēlieties meistaru vai atstājiet tukšu" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Nav piesaistīts</SelectItem>
+                          {staffMembers.map((staff) => (
+                            <SelectItem key={staff.id} value={staff.id}>
+                              {staff.name} {staff.position && `- ${staff.position}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Ja piesaistīsiet pakalpojumu konkrētam meistaram, tikai viņš varēs to sniegt
+                      </p>
                     </div>
                     <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary border-0">
                       {editingService ? 'Saglabāt izmaiņas' : 'Pievienot pakalpojumu'}
