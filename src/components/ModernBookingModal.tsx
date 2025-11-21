@@ -309,11 +309,8 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
             const rangeStartMin = timeToMinutes(range.start);
             const rangeEndMin = timeToMinutes(range.end);
             
-            return (
-              (slotStartMin >= rangeStartMin && slotStartMin < rangeEndMin) ||
-              (slotEndMin > rangeStartMin && slotEndMin <= rangeEndMin) ||
-              (slotStartMin <= rangeStartMin && slotEndMin >= rangeEndMin)
-            );
+            // Standard overlap check: slotStart < bookingEnd && slotEnd > bookingStart
+            return slotStartMin < rangeEndMin && slotEndMin > rangeStartMin;
           });
         };
 
@@ -539,7 +536,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                   </div>
                 ) : availableStaff.length === 0 ? (
                   <div className="text-sm text-amber-600 text-center py-4 bg-amber-50 rounded-xl">
-                    Nav pieejamu meistaru šim pakalpojumam vai datumam
+                    Šajā datumā visi laiki ir aizņemti
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -560,11 +557,11 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                               )}
                             </div>
                           </div>
-                          {availableSlots.length === 0 ? (
+                           {availableSlots.length === 0 ? (
                             <div className="text-sm text-center py-3 text-gray-500 bg-gray-100 rounded-xl">
-                              Nav pieejamu laiku
+                              Visi laiki aizņemti
                             </div>
-                          ) : (
+                           ) : (
                             <div className="grid grid-cols-3 gap-2">
                               {availableSlots.map((slot) => (
                                 <button

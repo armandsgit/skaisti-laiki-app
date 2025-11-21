@@ -93,6 +93,7 @@ const ProfessionalProfile = () => {
           client_id: user.id,
           professional_id: id,
           service_id: selectedService.id,
+          staff_member_id: formData.staffMemberId || null,
           booking_date: formData.date.toISOString().split('T')[0],
           booking_time: formData.time,
           booking_end_time: bookingEndTime,
