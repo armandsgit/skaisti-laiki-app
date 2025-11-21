@@ -69,6 +69,7 @@ export type Database = {
           notes: string | null
           professional_id: string
           service_id: string
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["booking_status"]
           updated_at: string
         }
@@ -82,6 +83,7 @@ export type Database = {
           notes?: string | null
           professional_id: string
           service_id: string
+          staff_member_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
         }
@@ -95,6 +97,7 @@ export type Database = {
           notes?: string | null
           professional_id?: string
           service_id?: string
+          staff_member_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
         }
@@ -118,6 +121,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_staff_member_id_fkey"
+            columns: ["staff_member_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
             referencedColumns: ["id"]
           },
         ]
@@ -251,6 +261,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           professional_id: string
+          staff_member_id: string | null
           start_time: string
           time_slot_interval: number | null
           updated_at: string | null
@@ -263,6 +274,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           professional_id: string
+          staff_member_id?: string | null
           start_time: string
           time_slot_interval?: number | null
           updated_at?: string | null
@@ -275,6 +287,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           professional_id?: string
+          staff_member_id?: string | null
           start_time?: string
           time_slot_interval?: number | null
           updated_at?: string | null
@@ -285,6 +298,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professional_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_schedules_staff_member_id_fkey"
+            columns: ["staff_member_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
             referencedColumns: ["id"]
           },
         ]
@@ -389,6 +409,7 @@ export type Database = {
           name: string
           price: number
           professional_id: string
+          staff_member_id: string | null
           updated_at: string
         }
         Insert: {
@@ -399,6 +420,7 @@ export type Database = {
           name: string
           price: number
           professional_id: string
+          staff_member_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -409,11 +431,60 @@ export type Database = {
           name?: string
           price?: number
           professional_id?: string
+          staff_member_id?: string | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_staff_member_id_fkey"
+            columns: ["staff_member_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_members: {
+        Row: {
+          avatar: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          position: string | null
+          professional_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          position?: string | null
+          professional_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: string | null
+          professional_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_members_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professional_profiles"

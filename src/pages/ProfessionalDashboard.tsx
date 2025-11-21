@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
 import SubscriptionStatusIndicator from '@/components/SubscriptionStatusIndicator';
 import WorkScheduleManager from '@/components/WorkScheduleManager';
+import StaffMemberManager from '@/components/StaffMemberManager';
 import { DashboardStats } from '@/components/DashboardStats';
 import { UpcomingBookingCard } from '@/components/UpcomingBookingCard';
 import { ServiceCard } from '@/components/ServiceCard';
@@ -39,6 +40,7 @@ const ProfessionalDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [selectedStaffMember, setSelectedStaffMember] = useState<string | null>(null);
   const [stats, setStats] = useState({ 
     totalEarnings: 0, 
     completedBookings: 0,
@@ -907,10 +909,36 @@ const ProfessionalDashboard = () => {
             <div className="mb-4">
               <h2 className="text-xl font-bold mb-2">Darba grafiks</h2>
               <p className="text-sm text-muted-foreground">
-                Uzstādiet savus darba laikus katrai nedēļas dienai
+                Pārvaldiet savus meistarus un viņu darba grafikus
               </p>
             </div>
-            <WorkScheduleManager professionalId={profile.id} />
+            
+            <StaffMemberManager
+              professionalId={profile.id}
+              onSelectStaffMember={(staffId) => {
+                setSelectedStaffMember(staffId);
+              }}
+            />
+
+            {selectedStaffMember && (
+              <div className="mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedStaffMember(null)}
+                  className="mb-4"
+                >
+                  ← Atpakaļ uz meistaru sarakstu
+                </Button>
+                <WorkScheduleManager
+                  professionalId={profile.id}
+                  staffMemberId={selectedStaffMember}
+                />
+              </div>
+            )}
+
+            {!selectedStaffMember && (
+              <WorkScheduleManager professionalId={profile.id} />
+            )}
           </TabsContent>
 
           {/* Profile Tab */}
