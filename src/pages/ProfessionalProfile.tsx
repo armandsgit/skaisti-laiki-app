@@ -15,6 +15,7 @@ import { ArrowLeft, Star, MapPin, Clock, Euro } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationMap from '@/components/LocationMap';
 import { bookingSchema } from '@/lib/validation';
+import BookingSuccessModal from '@/components/BookingSuccessModal';
 
 const ProfessionalProfile = () => {
   const { id } = useParams();
@@ -30,6 +31,7 @@ const ProfessionalProfile = () => {
   const [bookingDate, setBookingDate] = useState<Date>();
   const [bookingTime, setBookingTime] = useState('');
   const [loading, setLoading] = useState(true);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -104,9 +106,8 @@ const ProfessionalProfile = () => {
       if (error) {
         toast.error(t.error);
       } else {
-        toast.success(t.bookingCreated);
         setBookingDialogOpen(false);
-        navigate('/');
+        setSuccessModalOpen(true);
       }
     } catch (error: any) {
       if (error.errors) {
@@ -389,6 +390,11 @@ const ProfessionalProfile = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <BookingSuccessModal 
+        open={successModalOpen} 
+        onClose={() => setSuccessModalOpen(false)} 
+      />
     </div>
   );
 };
