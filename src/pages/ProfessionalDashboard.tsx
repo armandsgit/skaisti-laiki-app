@@ -1074,6 +1074,8 @@ const ProfessionalDashboard = () => {
                             <SelectItem value="120">120 min</SelectItem>
                             <SelectItem value="150">150 min</SelectItem>
                             <SelectItem value="180">180 min</SelectItem>
+                            <SelectItem value="240">240 min (4h)</SelectItem>
+                            <SelectItem value="300">300 min (5h)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
