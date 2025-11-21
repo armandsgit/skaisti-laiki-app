@@ -270,20 +270,43 @@ const ProfessionalProfile = () => {
         {/* Location Map */}
         {professional.latitude && professional.longitude && (
           <Card className="border-0 shadow-sm overflow-hidden animate-fade-in">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
-                <h3 className="font-semibold">Atrašanās vieta</h3>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                    <h3 className="font-semibold text-sm">Atrašanās vieta</h3>
+                  </div>
+                  {professional.address && (
+                    <p className="text-sm text-muted-foreground leading-relaxed break-words">
+                      {professional.address}, {professional.city}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-shrink-0"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    window.open(
+                      `https://www.google.com/maps?q=${professional.latitude},${professional.longitude}`,
+                      '_blank'
+                    );
+                  }}
+                >
+                  <MapPin className="w-4 h-4" />
+                </Button>
               </div>
-              {professional.address && (
-                <p className="text-sm text-muted-foreground mb-3">{professional.address}</p>
-              )}
-              <div className="w-full overflow-hidden rounded-xl border h-48">
-                <LocationMap
-                  latitude={professional.latitude}
-                  longitude={professional.longitude}
-                  address={professional.address}
-                />
+              
+              <div className="w-full overflow-hidden rounded-xl border">
+                <div className="relative w-full h-44">
+                  <LocationMap
+                    latitude={professional.latitude}
+                    longitude={professional.longitude}
+                    address={professional.address}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
