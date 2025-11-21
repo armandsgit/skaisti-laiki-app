@@ -62,7 +62,7 @@ const App = () => (
               } 
             />
             <Route 
-              path="/bookings" 
+              path="/client/bookings" 
               element={
                 <ProtectedRoute requiredRole="CLIENT">
                   <ClientBookings />
