@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SortedMaster } from '@/lib/master-sorting';
 import NavigationPicker from './NavigationPicker';
+import { Navigation } from 'lucide-react';
+import { triggerHaptic } from '@/lib/haptic';
 
 interface MasterBottomSheetProps {
   master: SortedMaster | null;
@@ -165,11 +167,14 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
             
             {/* Navigation Button */}
             <button
-              onClick={() => setShowNavigationPicker(true)}
-              className="rounded-full p-2.5 bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-all duration-150 active:scale-95 flex-shrink-0 ml-2"
+              onClick={() => {
+                triggerHaptic('light');
+                setShowNavigationPicker(true);
+              }}
+              className="rounded-[18px] border-2 border-primary bg-background hover:bg-primary/5 px-3 py-1.5 h-auto flex-shrink-0 active:scale-95 transition-all"
               aria-label="Navigēt"
             >
-              <span className="text-xl">🗺️</span>
+              <Navigation className="w-4 h-4 text-foreground" />
             </button>
           </div>
 
