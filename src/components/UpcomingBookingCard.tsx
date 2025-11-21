@@ -12,7 +12,7 @@ interface UpcomingBookingCardProps {
     booking_time: string;
     status: 'pending' | 'confirmed' | 'completed' | 'canceled';
     services: { name: string; price: number };
-    profiles: { name: string; phone: string };
+    profiles: { name: string; phone: string; email?: string };
   };
   onClick: () => void;
 }
@@ -65,10 +65,17 @@ export const UpcomingBookingCard = ({ booking, onClick }: UpcomingBookingCardPro
               <User className="w-4 h-4 text-muted-foreground" />
               <span className="text-foreground font-medium">{booking.profiles.name}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Phone className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{booking.profiles.phone}</span>
-            </div>
+            {booking.profiles.email && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">📧 {booking.profiles.email}</span>
+              </div>
+            )}
+            {booking.profiles.phone && (
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">{booking.profiles.phone}</span>
+              </div>
+            )}
           </div>
 
           <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
