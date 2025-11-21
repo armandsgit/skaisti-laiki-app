@@ -5,9 +5,11 @@ import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, MessageSquare } from 'lucide-react';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import EmptyStateAnimation from '@/components/EmptyStateAnimation';
+import ReviewModal from '@/components/ReviewModal';
 
 const ClientBookings = () => {
   const t = useTranslation('lv');
@@ -15,6 +17,8 @@ const ClientBookings = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -29,6 +33,7 @@ const ClientBookings = () => {
         *,
         services(name, price),
         professional_profiles(
+          id,
           profiles!professional_profiles_user_id_fkey(name, avatar)
         )
       `)
@@ -36,9 +41,35 @@ const ClientBookings = () => {
       .order('booking_date', { ascending: false });
     
     if (!error && data) {
-      setBookings(data);
+      // Check if reviews exist for each booking
+      const bookingsWithReviewStatus = await Promise.all(
+        data.map(async (booking) => {
+          const { data: reviewData } = await supabase
+            .from('reviews')
+            .select('id, status')
+            .eq('booking_id', booking.id)
+            .maybeSingle();
+
+          return {
+            ...booking,
+            hasReview: !!reviewData,
+            reviewStatus: reviewData?.status
+          };
+        })
+      );
+      
+      setBookings(bookingsWithReviewStatus);
     }
     setLoading(false);
+  };
+
+  const handleOpenReview = (booking: any) => {
+    setSelectedBooking(booking);
+    setReviewModalOpen(true);
+  };
+
+  const handleReviewSuccess = () => {
+    loadBookings(); // Reload bookings to update review status
   };
 
   if (loading) {
@@ -102,6 +133,34 @@ const ClientBookings = () => {
                         {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
                       </span>
                     </div>
+
+                    {/* Review Button - Only show for completed bookings without approved review */}
+                    {booking.status === 'completed' && !booking.hasReview && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full mt-3"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenReview(booking);
+                        }}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Atstāt atsauksmi
+                      </Button>
+                    )}
+
+                    {/* Review Status Badge */}
+                    {booking.hasReview && booking.reviewStatus === 'pending' && (
+                      <Badge variant="outline" className="w-full mt-3 justify-center">
+                        Atsauksme gaida apstiprināšanu
+                      </Badge>
+                    )}
+                    {booking.hasReview && booking.reviewStatus === 'approved' && (
+                      <Badge variant="secondary" className="w-full mt-3 justify-center">
+                        Atsauksme publicēta
+                      </Badge>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -109,6 +168,18 @@ const ClientBookings = () => {
           </div>
         )}
       </main>
+
+      {/* Review Modal */}
+      {selectedBooking && (
+        <ReviewModal
+          open={reviewModalOpen}
+          onClose={() => setReviewModalOpen(false)}
+          bookingId={selectedBooking.id}
+          professionalId={selectedBooking.professional_profiles?.id}
+          clientId={user?.id || ''}
+          onSuccess={handleReviewSuccess}
+        />
+      )}
     </div>
   );
 };

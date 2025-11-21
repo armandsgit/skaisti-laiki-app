@@ -237,6 +237,8 @@ export type Database = {
           id: string
           professional_id: string
           rating: number
+          status: string
+          updated_at: string | null
         }
         Insert: {
           booking_id: string
@@ -246,6 +248,8 @@ export type Database = {
           id?: string
           professional_id: string
           rating: number
+          status?: string
+          updated_at?: string | null
         }
         Update: {
           booking_id?: string
@@ -255,6 +259,8 @@ export type Database = {
           id?: string
           professional_id?: string
           rating?: number
+          status?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
