@@ -390,6 +390,8 @@ const ProfessionalProfile = () => {
         <NavigationPicker
           latitude={professional.latitude}
           longitude={professional.longitude}
+          address={professional.address}
+          city={professional.city}
           isOpen={showNavigationPicker}
           onClose={() => setShowNavigationPicker(false)}
         />

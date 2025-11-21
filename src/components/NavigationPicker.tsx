@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react';
 interface NavigationPickerProps {
   latitude: number;
   longitude: number;
+  address?: string;
+  city?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const NavigationPicker = ({ latitude, longitude, isOpen, onClose }: NavigationPickerProps) => {
+const NavigationPicker = ({ latitude, longitude, address, city, isOpen, onClose }: NavigationPickerProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -25,6 +27,10 @@ const NavigationPicker = ({ latitude, longitude, isOpen, onClose }: NavigationPi
 
   if (!isOpen) return null;
 
+  // Create full address string for Waze
+  const fullAddress = address && city ? `${address}, ${city}` : address || city || '';
+  const wazeQuery = fullAddress ? encodeURIComponent(fullAddress) : `${latitude},${longitude}`;
+
   const navigationOptions = [
     {
       name: 'Apple Maps',
@@ -41,8 +47,8 @@ const NavigationPicker = ({ latitude, longitude, isOpen, onClose }: NavigationPi
     {
       name: 'Waze',
       icon: '🚗',
-      url: `waze://?ll=${latitude},${longitude}&navigate=yes`,
-      fallbackUrl: `https://waze.com/ul?ll=${latitude},${longitude}&navigate=yes`,
+      url: `waze://?q=${wazeQuery}&navigate=yes`,
+      fallbackUrl: `https://waze.com/ul?q=${wazeQuery}&navigate=yes`,
       priority: 2,
     },
   ].sort((a, b) => a.priority - b.priority);

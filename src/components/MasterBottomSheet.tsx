@@ -191,6 +191,8 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
         <NavigationPicker
           latitude={master.latitude}
           longitude={master.longitude}
+          address={master.address}
+          city={master.city}
           isOpen={showNavigationPicker}
           onClose={() => setShowNavigationPicker(false)}
         />
