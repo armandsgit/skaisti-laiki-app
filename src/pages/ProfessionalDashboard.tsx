@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings, LayoutDashboard, CalendarDays, TrendingUp, Bell, Trash2 } from 'lucide-react';
+import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings, LayoutDashboard, CalendarDays, TrendingUp, Bell, Trash2, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import EmptyStateAnimation from '@/components/EmptyStateAnimation';
@@ -77,6 +77,7 @@ const ProfessionalDashboard = () => {
     latitude: null as number | null,
     longitude: null as number | null
   });
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -193,6 +194,11 @@ const ProfessionalDashboard = () => {
   const loadBookings = async () => {
     if (!profile?.id) return;
     
+    // Get date 30 days ago for completed bookings filter
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+    
     const { data } = await supabase
       .from('bookings')
       .select(`
@@ -202,7 +208,9 @@ const ProfessionalDashboard = () => {
         staff_members(name, avatar)
       `)
       .eq('professional_id', profile.id)
-      .order('booking_date', { ascending: false });
+      .or(`status.neq.completed,and(status.eq.completed,booking_date.gte.${thirtyDaysAgoStr})`)
+      .order('booking_date', { ascending: true })
+      .order('booking_time', { ascending: true });
     
     if (data) {
       setBookings(data);
@@ -736,10 +744,23 @@ const ProfessionalDashboard = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-3">
-                {bookings.map((booking) => (
-                  <Card key={booking.id} className="border-0 shadow-card">
-                    <CardContent className="p-4">
+              <div className="space-y-6">
+                {/* Active Bookings Section */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Gaidāmās rezervācijas</h3>
+                  {bookings.filter(b => b.status !== 'completed').length > 0 ? (
+                    bookings.filter(b => b.status !== 'completed').map((booking) => (
+                      <Card 
+                        key={booking.id}
+                        className="hover:shadow-lg transition-all duration-300 border-l-4 bg-gradient-to-r from-background to-muted/20 border-0 shadow-card"
+                        style={{
+                          borderLeftColor: 
+                            booking.status === 'pending' ? '#f59e0b' :
+                            booking.status === 'confirmed' ? '#10b981' :
+                            '#ef4444'
+                        }}
+                      >
+                        <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -842,20 +863,147 @@ const ProfessionalDashboard = () => {
                         </div>
                       )}
 
-                      {(booking.status === 'completed' || booking.status === 'canceled') && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDeleteBooking(booking.id)}
-                          className="w-full"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Dzēst rezervāciju
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                          {booking.status === 'canceled' && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteBooking(booking.id)}
+                              className="w-full"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Dzēst rezervāciju
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <Card className="p-8 border-0 shadow-card">
+                      <p className="text-center text-muted-foreground">
+                        Nav gaidāmo rezervāciju
+                      </p>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Completed Bookings Section - Collapsible */}
+                {bookings.filter(b => b.status === 'completed').length > 0 && (
+                  <div className="space-y-4">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowCompleted(!showCompleted)}
+                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-muted-foreground">
+                          Pabeigtās rezervācijas
+                        </h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {bookings.filter(b => b.status === 'completed').length}
+                        </Badge>
+                      </div>
+                      <ChevronDown 
+                        className={`h-5 w-5 text-muted-foreground transition-transform duration-300 ${
+                          showCompleted ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </Button>
+
+                    {showCompleted && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-3"
+                      >
+                        {bookings.filter(b => b.status === 'completed').map((booking) => (
+                          <Card 
+                            key={booking.id}
+                            className="opacity-60 hover:opacity-80 transition-all duration-200 border-l-4 bg-muted/30 border-0 shadow-card"
+                            style={{ borderLeftColor: '#6b7280' }}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-semibold text-lg text-muted-foreground">
+                                      {booking.profiles.name}
+                                    </p>
+                                  </div>
+                                  <div className="space-y-1 mt-1">
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-xs font-mono bg-muted px-2 py-1 rounded-md text-muted-foreground break-all">
+                                        {booking.profiles.email || 'Nav e-pasta'}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      📱 {booking.profiles.phone || 'Nav telefona'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Badge variant="outline">
+                                  Pabeigts
+                                </Badge>
+                              </div>
+
+                              <div className="space-y-2">
+                                <p className="text-sm">
+                                  <span className="font-medium">Pakalpojums:</span>{' '}
+                                  {booking.services?.name}
+                                </p>
+                                
+                                {booking.staff_members && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium">Meistars:</span>
+                                    <div className="flex items-center gap-2">
+                                      {booking.staff_members.avatar && (
+                                        <img 
+                                          src={booking.staff_members.avatar} 
+                                          alt={booking.staff_members.name}
+                                          className="w-6 h-6 rounded-full object-cover"
+                                        />
+                                      )}
+                                      <span className="text-sm text-muted-foreground">
+                                        {booking.staff_members.name}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <p className="text-sm">
+                                  <span className="font-medium">Datums:</span>{' '}
+                                  {format(new Date(booking.booking_date), 'dd.MM.yyyy', { locale: lv })}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Laiks:</span>{' '}
+                                  {booking.booking_time.slice(0, 5)} - {booking.booking_end_time?.slice(0, 5)}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Cena:</span> €{booking.services?.price}
+                                </p>
+                                {booking.notes && (
+                                  <p className="text-sm">
+                                    <span className="font-medium">Piezīmes:</span> {booking.notes}
+                                  </p>
+                                )}
+                              </div>
+
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteBooking(booking.id)}
+                                className="w-full mt-4"
+                              >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Dzēst rezervāciju
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </motion.div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
