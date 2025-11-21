@@ -244,6 +244,7 @@ export type Database = {
       }
       professional_schedules: {
         Row: {
+          available_services: string[] | null
           created_at: string | null
           day_of_week: number
           end_time: string
@@ -255,6 +256,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          available_services?: string[] | null
           created_at?: string | null
           day_of_week: number
           end_time: string
@@ -266,6 +268,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          available_services?: string[] | null
           created_at?: string | null
           day_of_week?: number
           end_time?: string

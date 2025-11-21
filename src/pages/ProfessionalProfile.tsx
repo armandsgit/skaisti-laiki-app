@@ -28,7 +28,6 @@ const ProfessionalProfile = () => {
   const [professional, setProfessional] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [showNavigationPicker, setShowNavigationPicker] = useState(false);
@@ -72,6 +71,13 @@ const ProfessionalProfile = () => {
     triggerHaptic('medium');
 
     try {
+      // Find selected service
+      const selectedService = services.find(s => s.id === formData.serviceId);
+      if (!selectedService) {
+        toast.error('Pakalpojums nav atrasts');
+        return;
+      }
+
       // Calculate booking end time based on service duration
       const [hours, minutes] = formData.time.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
@@ -247,7 +253,6 @@ const ProfessionalProfile = () => {
                       className="w-full rounded-xl font-semibold shadow-sm button-press"
                       onClick={() => {
                         triggerHaptic('medium');
-                        setSelectedService(service);
                         setBookingDialogOpen(true);
                       }}
                     >
@@ -313,9 +318,10 @@ const ProfessionalProfile = () => {
       </div>
 
       <ModernBookingModal
-        isOpen={bookingDialogOpen && !!selectedService}
+        isOpen={bookingDialogOpen}
         onClose={() => setBookingDialogOpen(false)}
-        service={selectedService || {}}
+        services={services}
+        professionalId={id || ''}
         professionalName={professional?.profiles?.name || ''}
         onSubmit={handleBooking}
       />

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Clock, Calendar, Plus, X } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptic';
@@ -16,6 +17,14 @@ interface Schedule {
   end_time: string;
   is_active: boolean;
   time_slot_interval?: number;
+  available_services?: string[];
+}
+
+interface Service {
+  id: string;
+  name: string;
+  duration: number;
+  price: number;
 }
 
 interface WorkScheduleManagerProps {
@@ -34,11 +43,29 @@ const DAYS = [
 
 const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
   const [schedules, setSchedules] = useState<Record<number, Schedule[]>>({});
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadSchedules();
+    loadServices();
   }, [professionalId]);
+
+  const loadServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('professional_id', professionalId)
+        .order('name');
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error('Error loading services:', error);
+      toast.error('Neizdevās ielādēt pakalpojumus');
+    }
+  };
 
   const loadSchedules = async () => {
     try {
@@ -78,6 +105,7 @@ const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
       end_time: '17:00',
       is_active: true,
       time_slot_interval: 30,
+      available_services: [],
     };
 
     try {
@@ -270,6 +298,45 @@ const WorkScheduleManager = ({ professionalId }: WorkScheduleManagerProps) => {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Available Services */}
+                    {services.length > 0 && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">
+                          Pieejamie pakalpojumi šajā dienā
+                        </Label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto p-2 bg-background rounded-lg">
+                          {services.map((service) => (
+                            <div key={service.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`${schedule.id}-${service.id}`}
+                                checked={(schedule.available_services || []).includes(service.id)}
+                                onCheckedChange={(checked) => {
+                                  if (schedule.id) {
+                                    const currentServices = schedule.available_services || [];
+                                    const newServices = checked
+                                      ? [...currentServices, service.id]
+                                      : currentServices.filter(id => id !== service.id);
+                                    updateSchedule(schedule.id, { available_services: newServices });
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`${schedule.id}-${service.id}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {service.name} ({service.duration} min, €{service.price})
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        {(schedule.available_services || []).length === 0 && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            ⚠️ Nav izvēlēts neviens pakalpojums - klients nevarēs rezervēt
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
