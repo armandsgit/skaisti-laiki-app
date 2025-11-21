@@ -601,8 +601,6 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                     {availableStaff.map((staff) => {
                       const slots = staffTimeSlots[staff.id] || [];
                       const availableSlots = slots.filter(s => !s.isBooked);
-                      
-                      if (availableSlots.length === 0) return null;
 
                       return (
                         <div key={staff.id} className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
@@ -617,31 +615,37 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                               )}
                             </div>
                           </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            {availableSlots.map((slot) => (
-                              <button
-                                key={`${staff.id}-${slot.time}`}
-                                type="button"
-                                onClick={() => {
-                                  triggerHaptic('light');
-                                  setFormData({ 
-                                    ...formData, 
-                                    staffMemberId: staff.id, 
-                                    serviceId: slot.serviceId,
-                                    time: slot.time 
-                                  });
-                                }}
-                                className={cn(
-                                  "p-3 rounded-xl border-2 text-sm font-medium transition-all",
-                                  formData.time === slot.time && formData.staffMemberId === staff.id
-                                    ? "border-primary bg-primary text-white"
-                                    : "border-gray-200 bg-white hover:border-primary/50"
-                                )}
-                              >
-                                {slot.time}
-                              </button>
-                            ))}
-                          </div>
+                          {availableSlots.length === 0 ? (
+                            <div className="text-sm text-center py-3 text-gray-500 bg-gray-100 rounded-xl">
+                              Šajā dienā nav pieejamu pakalpojumu
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-3 gap-2">
+                              {availableSlots.map((slot) => (
+                                <button
+                                  key={`${staff.id}-${slot.time}`}
+                                  type="button"
+                                  onClick={() => {
+                                    triggerHaptic('light');
+                                    setFormData({ 
+                                      ...formData, 
+                                      staffMemberId: staff.id, 
+                                      serviceId: slot.serviceId,
+                                      time: slot.time 
+                                    });
+                                  }}
+                                  className={cn(
+                                    "p-3 rounded-xl border-2 text-sm font-medium transition-all",
+                                    formData.time === slot.time && formData.staffMemberId === staff.id
+                                      ? "border-primary bg-primary text-white"
+                                      : "border-gray-200 bg-white hover:border-primary/50"
+                                  )}
+                                >
+                                  {slot.time}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
