@@ -15,7 +15,6 @@ interface Schedule {
   start_time: string;
   end_time: string;
   is_active: boolean;
-  time_slot_interval?: number;
   available_services?: string[];
 }
 
@@ -144,7 +143,6 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
       start_time: '09:00',
       end_time: '17:00',
       is_active: true,
-      time_slot_interval: 10,
       available_services: serviceIds,
     };
 
@@ -318,13 +316,6 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
                         >
                           <X className="w-4 h-4" />
                         </Button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-1 block">Laika solis (fiksēts)</Label>
-                      <div className="w-full px-3 py-2 border rounded-lg text-sm bg-muted/30">
-                        10 minūtes
                       </div>
                     </div>
                   </div>
