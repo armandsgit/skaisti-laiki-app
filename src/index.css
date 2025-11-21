@@ -484,29 +484,23 @@
   }
   
   /* ========================================
-     CUSTOM MAP MARKERS - Modern Design
+     CUSTOM MAP MARKERS - Simple Design
      ======================================== */
   .custom-map-marker {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    max-width: 44px;
-    max-height: 44px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 36px;
+    max-height: 36px;
     background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
     border-radius: 50%;
     border: 3px solid white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 20px;
     box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  }
-  
-  .custom-map-marker:hover {
-    transform: scale(1.15);
-    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
   }
   
   .mapboxgl-map:active .custom-map-marker {
@@ -520,13 +514,13 @@
   
   @media (max-width: 639px) {
     .custom-map-marker {
-      width: 38px !important;
-      height: 38px !important;
-      min-width: 38px !important;
-      min-height: 38px !important;
-      max-width: 38px !important;
-      max-height: 38px !important;
-      font-size: 20px !important;
+      width: 28px !important;
+      height: 28px !important;
+      min-width: 28px !important;
+      min-height: 28px !important;
+      max-width: 28px !important;
+      max-height: 28px !important;
+      font-size: 16px !important;
       border-width: 2.5px !important;
     }
     

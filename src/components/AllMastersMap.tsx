@@ -152,35 +152,11 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       // Add markers for filtered masters
       filteredMasters.forEach((master) => {
 
-        // Create custom marker with modern design
+        // Create custom marker - simple design without hover
         const markerEl = document.createElement('div');
         markerEl.className = 'custom-map-marker clickable-marker';
-        markerEl.style.cssText = `
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #ec4899, #f472b6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 22px;
-          box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 3px solid white;
-        `;
         markerEl.innerHTML = '✨';
         markerEl.dataset.masterId = master.id;
-
-        // Add hover effect
-        markerEl.addEventListener('mouseenter', () => {
-          markerEl.style.transform = 'scale(1.15)';
-          markerEl.style.boxShadow = '0 6px 20px rgba(236, 72, 153, 0.5)';
-        });
-        markerEl.addEventListener('mouseleave', () => {
-          markerEl.style.transform = 'scale(1)';
-          markerEl.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.4)';
-        });
 
         const marker = new mapboxgl.Marker({ 
           element: markerEl,
