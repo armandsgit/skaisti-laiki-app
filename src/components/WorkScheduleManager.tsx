@@ -115,13 +115,16 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
   const addTimeSlot = async (dayOfWeek: number) => {
     triggerHaptic('light');
     
+    // Automatically select all available services for this staff member
+    const serviceIds = services.map(s => s.id);
+    
     const newSchedule: Schedule = {
       day_of_week: dayOfWeek,
       start_time: '09:00',
       end_time: '17:00',
       is_active: true,
       time_slot_interval: 30,
-      available_services: [],
+      available_services: serviceIds,
     };
 
     try {
@@ -319,9 +322,31 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
                     {/* Available Services */}
                     {services.length > 0 && (
                       <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">
-                          Pieejamie pakalpojumi šajā dienā
-                        </Label>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs text-muted-foreground">
+                            Pieejamie pakalpojumi šajā dienā
+                          </Label>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (schedule.id) {
+                                const allServiceIds = services.map(s => s.id);
+                                const allSelected = allServiceIds.every(id => 
+                                  (schedule.available_services || []).includes(id)
+                                );
+                                updateSchedule(schedule.id, { 
+                                  available_services: allSelected ? [] : allServiceIds 
+                                });
+                              }
+                            }}
+                            className="h-6 text-xs"
+                          >
+                            {(schedule.available_services || []).length === services.length 
+                              ? 'Noņemt visus' 
+                              : 'Atlasīt visus'}
+                          </Button>
+                        </div>
                         <div className="space-y-2 max-h-40 overflow-y-auto p-2 bg-background rounded-lg">
                           {services.map((service) => (
                             <div key={service.id} className="flex items-center space-x-2">
