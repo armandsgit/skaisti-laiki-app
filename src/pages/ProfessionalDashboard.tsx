@@ -60,7 +60,7 @@ const ProfessionalDashboard = () => {
   const [newService, setNewService] = useState({
     name: '',
     price: '',
-    duration: '',
+    duration: '60',
     description: ''
   });
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -267,7 +267,7 @@ const ProfessionalDashboard = () => {
           toast.success('Pakalpojums atjaunināts!');
           setServiceDialogOpen(false);
           setEditingService(null);
-          setNewService({ name: '', price: '', duration: '', description: '' });
+          setNewService({ name: '', price: '', duration: '60', description: '' });
           loadServices();
         } else {
           toast.error(t.error);
@@ -286,7 +286,7 @@ const ProfessionalDashboard = () => {
         if (!error) {
           toast.success(t.serviceAdded);
           setServiceDialogOpen(false);
-          setNewService({ name: '', price: '', duration: '', description: '' });
+          setNewService({ name: '', price: '', duration: '60', description: '' });
           loadServices();
         } else {
           toast.error(t.error);
@@ -1017,7 +1017,7 @@ const ProfessionalDashboard = () => {
                   <Button
                     onClick={() => {
       setEditingService(null);
-      setNewService({ name: '', price: '', duration: '', description: '' });
+      setNewService({ name: '', price: '', duration: '60', description: '' });
     }}
                     className="bg-gradient-to-r from-primary to-secondary border-0"
                   >
@@ -1057,14 +1057,25 @@ const ProfessionalDashboard = () => {
                       </div>
                       <div>
                         <Label htmlFor="duration">Ilgums (min)</Label>
-                        <Input
-                          id="duration"
-                          type="number"
+                        <Select
                           value={newService.duration}
-                          onChange={(e) => setNewService({ ...newService, duration: e.target.value })}
-                          placeholder="60"
-                          required
-                        />
+                          onValueChange={(value) => setNewService({ ...newService, duration: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Izvēlieties ilgumu" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="20">20 min</SelectItem>
+                            <SelectItem value="30">30 min</SelectItem>
+                            <SelectItem value="40">40 min</SelectItem>
+                            <SelectItem value="50">50 min</SelectItem>
+                            <SelectItem value="60">60 min</SelectItem>
+                            <SelectItem value="90">90 min</SelectItem>
+                            <SelectItem value="120">120 min</SelectItem>
+                            <SelectItem value="150">150 min</SelectItem>
+                            <SelectItem value="180">180 min</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     <div>

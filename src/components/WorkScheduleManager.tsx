@@ -144,7 +144,7 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
       start_time: '09:00',
       end_time: '17:00',
       is_active: true,
-      time_slot_interval: 30,
+      time_slot_interval: 10,
       available_services: serviceIds,
     };
 
@@ -322,22 +322,10 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
                     </div>
 
                     <div>
-                      <Label className="text-xs text-muted-foreground mb-1 block">Laika solis</Label>
-                      <Select
-                        value={String(schedule.time_slot_interval || 30)}
-                        onValueChange={(value) =>
-                          schedule.id && updateSchedule(schedule.id, { time_slot_interval: Number(value) })
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="15">15 minūtes</SelectItem>
-                          <SelectItem value="30">30 minūtes</SelectItem>
-                          <SelectItem value="60">60 minūtes</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Laika solis (fiksēts)</Label>
+                      <div className="w-full px-3 py-2 border rounded-lg text-sm bg-muted/30">
+                        10 minūtes
+                      </div>
                     </div>
                   </div>
                 ))}
