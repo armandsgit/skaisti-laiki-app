@@ -41,6 +41,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     name: '',
     position: '',
     avatar: '',
+    showOnProfile: true,
   });
 
   useEffect(() => {
@@ -67,7 +68,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     try {
       const { data, error } = await supabase
         .from('staff_members')
-        .select('*')
+        .select('*, show_on_profile')
         .eq('professional_id', professionalId)
         .eq('is_active', true)
         .order('created_at');
@@ -102,6 +103,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
             name: formData.name,
             position: formData.position || null,
             avatar: formData.avatar || null,
+            show_on_profile: formData.showOnProfile,
           })
           .eq('id', editingStaff.id);
 
@@ -123,6 +125,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
             name: formData.name,
             position: formData.position || null,
             avatar: formData.avatar || null,
+            show_on_profile: formData.showOnProfile,
           })
           .select()
           .single();
@@ -148,7 +151,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
 
       setIsDialogOpen(false);
       setEditingStaff(null);
-      setFormData({ name: '', position: '', avatar: '' });
+      setFormData({ name: '', position: '', avatar: '', showOnProfile: true });
       setSelectedServiceIds([]);
       loadStaffMembers();
     } catch (error) {
@@ -163,6 +166,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
       name: staff.name,
       position: staff.position || '',
       avatar: staff.avatar || '',
+      showOnProfile: (staff as any).show_on_profile ?? true,
     });
 
     // Load staff member's current services
@@ -206,7 +210,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
 
   const openDialog = () => {
     setEditingStaff(null);
-    setFormData({ name: '', position: '', avatar: '' });
+    setFormData({ name: '', position: '', avatar: '', showOnProfile: true });
     setSelectedServiceIds([]);
     setIsDialogOpen(true);
   };
@@ -279,6 +283,41 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                     placeholder="https://..."
                   />
                 </div>
+                
+                {/* Show on Profile Toggle */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/40">
+                  <div className="flex-1">
+                    <Label htmlFor="showOnProfile" className="text-sm font-semibold">
+                      Rādīt publiskajā profilā
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Vai šis meistars būs redzams klientiem profilā
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setFormData({ ...formData, showOnProfile: !formData.showOnProfile });
+                    }}
+                    className={`
+                      w-14 h-7 rounded-full relative flex-shrink-0 cursor-pointer ml-3
+                      transition-all duration-300 ease-out
+                      ${formData.showOnProfile
+                        ? 'bg-gradient-to-r from-primary to-secondary'
+                        : 'bg-gray-300'
+                      }
+                    `}
+                  >
+                    <div
+                      className={`
+                        absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md
+                        transition-all duration-300 ease-out
+                        ${formData.showOnProfile ? 'left-[calc(100%-24px-2px)]' : 'left-0.5'}
+                      `}
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <Label>Pakalpojumi</Label>
                   <p className="text-xs text-muted-foreground mb-2">

@@ -496,6 +496,7 @@ export type Database = {
           name: string
           position: string | null
           professional_id: string
+          show_on_profile: boolean | null
           updated_at: string | null
         }
         Insert: {
@@ -506,6 +507,7 @@ export type Database = {
           name: string
           position?: string | null
           professional_id: string
+          show_on_profile?: boolean | null
           updated_at?: string | null
         }
         Update: {
@@ -516,6 +518,7 @@ export type Database = {
           name?: string
           position?: string | null
           professional_id?: string
+          show_on_profile?: boolean | null
           updated_at?: string | null
         }
         Relationships: [
