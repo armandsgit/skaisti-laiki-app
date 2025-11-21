@@ -28,6 +28,7 @@ const ProfessionalProfile = () => {
   const [professional, setProfessional] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [showNavigationPicker, setShowNavigationPicker] = useState(false);
@@ -253,6 +254,7 @@ const ProfessionalProfile = () => {
                       className="w-full rounded-xl font-semibold shadow-sm button-press"
                       onClick={() => {
                         triggerHaptic('medium');
+                        setSelectedServiceId(service.id);
                         setBookingDialogOpen(true);
                       }}
                     >
@@ -319,11 +321,15 @@ const ProfessionalProfile = () => {
 
       <ModernBookingModal
         isOpen={bookingDialogOpen}
-        onClose={() => setBookingDialogOpen(false)}
+        onClose={() => {
+          setBookingDialogOpen(false);
+          setSelectedServiceId(null);
+        }}
         services={services}
         professionalId={id || ''}
         professionalName={professional?.profiles?.name || ''}
         onSubmit={handleBooking}
+        initialServiceId={selectedServiceId}
       />
 
       <BookingSuccessModal
