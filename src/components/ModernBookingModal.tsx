@@ -109,6 +109,8 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
 
     const dateStr = formData.date.toISOString().split('T')[0];
 
+    console.log('Setting up realtime subscription for professional:', service.professional_id);
+
     // Subscribe to bookings changes
     const channel = supabase
       .channel('bookings-changes')
@@ -121,20 +123,26 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
           filter: `professional_id=eq.${service.professional_id}`
         },
         (payload) => {
-          console.log('Booking changed:', payload);
+          console.log('Booking changed via realtime:', payload);
           // Reload time slots when any booking changes for this professional
-          loadAvailableTimeSlots(service.professional_id, formData.date);
+          if (formData.date) {
+            loadAvailableTimeSlots(service.professional_id, formData.date);
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
     return () => {
+      console.log('Removing realtime channel');
       supabase.removeChannel(channel);
     };
   }, [formData.date, service.professional_id]);
 
   const loadAvailableTimeSlots = async (professionalId: string, date: Date) => {
     setLoadingSlots(true);
+    console.log('Loading available time slots for:', professionalId, date);
     try {
       const dayOfWeek = date.getDay();
       const dateStr = date.toISOString().split('T')[0];
@@ -147,9 +155,11 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         .eq('day_of_week', dayOfWeek)
         .eq('is_active', true);
 
+      console.log('Schedules loaded:', schedules);
       if (scheduleError) throw scheduleError;
 
       if (!schedules || schedules.length === 0) {
+        console.log('No schedules found for this day');
         setTimeSlots([]);
         return;
       }
@@ -162,9 +172,17 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         .eq('booking_date', dateStr)
         .in('status', ['pending', 'confirmed']);
 
+      console.log('Bookings loaded for date:', dateStr, bookings);
       if (bookingsError) throw bookingsError;
 
-      const bookedTimes = new Set(bookings?.map(b => b.booking_time) || []);
+      // Extract booked times and normalize format (remove seconds)
+      const bookedTimes = new Set(
+        bookings?.map(b => {
+          const time = b.booking_time.substring(0, 5); // Extract HH:MM from HH:MM:SS
+          return time;
+        }) || []
+      );
+      console.log('Booked times (normalized):', Array.from(bookedTimes));
 
       // Generate time slots from schedules
       const slots: string[] = [];
@@ -196,6 +214,7 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         }
       });
 
+      console.log('Available time slots:', slots);
       setTimeSlots(slots.sort());
     } catch (error) {
       console.error('Error loading time slots:', error);
