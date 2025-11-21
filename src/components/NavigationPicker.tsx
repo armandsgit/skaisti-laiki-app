@@ -41,10 +41,30 @@ const NavigationPicker = ({ latitude, longitude, isOpen, onClose }: NavigationPi
     {
       name: 'Waze',
       icon: '🚗',
-      url: `https://waze.com/ul?ll=${latitude},${longitude}&navigate=yes`,
+      url: `waze://?ll=${latitude},${longitude}&navigate=yes`,
+      fallbackUrl: `https://waze.com/ul?ll=${latitude},${longitude}&navigate=yes`,
       priority: 2,
     },
   ].sort((a, b) => a.priority - b.priority);
+
+  const handleNavigationClick = (option: typeof navigationOptions[0]) => {
+    if (option.name === 'Waze') {
+      // Try to open Waze app first
+      window.location.href = option.url;
+      
+      // Fallback to web if app doesn't open within 2 seconds
+      setTimeout(() => {
+        if (option.fallbackUrl && document.hidden === false) {
+          window.open(option.fallbackUrl, '_blank');
+        }
+      }, 2000);
+    } else {
+      window.open(option.url, '_blank');
+    }
+    
+    setIsVisible(false);
+    setTimeout(onClose, 200);
+  };
 
   return (
     <>
@@ -87,11 +107,7 @@ const NavigationPicker = ({ latitude, longitude, isOpen, onClose }: NavigationPi
             {navigationOptions.map((option) => (
               <button
                 key={option.name}
-                onClick={() => {
-                  window.open(option.url, '_blank');
-                  setIsVisible(false);
-                  setTimeout(onClose, 200);
-                }}
+                onClick={() => handleNavigationClick(option)}
                 className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-2xl transition-all duration-150 active:scale-[0.98]"
               >
                 <span className="text-2xl">{option.icon}</span>
