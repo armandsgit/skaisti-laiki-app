@@ -8,108 +8,56 @@
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
   
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 330 81% 60%;
-  --primary-foreground: 0 0% 100%;
-  --primary-soft: 330 81% 95%;
-  --primary-muted: 330 30% 85%;
-  --primary-glow: 330 100% 70%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 280 100% 70%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 330 81% 60%;
-  --radius: 0.75rem;
-  --success: 142 76% 36%;
-  --warning: 38 92% 50%;
-  --info: 199 89% 48%;
+  /* Dark mode colors - Bolt/Wolt inspired */
+  --background: 0 0% 0%; /* Pure black #000000 */
+  --foreground: 0 0% 98%; /* Almost white text */
+
+  --card: 0 0% 7%; /* Dark card #121212 */
+  --card-foreground: 0 0% 98%;
+
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 142 76% 64%; /* Neon green #4BFF87 */
+  --primary-foreground: 0 0% 0%;
+  --primary-soft: 142 76% 10%;
   
+  --secondary: 320 85% 65%; /* Neon pink #FF4DD8 */
+  --secondary-foreground: 0 0% 0%;
+
+  --muted: 0 0% 15%; /* Soft gray for muted areas */
+  --muted-foreground: 0 0% 54%; /* #8A8A8A */
+
+  --accent: 47 100% 55%; /* Gold/amber for stars */
+  --accent-foreground: 0 0% 0%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 10%; /* rgba(255,255,255,0.06) equivalent */
+  --input: 0 0% 15%;
+  --ring: 142 76% 64%;
+
+  --radius: 1.5rem; /* 24px default */
+
   /* Sidebar Colors */
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 330 81% 60%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 330 81% 60%;
+  --sidebar-background: 0 0% 6%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 142 76% 64%;
+  --sidebar-primary-foreground: 0 0% 0%;
+  --sidebar-accent: 0 0% 10%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 0 0% 10%;
+  --sidebar-ring: 142 76% 64%;
   
   /* Shadows */
-  --shadow-soft: 0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 8px 24px -4px rgba(0, 0, 0, 0.06);
-  --shadow-hover: 0 8px 20px -4px rgba(0, 0, 0, 0.12), 0 16px 40px -8px rgba(0, 0, 0, 0.08);
-  --shadow-glow: 0 0 20px rgba(236, 72, 153, 0.3), 0 0 40px rgba(236, 72, 153, 0.15);
-  --shadow-lg: 0 10px 40px -8px rgba(0, 0, 0, 0.12);
+  --shadow-soft: 0 4px 20px rgba(75, 255, 135, 0.08);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-elegant: 0 10px 40px rgba(75, 255, 135, 0.12);
   
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-  --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--muted)) 100%);
-  --gradient-soft: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--primary-soft)) 100%);
-  --gradient-header: linear-gradient(135deg, hsl(var(--primary) / 0.05) 0%, hsl(var(--accent) / 0.05) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--primary-soft)) 100%);
-}
-
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 330 81% 60%;
-  --primary-foreground: 0 0% 100%;
-  --primary-soft: 330 20% 20%;
-  --primary-muted: 330 15% 25%;
-  --primary-glow: 330 100% 70%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 280 100% 70%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 330 81% 60%;
-  --success: 142 71% 45%;
-  --warning: 38 92% 50%;
-  --info: 199 89% 48%;
-  
-  /* Sidebar Colors Dark */
-  --sidebar-background: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 330 81% 60%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 330 81% 60%;
-  
-  /* Shadows Dark */
-  --shadow-soft: 0 2px 8px -2px rgba(0, 0, 0, 0.3), 0 4px 16px -4px rgba(0, 0, 0, 0.2);
-  --shadow-card: 0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 8px 24px -4px rgba(0, 0, 0, 0.3);
-  --shadow-hover: 0 8px 20px -4px rgba(0, 0, 0, 0.5), 0 16px 40px -8px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 20px rgba(236, 72, 153, 0.4), 0 0 40px rgba(236, 72, 153, 0.2);
-  --shadow-lg: 0 10px 40px -8px rgba(0, 0, 0, 0.5);
-  
-  /* Gradients Dark */
-  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-  --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--muted)) 100%);
-  --gradient-soft: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--primary-soft)) 100%);
-  --gradient-header: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--accent) / 0.1) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--primary-soft)) 100%);
+  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+  --gradient-card: linear-gradient(180deg, rgba(18,18,18,1) 0%, rgba(10,10,10,1) 100%);
 }
 
 @layer base {
@@ -227,6 +175,19 @@
     width: 300%;
     height: 300%;
     opacity: 0.3;
+  }
+
+  /* Bottom nav blur effect */
+  .nav-blur {
+    background: rgba(6, 6, 6, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Safe area padding for notched devices */
+  .pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
   
   /* Hide scrollbar for category filter */

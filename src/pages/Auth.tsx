@@ -34,7 +34,6 @@ const Auth = () => {
   }, []);
 
   useEffect(() => {
-    // Real-time atjauninājums kategorijām
     const channel = supabase
       .channel('categories-changes-auth')
       .on(
@@ -65,7 +64,6 @@ const Auth = () => {
     if (!error && data) {
       const categoryNames = data.map(cat => cat.name);
       setCategories(categoryNames);
-      // Set pirmās kategorijas kā default
       if (categoryNames.length > 0 && !registerCategory) {
         setRegisterCategory(categoryNames[0]);
       }
@@ -92,7 +90,6 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    // Ja ir profesionālis, validē obligātos laukus
     if (registerRole === 'PROFESSIONAL') {
       if (!registerAddress || !registerCity) {
         toast.error('Lūdzu aizpildiet visus obligātos laukus');
@@ -101,7 +98,6 @@ const Auth = () => {
       }
     }
     
-    // Ja ir profesionālis ar adresi, veic geocoding
     let latitude = null;
     let longitude = null;
     
@@ -145,12 +141,9 @@ const Auth = () => {
     if (error) {
       toast.error(t.registerError);
     } else {
-      // Ja ir profesionālis, izveido vai atjaunina profilu
       if (registerRole === 'PROFESSIONAL' && data?.user) {
-        // Gaida nedaudz, lai trigger izveidotu profilu
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Mēģina atrast esošo profilu
         const { data: existingProfile } = await supabase
           .from('professional_profiles')
           .select('id')
@@ -158,7 +151,6 @@ const Auth = () => {
           .maybeSingle();
         
         if (existingProfile) {
-          // Atjaunina esošo profilu
           const { error: profileError } = await supabase
             .from('professional_profiles')
             .update({
@@ -175,7 +167,6 @@ const Auth = () => {
             console.error('Profile update error:', profileError);
           }
         } else {
-          // Izveido jaunu profilu
           const { error: profileError } = await supabase
             .from('professional_profiles')
             .insert({
@@ -202,31 +193,31 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl border-0">
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mb-2 shadow-soft">
-            <Sparkles className="w-8 h-8 text-primary-foreground" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-elegant border-border/50 bg-card">
+        <CardHeader className="text-center space-y-3 pb-4">
+          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center mb-2 shadow-elegant">
+            <Sparkles className="w-10 h-10 text-black" />
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             BeautyOn
           </CardTitle>
-          <CardDescription>
-            Skaistumkopšanas pakalpojumu rezervāciju platforma
+          <CardDescription className="text-muted-foreground">
+            Skaistumkopšanas pakalpojumu platforma
           </CardDescription>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="px-6 pb-6">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">{t.login}</TabsTrigger>
-              <TabsTrigger value="register">{t.register}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/30 h-12">
+              <TabsTrigger value="login" className="rounded-xl">{t.login}</TabsTrigger>
+              <TabsTrigger value="register" className="rounded-xl">{t.register}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">{t.email}</Label>
+                  <Label htmlFor="login-email" className="text-sm font-medium">{t.email}</Label>
                   <Input
                     id="login-email"
                     type="email"
@@ -234,11 +225,12 @@ const Auth = () => {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
+                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">{t.password}</Label>
+                  <Label htmlFor="login-password" className="text-sm font-medium">{t.password}</Label>
                   <Input
                     id="login-password"
                     type="password"
@@ -246,12 +238,13 @@ const Auth = () => {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
+                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
                   />
                 </div>
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-soft"
+                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-black font-semibold rounded-2xl shadow-soft mt-6"
                   disabled={loading}
                 >
                   {loading ? t.loading : t.login}
@@ -262,7 +255,7 @@ const Auth = () => {
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="register-name">{t.name}</Label>
+                  <Label htmlFor="register-name" className="text-sm font-medium">{t.name}</Label>
                   <Input
                     id="register-name"
                     type="text"
@@ -270,11 +263,12 @@ const Auth = () => {
                     value={registerName}
                     onChange={(e) => setRegisterName(e.target.value)}
                     required
+                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="register-email">{t.email}</Label>
+                  <Label htmlFor="register-email" className="text-sm font-medium">{t.email}</Label>
                   <Input
                     id="register-email"
                     type="email"
@@ -282,11 +276,12 @@ const Auth = () => {
                     value={registerEmail}
                     onChange={(e) => setRegisterEmail(e.target.value)}
                     required
+                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="register-password">{t.password}</Label>
+                  <Label htmlFor="register-password" className="text-sm font-medium">{t.password}</Label>
                   <Input
                     id="register-password"
                     type="password"
@@ -295,17 +290,18 @@ const Auth = () => {
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
                     minLength={6}
+                    className="h-12 bg-muted/30 border-border/50 rounded-2xl"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Loma</Label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <Label className="text-sm font-medium">Loma</Label>
+                  <div className="grid grid-cols-2 gap-3">
                     <Button
                       type="button"
                       variant={registerRole === 'CLIENT' ? 'default' : 'outline'}
                       onClick={() => setRegisterRole('CLIENT')}
-                      className="w-full"
+                      className={`h-12 rounded-2xl ${registerRole === 'CLIENT' ? 'bg-primary text-black' : 'border-border/50'}`}
                     >
                       {t.client}
                     </Button>
@@ -313,7 +309,7 @@ const Auth = () => {
                       type="button"
                       variant={registerRole === 'PROFESSIONAL' ? 'default' : 'outline'}
                       onClick={() => setRegisterRole('PROFESSIONAL')}
-                      className="w-full"
+                      className={`h-12 rounded-2xl ${registerRole === 'PROFESSIONAL' ? 'bg-primary text-black' : 'border-border/50'}`}
                     >
                       {t.professional}
                     </Button>
@@ -323,10 +319,10 @@ const Auth = () => {
                 {registerRole === 'PROFESSIONAL' && (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="register-category">Kategorija *</Label>
+                      <Label htmlFor="register-category" className="text-sm font-medium">Kategorija *</Label>
                       <select
                         id="register-category"
-                        className="w-full px-3 py-2 rounded-md border border-input bg-background"
+                        className="w-full h-12 px-4 rounded-2xl border border-border/50 bg-muted/30 text-foreground"
                         value={registerCategory}
                         onChange={(e) => setRegisterCategory(e.target.value)}
                         required
@@ -344,7 +340,7 @@ const Auth = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="register-city">Pilsēta *</Label>
+                      <Label htmlFor="register-city" className="text-sm font-medium">Pilsēta *</Label>
                       <Input
                         id="register-city"
                         type="text"
@@ -352,13 +348,14 @@ const Auth = () => {
                         value={registerCity}
                         onChange={(e) => setRegisterCity(e.target.value)}
                         required
+                        className="h-12 bg-muted/30 border-border/50 rounded-2xl"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="register-address">
+                      <Label htmlFor="register-address" className="text-sm font-medium">
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" />
+                          <MapPin className="w-4 h-4 text-primary" />
                           Adrese *
                         </div>
                       </Label>
@@ -370,6 +367,7 @@ const Auth = () => {
                         onChange={(e) => setRegisterAddress(e.target.value)}
                         disabled={geocoding}
                         required
+                        className="h-12 bg-muted/30 border-border/50 rounded-2xl"
                       />
                       <p className="text-xs text-muted-foreground">
                         Ievadiet savu darba vietas adresi
@@ -380,7 +378,7 @@ const Auth = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-soft"
+                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-black font-semibold rounded-2xl shadow-soft mt-6"
                   disabled={loading || geocoding}
                 >
                   {loading || geocoding ? t.loading : t.createAccount}
