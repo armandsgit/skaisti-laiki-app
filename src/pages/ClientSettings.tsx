@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Trash2, User, Mail, Phone } from 'lucide-react';
 import DeleteAccountModal from '@/components/DeleteAccountModal';
 import { toast } from 'sonner';
 
@@ -13,6 +15,59 @@ export default function ClientSettings() {
   const { user, signOut } = useAuth();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
+
+  useEffect(() => {
+    loadProfile();
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('name, email, phone')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && data) {
+      setProfileData({
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || ''
+      });
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: profileData.name,
+          phone: profileData.phone
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success('Profils veiksmīgi atjaunināts');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Neizdevās atjaunināt profilu');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (!user) return;
@@ -54,7 +109,7 @@ export default function ClientSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary pb-24">
       <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <Button
@@ -72,6 +127,72 @@ export default function ClientSettings() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
+          {/* Profile Information Card */}
+          <Card className="shadow-card border-0">
+            <CardHeader>
+              <CardTitle>Profila informācija</CardTitle>
+              <CardDescription>
+                Atjaunini savu vārdu, e-pastu un tālruni
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name" className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4" />
+                    Vārds un uzvārds
+                  </Label>
+                  <Input
+                    id="name"
+                    value={profileData.name}
+                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                    placeholder="Jānis Bērziņš"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="email" className="flex items-center gap-2 mb-2">
+                    <Mail className="w-4 h-4" />
+                    E-pasts
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profileData.email}
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    E-pastu nevar mainīt
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="phone" className="flex items-center gap-2 mb-2">
+                    <Phone className="w-4 h-4" />
+                    Telefona numurs
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={profileData.phone}
+                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                    placeholder="+371 20 000 000"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="w-full bg-gradient-to-r from-primary to-secondary"
+                >
+                  {saving ? 'Saglabā...' : 'Saglabāt izmaiņas'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Delete Account Card */}
           <Card className="shadow-card border-0">
             <CardHeader>
               <CardTitle>Dzēst kontu</CardTitle>

@@ -93,6 +93,20 @@ const ProfessionalProfile = () => {
         return;
       }
 
+      // Update client profile with name and phone
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          name: fullName,
+          phone: formData.phone
+        })
+        .eq('id', user.id);
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+      }
+
       // Calculate booking end time based on service duration
       const [hours, minutes] = formData.time.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
