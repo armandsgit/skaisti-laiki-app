@@ -127,7 +127,10 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
 
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 active:scale-95"
           aria-label="Aizvērt"
         >
