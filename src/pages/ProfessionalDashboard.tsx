@@ -267,7 +267,7 @@ const ProfessionalDashboard = () => {
           toast.success('Pakalpojums atjaunināts!');
           setServiceDialogOpen(false);
           setEditingService(null);
-          setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: '' });
+          setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: undefined });
           loadServices();
         } else {
           toast.error(t.error);
@@ -287,7 +287,7 @@ const ProfessionalDashboard = () => {
         if (!error) {
           toast.success(t.serviceAdded);
           setServiceDialogOpen(false);
-          setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: '' });
+          setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: undefined });
           loadServices();
         } else {
           toast.error(t.error);
@@ -309,7 +309,7 @@ const ProfessionalDashboard = () => {
       price: service.price.toString(),
       duration: service.duration.toString(),
       description: service.description || '',
-      staff_member_id: service.staff_member_id || ''
+      staff_member_id: service.staff_member_id || undefined
     });
     setServiceDialogOpen(true);
   };
@@ -651,7 +651,7 @@ const ProfessionalDashboard = () => {
                 label="Pievienot pakalpojumu"
                 onClick={() => {
                   setEditingService(null);
-                  setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: '' });
+                  setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: undefined });
                   setServiceDialogOpen(true);
                 }}
               />
@@ -838,7 +838,7 @@ const ProfessionalDashboard = () => {
                   <Button
                     onClick={() => {
                       setEditingService(null);
-                      setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: '' });
+                      setNewService({ name: '', price: '', duration: '', description: '', staff_member_id: undefined });
                     }}
                     className="bg-gradient-to-r from-primary to-secondary border-0"
                   >
@@ -901,14 +901,17 @@ const ProfessionalDashboard = () => {
                     <div>
                       <Label htmlFor="staff_member">Meistars (neobligāti)</Label>
                       <Select
-                        value={newService.staff_member_id}
-                        onValueChange={(value) => setNewService({ ...newService, staff_member_id: value })}
+                        value={newService.staff_member_id || "none"}
+                        onValueChange={(value) => setNewService({ 
+                          ...newService, 
+                          staff_member_id: value === "none" ? undefined : value 
+                        })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Izvēlieties meistaru vai atstājiet tukšu" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nav piesaistīts</SelectItem>
+                          <SelectItem value="none">Nav piesaistīts</SelectItem>
                           {staffMembers.map((staff) => (
                             <SelectItem key={staff.id} value={staff.id}>
                               {staff.name} {staff.position && `- ${staff.position}`}
