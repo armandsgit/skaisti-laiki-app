@@ -1,127 +1,17 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SortedMaster } from '@/lib/master-sorting';
-import { Star, Navigation } from 'lucide-react';
 
 interface MasterBottomSheetProps {
   master: SortedMaster | null;
   onClose: () => void;
 }
 
-interface NavigationPickerProps {
-  latitude: number;
-  longitude: number;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const NavigationPicker = ({ latitude, longitude, isOpen, onClose }: NavigationPickerProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-  useEffect(() => {
-    if (isOpen) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsVisible(true);
-        });
-      });
-    } else {
-      setIsVisible(false);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const navigationOptions = [
-    {
-      name: 'Apple Maps',
-      icon: '🗺️',
-      url: `https://maps.apple.com/?ll=${latitude},${longitude}`,
-      priority: isIOS ? 1 : 3,
-    },
-    {
-      name: 'Google Maps',
-      icon: '🌍',
-      url: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`,
-      priority: isIOS ? 2 : 1,
-    },
-    {
-      name: 'Waze',
-      icon: '🚗',
-      url: `https://waze.com/ul?ll=${latitude},${longitude}&navigate=yes`,
-      priority: 2,
-    },
-  ].sort((a, b) => a.priority - b.priority);
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div 
-        className={`fixed inset-0 bg-black/20 transition-opacity duration-200 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{ 
-          zIndex: 10000,
-          pointerEvents: isVisible ? 'auto' : 'none'
-        }}
-        onClick={() => {
-          setIsVisible(false);
-          setTimeout(onClose, 200);
-        }}
-      />
-      
-      {/* Navigation Picker Sheet */}
-      <div
-        className={`fixed left-0 right-0 bg-white rounded-t-[24px] shadow-2xl transition-all duration-300 ease-out ${
-          isVisible ? '' : 'translate-y-full'
-        }`}
-        style={{
-          bottom: 0,
-          zIndex: 10001,
-          paddingBottom: `calc(68px + max(env(safe-area-inset-bottom), 12px))`,
-        }}
-      >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-        </div>
-
-        {/* Content */}
-        <div className="px-5 pb-4">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Izvēlies navigāciju</h3>
-          
-          <div className="space-y-2">
-            {navigationOptions.map((option) => (
-              <button
-                key={option.name}
-                onClick={() => {
-                  window.open(option.url, '_blank');
-                  setIsVisible(false);
-                  setTimeout(onClose, 200);
-                }}
-                className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-2xl transition-all duration-150 active:scale-[0.98]"
-              >
-                <span className="text-2xl">{option.icon}</span>
-                <span className="flex-1 text-left font-semibold text-gray-900">{option.name}</span>
-                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
 const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
   const [startY, setStartY] = useState(0);
   const [currentY, setCurrentY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [showNavigationPicker, setShowNavigationPicker] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -139,7 +29,6 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
       setIsVisible(false);
       document.body.style.overflow = '';
       setDragOffset(0);
-      setShowNavigationPicker(false);
     }
     return () => {
       document.body.style.overflow = '';
@@ -238,49 +127,61 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
         {/* Content */}
         <div className="px-5 pb-4">
           {/* Header */}
-          <div className="flex items-center gap-3 mb-3">
-            <img 
-              src={avatarUrl}
-              alt={master.profiles.name}
-              className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm flex-shrink-0"
-            />
+          <div className="flex items-center gap-3.5 mb-4">
+            <div className="relative flex-shrink-0">
+              <img 
+                src={avatarUrl}
+                alt={master.profiles.name}
+                className="w-16 h-16 rounded-full object-cover border-3 border-primary/30 shadow-md"
+              />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white" />
+            </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-gray-900 mb-1 leading-tight truncate">
+              <h3 
+                onClick={() => {
+                  setIsVisible(false);
+                  setTimeout(() => {
+                    navigate(`/professional/${master.id}`);
+                  }, 150);
+                }}
+                className="text-xl font-bold text-gray-900 mb-1.5 leading-tight cursor-pointer hover:text-primary transition-colors active:scale-[0.98]"
+              >
                 {master.profiles.name}
               </h3>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span className="text-sm font-semibold text-gray-900">
-                  {master.rating || '5.0'}
-                </span>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
+                  <span className="text-amber-500 text-sm">⭐</span>
+                  <span className="text-gray-800 font-bold text-sm">
+                    {master.rating || '5.0'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Address */}
-          <div className="flex items-start gap-2 mb-4 text-sm text-gray-600">
-            <span className="text-base mt-0.5">📍</span>
-            <span className="leading-relaxed">{shortAddress}</span>
+          <div className="flex items-start gap-2.5 mb-5 p-3.5 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-200/50">
+            <span className="text-xl mt-0.5">📍</span>
+            <span className="text-sm text-gray-700 font-medium leading-relaxed">
+              {shortAddress}
+            </span>
           </div>
 
-          {/* Navigate Button */}
+          {/* View Profile Button */}
           <button
-            onClick={() => setShowNavigationPicker(true)}
-            className="w-full py-3.5 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
+            onClick={() => {
+              setIsVisible(false);
+              setTimeout(() => {
+                navigate(`/professional/${master.id}`);
+              }, 150);
+            }}
+            className="w-full py-4 bg-gradient-to-r from-primary via-primary to-secondary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2"
           >
-            <Navigation className="w-5 h-5" />
-            <span>Navigēt</span>
+            <span>Skatīt profilu</span>
+            <span className="text-lg">→</span>
           </button>
         </div>
       </div>
-
-      {/* Navigation Picker */}
-      <NavigationPicker
-        latitude={master.latitude}
-        longitude={master.longitude}
-        isOpen={showNavigationPicker}
-        onClose={() => setShowNavigationPicker(false)}
-      />
     </>
   );
 };
