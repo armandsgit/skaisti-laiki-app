@@ -286,7 +286,7 @@ const ProfessionalProfile = () => {
                   onClick={() => {
                     triggerHaptic('light');
                     window.open(
-                      `https://www.google.com/maps?q=${professional.latitude},${professional.longitude}`,
+                      `https://www.google.com/maps/search/?api=1&query=${professional.latitude},${professional.longitude}`,
                       '_blank'
                     );
                   }}

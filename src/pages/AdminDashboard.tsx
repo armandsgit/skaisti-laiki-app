@@ -694,7 +694,7 @@ const AdminDashboard = () => {
                                   </p>
                                   {prof.latitude && prof.longitude && (
                                     <a
-                                      href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
+                                      href={`https://www.google.com/maps/search/?api=1&query=${prof.latitude},${prof.longitude}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-primary tap-feedback text-xs sm:text-sm whitespace-nowrap flex-shrink-0 flex items-center gap-1"
@@ -837,7 +837,7 @@ const AdminDashboard = () => {
                       {prof.latitude && prof.longitude && (
                         <div className="mb-3 flex justify-end">
                           <a
-                            href={`https://www.google.com/maps?q=${prof.latitude},${prof.longitude}`}
+                            href={`https://www.google.com/maps/search/?api=1&query=${prof.latitude},${prof.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary tap-feedback text-xs sm:text-sm font-medium whitespace-nowrap flex items-center gap-1"
