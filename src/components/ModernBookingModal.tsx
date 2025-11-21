@@ -164,8 +164,8 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         return;
       }
 
-      // Get service duration
-      const serviceDuration = service.duration || 30;
+      // Get service duration (default 60 minutes if not set)
+      const serviceDuration = service.duration || 60;
 
       // Fetch existing bookings for this date with start and end times
       const { data: bookings, error: bookingsError } = await supabase

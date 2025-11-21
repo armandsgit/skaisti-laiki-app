@@ -391,7 +391,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
-          duration: number
+          duration?: number
           id?: string
           name: string
           price: number
