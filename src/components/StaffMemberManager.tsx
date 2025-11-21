@@ -120,13 +120,22 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     if (!confirm('Vai tiešām vēlaties dzēst šo meistaru?')) return;
 
     try {
+      // First, unassign this staff member from all services
+      const { error: servicesError } = await supabase
+        .from('services')
+        .update({ staff_member_id: null })
+        .eq('staff_member_id', staffId);
+
+      if (servicesError) throw servicesError;
+
+      // Then soft-delete the staff member
       const { error } = await supabase
         .from('staff_members')
         .update({ is_active: false })
         .eq('id', staffId);
 
       if (error) throw error;
-      toast.success('Meistars dzēsts');
+      toast.success('Meistars dzēsts un pakalpojumi atbrīvoti');
       loadStaffMembers();
     } catch (error) {
       console.error('Error deleting staff member:', error);
