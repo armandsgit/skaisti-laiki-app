@@ -106,16 +106,17 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
       {/* Bottom Sheet */}
       <div
         ref={sheetRef}
-        className={`fixed left-0 right-0 bg-white rounded-t-[24px] shadow-2xl transition-all duration-300 ease-out ${
+        className={`fixed left-0 right-0 bg-white rounded-t-[24px] shadow-2xl transition-all duration-300 ease-out overflow-y-auto ${
           isVisible ? '' : 'translate-y-full'
         }`}
         style={{
           bottom: 0,
-          height: '35vh',
+          maxHeight: '75vh',
+          height: 'auto',
           zIndex: 9999,
-          paddingBottom: `calc(68px + max(env(safe-area-inset-bottom), 12px))`,
+          paddingBottom: `calc(80px + env(safe-area-inset-bottom, 16px))`,
           transform: transform,
-          touchAction: 'none',
+          touchAction: 'pan-y',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
