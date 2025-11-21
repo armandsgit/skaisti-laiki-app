@@ -96,22 +96,27 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           setIsVisible(true);
         });
       });
-      // Set initial service if provided
+      // Set initial service if provided - MUST happen immediately
       if (initialServiceId) {
+        console.log('🔵 Setting initial serviceId:', initialServiceId);
         setFormData(prev => ({ ...prev, serviceId: initialServiceId }));
       }
     } else {
       setIsVisible(false);
       // Reset form when modal closes
       setFormData({});
+      setAvailableStaff([]);
+      setStaffTimeSlots({});
     }
   }, [isOpen, initialServiceId]);
 
   // Load available staff and their time slots when date or service changes
   useEffect(() => {
-    if (formData.date) {
+    if (formData.date && formData.serviceId) {
+      console.log('🔵 Loading staff for date:', formData.date, 'serviceId:', formData.serviceId);
       loadStaffAndTimeSlots(formData.date);
     } else {
+      console.log('🔵 Clearing staff - date:', formData.date, 'serviceId:', formData.serviceId);
       setAvailableStaff([]);
       setStaffTimeSlots({});
     }
@@ -158,8 +163,15 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       const dayOfWeek = date.getDay();
       const dateStr = date.toISOString().split('T')[0];
 
+      console.log('🔵 loadStaffAndTimeSlots called with:', {
+        date: dateStr,
+        dayOfWeek,
+        serviceId: formData.serviceId
+      });
+
       // CRITICAL: Must have a service selected to show staff
       if (!formData.serviceId) {
+        console.log('❌ No serviceId - returning empty');
         setAvailableStaff([]);
         setStaffTimeSlots({});
         setLoadingSlots(false);
@@ -168,7 +180,10 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
 
       // Step 1: Get the selected service details
       const selectedService = services.find(s => s.id === formData.serviceId);
+      console.log('🔵 Selected service:', selectedService);
+      
       if (!selectedService) {
+        console.log('❌ Service not found in services array');
         setAvailableStaff([]);
         setStaffTimeSlots({});
         setLoadingSlots(false);
@@ -176,6 +191,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       }
 
       const serviceDuration = selectedService.duration || 60;
+      console.log('🔵 Service duration:', serviceDuration, 'minutes');
 
       // Step 2: Get staff members assigned to this specific service via master_services
       const { data: masterServices, error: msError } = await supabase
@@ -186,8 +202,10 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       if (msError) throw msError;
 
       const staffIds = masterServices?.map(ms => ms.staff_member_id) || [];
+      console.log('🔵 Staff IDs from master_services:', staffIds);
 
       if (staffIds.length === 0) {
+        console.log('❌ No staff assigned to this service');
         setAvailableStaff([]);
         setStaffTimeSlots({});
         setLoadingSlots(false);
@@ -204,7 +222,10 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
 
       if (staffError) throw staffError;
 
+      console.log('🔵 Active staff members:', allStaff?.map(s => ({ id: s.id, name: s.name })));
+
       if (!allStaff || allStaff.length === 0) {
+        console.log('❌ No active staff found');
         setAvailableStaff([]);
         setStaffTimeSlots({});
         setLoadingSlots(false);
@@ -216,6 +237,8 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       const staffSlotsMap: Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>> = {};
 
       for (const staffMember of allStaff) {
+        console.log(`🔵 Processing staff: ${staffMember.name} (${staffMember.id})`);
+        
         // Fetch schedules for this staff member on this day
         const { data: schedules, error: scheduleError } = await supabase
           .from('professional_schedules')
@@ -226,16 +249,30 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           .eq('is_active', true);
 
         if (scheduleError) {
-          console.error('Error loading schedules:', scheduleError);
+          console.error('❌ Error loading schedules:', scheduleError);
           continue;
         }
 
-        // Filter schedules that include this specific service
-        const relevantSchedules = (schedules || []).filter(schedule =>
-          (schedule.available_services || []).includes(formData.serviceId)
-        );
+        console.log(`  📅 Found ${schedules?.length || 0} schedules for ${staffMember.name}`);
+        console.log(`  📅 Schedules:`, schedules?.map(s => ({
+          start: s.start_time,
+          end: s.end_time,
+          services: s.available_services
+        })));
 
-        if (relevantSchedules.length === 0) continue;
+        // Filter schedules that include this specific service
+        const relevantSchedules = (schedules || []).filter(schedule => {
+          const hasService = (schedule.available_services || []).includes(formData.serviceId);
+          console.log(`    🔍 Schedule ${schedule.start_time}-${schedule.end_time}: includes service? ${hasService}`);
+          return hasService;
+        });
+
+        console.log(`  ✅ Relevant schedules: ${relevantSchedules.length}`);
+
+        if (relevantSchedules.length === 0) {
+          console.log(`  ❌ No schedules with this service for ${staffMember.name}`);
+          continue;
+        }
 
         // Fetch existing bookings for this staff member on this date
         const { data: bookings, error: bookingsError } = await supabase
@@ -247,9 +284,11 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           .in('status', ['pending', 'confirmed']);
 
         if (bookingsError) {
-          console.error('Error loading bookings:', bookingsError);
+          console.error('❌ Error loading bookings:', bookingsError);
           continue;
         }
+
+        console.log(`  📝 Existing bookings: ${bookings?.length || 0}`);
 
         // Create booked time ranges
         const bookedRanges = (bookings || []).map(b => ({
@@ -288,8 +327,11 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           const endMinute = parseInt(schedule.end_time.split(':')[1]);
           const interval = schedule.time_slot_interval || 30;
 
+          console.log(`    ⏰ Generating slots for ${schedule.start_time}-${schedule.end_time}, interval: ${interval}min`);
+
           let currentHour = startHour;
           let currentMinute = startMinute;
+          let generatedCount = 0;
 
           while (
             currentHour < endHour || 
@@ -323,6 +365,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                   serviceId: selectedService.id,
                   serviceName: selectedService.name
                 });
+                generatedCount++;
               }
             }
 
@@ -333,19 +376,30 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
               currentMinute = currentMinute % 60;
             }
           }
+
+          console.log(`      Generated ${generatedCount} time slots`);
         }
+
+        console.log(`  📊 Total slots for ${staffMember.name}: ${slots.length} (${slots.filter(s => !s.isBooked).length} available)`);
 
         // Only include staff if they have at least one time slot
         if (slots.length > 0) {
           staffWithSchedules.push(staffMember);
           staffSlotsMap[staffMember.id] = slots.sort((a, b) => a.time.localeCompare(b.time));
+        } else {
+          console.log(`  ⚠️ ${staffMember.name} has NO time slots`);
         }
       }
+
+      console.log('🎯 Final result:', {
+        staffCount: staffWithSchedules.length,
+        staffNames: staffWithSchedules.map(s => s.name)
+      });
 
       setAvailableStaff(staffWithSchedules);
       setStaffTimeSlots(staffSlotsMap);
     } catch (error) {
-      console.error('Error loading staff and time slots:', error);
+      console.error('❌ Error loading staff and time slots:', error);
       toast.error('Neizdevās ielādēt pieejamos laikus');
       setAvailableStaff([]);
       setStaffTimeSlots({});
