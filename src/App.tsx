@@ -16,6 +16,7 @@ import MapView from "./pages/MapView";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import BottomNavigation from "./components/BottomNavigation";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +27,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          <div className="relative min-h-screen pb-20">
+            <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route 
               path="/" 
@@ -102,6 +104,8 @@ const App = () => (
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <BottomNavigation />
+        </div>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
