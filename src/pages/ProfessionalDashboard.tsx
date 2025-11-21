@@ -744,12 +744,12 @@ const ProfessionalDashboard = () => {
                         <div className="flex-1">
                           <p className="font-semibold text-lg">{booking.profiles.name}</p>
                           <div className="space-y-1 mt-1">
-                            {booking.profiles.email && (
-                              <p className="text-sm text-muted-foreground">📧 {booking.profiles.email}</p>
-                            )}
-                            {booking.profiles.phone && (
-                              <p className="text-sm text-muted-foreground">📱 {booking.profiles.phone}</p>
-                            )}
+                            <p className="text-sm text-muted-foreground">
+                              📧 {booking.profiles.email || 'Nav e-pasta'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              📱 {booking.profiles.phone || 'Nav telefona'}
+                            </p>
                           </div>
                         </div>
                         <Badge
@@ -778,25 +778,21 @@ const ProfessionalDashboard = () => {
                           <Sparkles className="w-4 h-4 text-muted-foreground" />
                           <span>{booking.services.name}</span>
                         </div>
-                        {booking.staff_members && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <span>Meistars: {booking.staff_members.name}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span>Meistars: {booking.staff_members?.name || 'Nav norādīts'}</span>
+                        </div>
                         <div className="flex items-center gap-2">
                           <Euro className="w-4 h-4 text-primary" />
                           <span className="font-bold text-primary">€{booking.services.price}</span>
                         </div>
                       </div>
 
-                      {booking.notes && (
-                        <div className="mb-4 p-3 bg-muted/30 rounded-lg">
-                          <p className="text-sm text-muted-foreground">
-                            <strong>Piezīme:</strong> {booking.notes}
-                          </p>
-                        </div>
-                      )}
+                      <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Piezīme:</strong> {booking.notes || 'Nav piezīmju'}
+                        </p>
+                      </div>
 
                       {booking.status === 'pending' && (
                         <div className="flex gap-2">
