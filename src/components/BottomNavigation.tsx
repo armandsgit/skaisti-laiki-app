@@ -22,10 +22,10 @@ const BottomNavigation = () => {
   const isClient = !isProfessionalDashboard && !isViewingProfile && !isAdminPanel;
   
   const searchParams = new URLSearchParams(location.search);
-  const currentTab = searchParams.get('tab') || 'pending';
+  const currentTab = searchParams.get('tab');
   
   const tabs = isAdminPanel ? [
-    { icon: Home, label: 'Sākums', path: '/admin', isActive: false, isMain: false, scrollToTop: true },
+    { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab, isMain: false, scrollToTop: true },
     { icon: CheckCircle, label: 'Gaida', path: '/admin?tab=pending', isActive: currentTab === 'pending' },
     { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: currentTab === 'professionals' },
     { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: currentTab === 'bookings' },
@@ -52,7 +52,8 @@ const BottomNavigation = () => {
               key={index}
               onClick={() => {
                 if (tab.scrollToTop) {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  navigate(tab.path);
+                  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
                 } else {
                   navigate(tab.path);
                 }
