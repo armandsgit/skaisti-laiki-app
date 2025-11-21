@@ -1,55 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle } from 'lucide-react';
-import Lottie from 'lottie-react';
-
-// Simple success animation
-const successAnimation = {
-  v: "5.7.4",
-  fr: 60,
-  ip: 0,
-  op: 60,
-  w: 100,
-  h: 100,
-  nm: "Success",
-  ddd: 0,
-  assets: [],
-  layers: [
-    {
-      ddd: 0,
-      ind: 1,
-      ty: 4,
-      nm: "Check",
-      sr: 1,
-      ks: {
-        o: { a: 0, k: 100 },
-        r: { a: 0, k: 0 },
-        p: { a: 0, k: [50, 50, 0] },
-        a: { a: 0, k: [0, 0, 0] },
-        s: { a: 1, k: [{ t: 0, s: [0, 0, 100], e: [120, 120, 100] }, { t: 20, s: [120, 120, 100], e: [100, 100, 100] }, { t: 30 }] }
-      },
-      ao: 0,
-      shapes: [
-        {
-          ty: "gr",
-          it: [
-            {
-              ty: "el",
-              d: 1,
-              s: { a: 0, k: [50, 50] },
-              p: { a: 0, k: [0, 0] }
-            },
-            {
-              ty: "fl",
-              c: { a: 0, k: [0.2, 0.8, 0.4, 1] },
-              o: { a: 0, k: 100 }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-};
 
 interface BookingSuccessModalProps {
   open: boolean;
@@ -109,31 +59,57 @@ const BookingSuccessModal = ({ open, onClose, bookingDetails }: BookingSuccessMo
         style={{ zIndex: 10003 }}
       >
         <div className="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl">
-          {/* Lottie Animation */}
-          <div className="flex justify-center mb-4">
-            <div className="w-28 h-28 bg-green-50 rounded-full flex items-center justify-center">
-              <Lottie animationData={successAnimation} loop={false} className="w-24 h-24" />
+          {/* Modern CSS Success Animation */}
+          <div className="flex justify-center mb-6">
+            <div className="relative w-24 h-24">
+              {/* Outer circle with scale animation */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-green-600 rounded-full animate-[scale-in_0.4s_ease-out]" />
+              
+              {/* Inner white circle */}
+              <div className="absolute inset-2 bg-white rounded-full animate-[scale-in_0.5s_ease-out_0.1s_both]" />
+              
+              {/* Checkmark */}
+              <svg
+                className="absolute inset-0 w-full h-full p-6"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 13l4 4L19 7"
+                  stroke="url(#gradient)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="animate-[draw-check_0.5s_ease-out_0.3s_both]"
+                  style={{
+                    strokeDasharray: '20',
+                    strokeDashoffset: '20',
+                  }}
+                />
+                <defs>
+                  <linearGradient id="gradient" x1="5" y1="7" x2="19" y2="17">
+                    <stop offset="0%" stopColor="#22c55e" />
+                    <stop offset="100%" stopColor="#16a34a" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
           </div>
 
-          {/* Success Icon */}
-          <div className="flex justify-center mb-4">
-            <CheckCircle className="w-16 h-16 text-green-500" />
-          </div>
-
           {/* Title */}
-          <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-2 animate-[fade-in_0.4s_ease-out_0.4s_both]">
             Vizīte veiksmīgi pieteikta!
           </h2>
 
           {/* Subtitle */}
-          <p className="text-center text-gray-600 mb-4">
+          <p className="text-center text-gray-600 mb-4 animate-[fade-in_0.4s_ease-out_0.5s_both]">
             Meistars drīzumā apstiprinās rezervāciju
           </p>
 
           {/* Info */}
           {bookingDetails && (
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-4 space-y-2 mt-4">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-4 space-y-2 mt-4 animate-[fade-in_0.4s_ease-out_0.6s_both]">
               {bookingDetails.service && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-gray-600">Pakalpojums:</span>
@@ -162,7 +138,7 @@ const BookingSuccessModal = ({ open, onClose, bookingDetails }: BookingSuccessMo
           )}
 
           {/* Auto-close message */}
-          <p className="text-center text-sm text-gray-500 mt-4">
+          <p className="text-center text-sm text-gray-500 mt-4 animate-[fade-in_0.4s_ease-out_0.7s_both]">
             Automātiski pāriet uz rezervācijām pēc 3 sekundēm...
           </p>
         </div>
