@@ -16,6 +16,7 @@ interface StaffMember {
   position: string | null;
   avatar: string | null;
   is_active: boolean;
+  serviceName?: string;
 }
 
 interface Service {
@@ -66,7 +67,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
 
   const loadStaffMembers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: staffData, error } = await supabase
         .from('staff_members')
         .select('*, show_on_profile')
         .eq('professional_id', professionalId)
@@ -74,7 +75,34 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
         .order('created_at');
 
       if (error) throw error;
-      setStaffMembers(data || []);
+
+      // Load service information for each staff member
+      const staffWithServices = await Promise.all(
+        (staffData || []).map(async (staff) => {
+          const { data: masterService } = await supabase
+            .from('master_services')
+            .select('service_id')
+            .eq('staff_member_id', staff.id)
+            .maybeSingle();
+
+          if (masterService?.service_id) {
+            const { data: service } = await supabase
+              .from('services')
+              .select('name')
+              .eq('id', masterService.service_id)
+              .single();
+
+            return {
+              ...staff,
+              serviceName: service?.name
+            };
+          }
+
+          return staff;
+        })
+      );
+
+      setStaffMembers(staffWithServices);
     } catch (error) {
       console.error('Error loading staff members:', error);
       toast.error('Neizdevās ielādēt meistarus');
@@ -425,6 +453,14 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                   <h4 className="font-medium">{staff.name}</h4>
                   {staff.position && (
                     <p className="text-sm text-muted-foreground">{staff.position}</p>
+                  )}
+                  {staff.serviceName && (
+                    <p className="text-xs text-primary font-medium mt-1 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {staff.serviceName}
+                    </p>
                   )}
                 </div>
                 <div className="flex gap-2">
