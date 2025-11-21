@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
@@ -11,19 +11,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings } from 'lucide-react';
+import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings, LayoutDashboard, CalendarDays, TrendingUp, Bell } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import EmptyStateAnimation from '@/components/EmptyStateAnimation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import LocationMap from '@/components/LocationMap';
 import EditableLocationMap from '@/components/EditableLocationMap';
-import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
 import SubscriptionStatusIndicator from '@/components/SubscriptionStatusIndicator';
 import WorkScheduleManager from '@/components/WorkScheduleManager';
+import { DashboardStats } from '@/components/DashboardStats';
+import { UpcomingBookingCard } from '@/components/UpcomingBookingCard';
+import { ServiceCard } from '@/components/ServiceCard';
+import { QuickActionButton } from '@/components/QuickActionButton';
+import { motion, AnimatePresence } from 'framer-motion';
+import { format, isToday, startOfMonth, endOfMonth, addDays, startOfWeek } from 'date-fns';
+import { lv } from 'date-fns/locale';
 
 const ProfessionalDashboard = () => {
   const t = useTranslation('lv');
@@ -33,7 +39,13 @@ const ProfessionalDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
-  const [stats, setStats] = useState({ totalEarnings: 0, completedBookings: 0 });
+  const [stats, setStats] = useState({ 
+    totalEarnings: 0, 
+    completedBookings: 0,
+    todayEarnings: 0,
+    todayBookings: 0,
+    monthlyEarnings: 0
+  });
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
@@ -41,6 +53,7 @@ const ProfessionalDashboard = () => {
   const [editingService, setEditingService] = useState<any>(null);
   const [editProfileDialogOpen, setEditProfileDialogOpen] = useState(false);
   const [editProfessionalInfoOpen, setEditProfessionalInfoOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('dashboard');
   const [newService, setNewService] = useState({
     name: '',
     price: '',
@@ -57,7 +70,7 @@ const ProfessionalDashboard = () => {
     bio: '',
     category: '',
     city: '',
-    address: '', // Full address with street number
+    address: '',
     latitude: null as number | null,
     longitude: null as number | null
   });
@@ -65,33 +78,16 @@ const ProfessionalDashboard = () => {
   useEffect(() => {
     if (user) {
       loadProfile();
-      loadServices();
-      loadBookings();
       loadCategories();
     }
   }, [user]);
 
   useEffect(() => {
-    // Set up real-time subscription for categories
-    const channel = supabase
-      .channel('categories-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'categories'
-        },
-        () => {
-          loadCategories();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+    if (profile) {
+      loadServices();
+      loadBookings();
+    }
+  }, [profile]);
 
   const loadCategories = async () => {
     const { data } = await supabase
@@ -108,7 +104,6 @@ const ProfessionalDashboard = () => {
   const loadProfile = async () => {
     if (!user?.id) return;
     
-    // Load user profile
     const { data: userData } = await supabase
       .from('profiles')
       .select('*')
@@ -122,7 +117,6 @@ const ProfessionalDashboard = () => {
       avatar: userData?.avatar || ''
     });
     
-    // Load professional profile
     const { data, error } = await supabase
       .from('professional_profiles')
       .select('*')
@@ -130,8 +124,7 @@ const ProfessionalDashboard = () => {
       .maybeSingle();
     
     if (!data && !error) {
-      // Create professional profile if it doesn't exist
-      const { data: newProfile, error: insertError } = await supabase
+      const { data: newProfile } = await supabase
         .from('professional_profiles')
         .insert({
           user_id: user.id,
@@ -142,7 +135,7 @@ const ProfessionalDashboard = () => {
         .select()
         .single();
       
-      if (!insertError && newProfile) {
+      if (newProfile) {
         setProfile(newProfile);
         setEditedProfInfo({
           bio: '',
@@ -152,7 +145,7 @@ const ProfessionalDashboard = () => {
           latitude: null,
           longitude: null
         });
-        toast.success('Profesionālais profils izveidots! Lūdzu, atjauniniet savu informāciju.');
+        toast.success('Profesionālais profils izveidots!');
       }
     } else {
       setProfile(data);
@@ -199,9 +192,23 @@ const ProfessionalDashboard = () => {
       const completed = data.filter(b => b.status === 'completed');
       const earnings = completed.reduce((sum, b) => sum + (b.services?.price || 0), 0);
       
+      const today = new Date().toISOString().split('T')[0];
+      const todayBookings = data.filter(b => b.booking_date === today);
+      const todayCompleted = todayBookings.filter(b => b.status === 'completed');
+      const todayEarnings = todayCompleted.reduce((sum, b) => sum + (b.services?.price || 0), 0);
+      
+      const monthStart = startOfMonth(new Date()).toISOString().split('T')[0];
+      const monthEnd = endOfMonth(new Date()).toISOString().split('T')[0];
+      const monthlyBookings = data.filter(b => b.booking_date >= monthStart && b.booking_date <= monthEnd);
+      const monthlyCompleted = monthlyBookings.filter(b => b.status === 'completed');
+      const monthlyEarnings = monthlyCompleted.reduce((sum, b) => sum + (b.services?.price || 0), 0);
+      
       setStats({
         totalEarnings: earnings,
-        completedBookings: completed.length
+        completedBookings: completed.length,
+        todayEarnings,
+        todayBookings: todayBookings.length,
+        monthlyEarnings
       });
     }
   };
@@ -212,7 +219,6 @@ const ProfessionalDashboard = () => {
     if (!profile?.id) return;
 
     try {
-      // Validate service data
       const validatedData = serviceSchema.parse({
         name: newService.name,
         price: parseFloat(newService.price),
@@ -221,7 +227,6 @@ const ProfessionalDashboard = () => {
       });
 
       if (editingService) {
-        // Update existing service
         const { error } = await supabase
           .from('services')
           .update({
@@ -232,17 +237,16 @@ const ProfessionalDashboard = () => {
           })
           .eq('id', editingService.id);
 
-        if (error) {
-          toast.error(t.error);
-        } else {
+        if (!error) {
           toast.success('Pakalpojums atjaunināts!');
           setServiceDialogOpen(false);
           setEditingService(null);
           setNewService({ name: '', price: '', duration: '', description: '' });
           loadServices();
+        } else {
+          toast.error(t.error);
         }
       } else {
-        // Add new service
         const { error } = await supabase
           .from('services')
           .insert({
@@ -253,13 +257,13 @@ const ProfessionalDashboard = () => {
             description: validatedData.description
           });
         
-        if (error) {
-          toast.error(t.error);
-        } else {
+        if (!error) {
           toast.success(t.serviceAdded);
           setServiceDialogOpen(false);
           setNewService({ name: '', price: '', duration: '', description: '' });
           loadServices();
+        } else {
+          toast.error(t.error);
         }
       }
     } catch (error: any) {
@@ -282,11 +286,27 @@ const ProfessionalDashboard = () => {
     setServiceDialogOpen(true);
   };
 
+  const handleDeleteService = async (serviceId: string) => {
+    if (!confirm('Vai tiešām vēlaties dzēst šo pakalpojumu?')) return;
+    
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', serviceId);
+
+    if (!error) {
+      toast.success('Pakalpojums dzēsts!');
+      loadServices();
+    } else {
+      toast.error(t.error);
+    }
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error('Attēls ir par lielu. Maksimālais izmērs: 5MB');
       return;
@@ -329,12 +349,12 @@ const ProfessionalDashboard = () => {
       })
       .eq('id', user.id);
 
-    if (error) {
-      toast.error('Kļūda atjauninot profilu');
-    } else {
+    if (!error) {
       toast.success('Profils atjaunināts!');
       setEditProfileDialogOpen(false);
       loadProfile();
+    } else {
+      toast.error('Kļūda atjauninot profilu');
     }
   };
 
@@ -343,19 +363,16 @@ const ProfessionalDashboard = () => {
 
     const fullAddress = editedProfInfo.address.trim();
 
-    // Validate required fields
     if (!fullAddress || !editedProfInfo.city) {
       toast.error('Lūdzu, aizpildiet pilsētu un adresi');
       return;
     }
 
-    // Validate coordinates
     if (!editedProfInfo.latitude || !editedProfInfo.longitude) {
       toast.error('Lūdzu, atzīmējiet atrašanās vietu kartē');
       return;
     }
 
-    // Update with manually selected coordinates
     const { error } = await supabase
       .from('professional_profiles')
       .update({
@@ -368,13 +385,12 @@ const ProfessionalDashboard = () => {
       })
       .eq('id', profile.id);
 
-    if (error) {
-      console.error('Update error:', error);
-      toast.error(`Kļūda atjauninot informāciju: ${error.message}`);
-    } else {
+    if (!error) {
       toast.success('Informācija atjaunināta!');
       setEditProfessionalInfoOpen(false);
       await loadProfile();
+    } else {
+      toast.error(`Kļūda atjauninot informāciju: ${error.message}`);
     }
   };
 
@@ -384,31 +400,15 @@ const ProfessionalDashboard = () => {
       .update({ status })
       .eq('id', bookingId);
     
-    if (error) {
-      toast.error(t.error);
-    } else {
+    if (!error) {
       toast.success(
         status === 'confirmed' ? t.bookingConfirmed :
         status === 'completed' ? t.bookingCompleted :
         t.bookingCanceled
       );
       loadBookings();
-    }
-  };
-
-  const handleDeleteService = async (serviceId: string) => {
-    if (!confirm('Vai tiešām vēlaties dzēst šo pakalpojumu?')) return;
-    
-    const { error } = await supabase
-      .from('services')
-      .delete()
-      .eq('id', serviceId);
-
-    if (error) {
-      toast.error(t.error);
     } else {
-      toast.success('Pakalpojums dzēsts!');
-      loadServices();
+      toast.error(t.error);
     }
   };
 
@@ -422,19 +422,16 @@ const ProfessionalDashboard = () => {
     setUploadingImage(true);
     
     try {
-      // Augšupielādē bildi
       const { error: uploadError } = await supabase.storage
         .from('gallery')
         .upload(fileName, file);
       
       if (uploadError) throw uploadError;
       
-      // Iegūst publisko URL
       const { data: { publicUrl } } = supabase.storage
         .from('gallery')
         .getPublicUrl(fileName);
       
-      // Atjaunina profilu ar jauno bildi galerijā
       const currentGallery = profile?.gallery || [];
       const { error: updateError } = await supabase
         .from('professional_profiles')
@@ -456,7 +453,6 @@ const ProfessionalDashboard = () => {
     if (!confirm('Vai tiešām vēlaties dzēst šo bildi?') || !user?.id) return;
     
     try {
-      // Izņem bildi no galerijas masīva
       const currentGallery = profile?.gallery || [];
       const updatedGallery = currentGallery.filter((url: string) => url !== imageUrl);
       
@@ -467,7 +463,6 @@ const ProfessionalDashboard = () => {
       
       if (updateError) throw updateError;
       
-      // Dzēš bildi no storage (ja tā ir mūsu storage)
       if (imageUrl.includes('gallery')) {
         const path = imageUrl.split('/gallery/').pop();
         if (path) {
@@ -482,38 +477,31 @@ const ProfessionalDashboard = () => {
     }
   };
 
-  const getPlanDisplayInfo = () => {
-    const planMap = {
-      starter: { name: 'Starter', price: '0' },
-      pro: { name: 'Pro', price: '14.99' },
-      premium: { name: 'Premium', price: '24.99' },
-    };
-    return planMap[profile?.plan as keyof typeof planMap] || { name: 'Nav izvēlēts', price: '0' };
+  const getUpcomingBookings = () => {
+    return bookings
+      .filter(b => {
+        const bookingDate = new Date(b.booking_date);
+        return bookingDate >= new Date() && (b.status === 'pending' || b.status === 'confirmed');
+      })
+      .sort((a, b) => new Date(a.booking_date).getTime() - new Date(b.booking_date).getTime())
+      .slice(0, 3);
   };
-
-  useEffect(() => {
-    if (profile) {
-      loadServices();
-      loadBookings();
-    }
-  }, [profile]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingAnimation size={100} text={t.loading} />
       </div>
     );
   }
 
-  // Check if professional needs to choose subscription plan
   if (profile && profile.subscription_status !== 'active') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center p-4">
-        <Card className="max-w-2xl w-full shadow-xl border-0">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full shadow-card border-0">
           <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-8 h-8 text-primary-foreground" />
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-3xl mb-2">
               Lai turpinātu un kļūtu redzams klientiem
@@ -526,7 +514,7 @@ const ProfessionalDashboard = () => {
             <Button 
               size="lg"
               onClick={() => window.location.href = '/subscription-plans'}
-              className="w-full max-w-md mx-auto"
+              className="w-full max-w-md mx-auto bg-gradient-to-r from-primary to-secondary border-0"
             >
               Izvēlēties plānu
             </Button>
@@ -539,643 +527,607 @@ const ProfessionalDashboard = () => {
     );
   }
 
+  const upcomingBookings = getUpcomingBookings();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary">
-      <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft flex-shrink-0">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header */}
+      <header className="bg-card/80 backdrop-blur-sm border-b sticky top-0 z-10 shadow-soft">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-card">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">
-              BeautyOn
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                BeautyOn
+              </h1>
+              <p className="text-xs text-muted-foreground">Meistara panelis</p>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <Button variant="outline" size="sm" onClick={() => navigate('/professional/settings')}>
-              <Settings className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Iestatījumi</span>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/professional/settings')}>
+              <Settings className="w-5 h-5" />
             </Button>
-            <SubscriptionStatusIndicator 
-              plan={profile.plan || 'starter'} 
-              status={profile.subscription_status || 'inactive'} 
-            />
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t.logout}</span>
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="w-5 h-5" />
             </Button>
           </div>
         </div>
       </header>
 
-
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-x-hidden">
-        {/* Subscription Management Section */}
-        <Card className="shadow-card border-0 mb-4 sm:mb-6 overflow-hidden">
-          <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Mans abonements</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">Pārvaldi savu abonēšanas plānu</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 border rounded-xl">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-base sm:text-lg font-semibold">{getPlanDisplayInfo().name}</p>
-                  <Badge variant={profile.subscription_status === 'active' ? 'default' : 'destructive'} className="text-xs px-2 py-0.5">
-                    {profile.subscription_status === 'active' ? 'Aktīvs' : 'Neaktīvs'}
-                  </Badge>
+      <main className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Approval Status */}
+        {!profile.approved && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card className="mb-6 border-warning/20 bg-warning/5">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-warning/10">
+                    <Clock className="w-5 h-5 text-warning" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Profils gaida apstiprināšanu</p>
+                    <p className="text-sm text-muted-foreground">
+                      Pēc apstiprināšanas būsi redzams klientiem
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xl sm:text-2xl font-bold">€{getPlanDisplayInfo().price}<span className="text-xs sm:text-sm text-muted-foreground">/mēn</span></p>
-              </div>
-              <Button onClick={() => window.location.href = '/subscription-plans'} size="sm" className="w-full sm:w-auto">
-                {profile.subscription_status === 'active' ? 'Mainīt plānu' : 'Aktivizēt abonementu'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Approval Status Alert */}
-        {!profile.approved ? (
-          <Card className="shadow-card border-0 mb-4 sm:mb-6 bg-warning/10 border-warning/20">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-5 h-5 text-warning" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-base mb-1">Profils gaida apstiprināšanu</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tavs profils tiek pārbaudīts. Pēc administratora apstiprināšanas tu būsi redzams klientiem kartē un meklēšanas rezultātos.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="shadow-card border-0 mb-4 sm:mb-6 bg-success/10 border-success/20">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-5 h-5 text-success" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-base mb-1">Profils apstiprināts</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tavs profils ir aktīvs un redzams klientiem.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
-            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                {t.totalEarnings}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="flex items-center gap-2">
-                <Euro className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-                <span className="text-2xl sm:text-3xl font-bold text-foreground">
-                  {stats.totalEarnings.toFixed(2)}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
-            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                {t.completedServices}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-                <span className="text-2xl sm:text-3xl font-bold text-foreground">
-                  {stats.completedBookings}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-0 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden sm:col-span-2 md:col-span-1">
-            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                {t.myServices}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-                <span className="text-2xl sm:text-3xl font-bold text-foreground">
-                  {services.length}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-4 sm:mb-6 bg-card/80 backdrop-blur-sm text-xs sm:text-sm overflow-x-auto">
-            <TabsTrigger value="profile" className="px-2 py-2 sm:px-4 sm:py-2.5">
-              <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-              <span className="hidden sm:inline">Profils</span>
+        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-6 bg-card shadow-soft">
+            <TabsTrigger value="dashboard">
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Galvenā</span>
             </TabsTrigger>
-            <TabsTrigger value="bookings" className="px-2 py-2 sm:px-4 sm:py-2.5">
-              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-              <span className="hidden sm:inline">{t.bookings}</span>
+            <TabsTrigger value="bookings">
+              <Calendar className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Rezervācijas</span>
             </TabsTrigger>
-            <TabsTrigger value="services" className="px-2 py-2 sm:px-4 sm:py-2.5">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-              <span className="hidden sm:inline">{t.myServices}</span>
+            <TabsTrigger value="services">
+              <Sparkles className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Pakalpojumi</span>
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="px-2 py-2 sm:px-4 sm:py-2.5">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+            <TabsTrigger value="schedule">
+              <CalendarDays className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Grafiks</span>
             </TabsTrigger>
-            <TabsTrigger value="gallery" className="px-2 py-2 sm:px-4 sm:py-2.5">
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-              <span className="hidden sm:inline">Galerija</span>
+            <TabsTrigger value="profile">
+              <User className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Profils</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profile" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="shadow-card border-0">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Lietotāja profils</CardTitle>
-                  <Dialog open={editProfileDialogOpen} onOpenChange={setEditProfileDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4 mr-2" />
-                        Labot
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Labot profilu</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Vārds</Label>
-                          <Input
-                            id="name"
-                            value={editedProfile.name}
-                            onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Telefons</Label>
-                          <Input
-                            id="phone"
-                            value={editedProfile.phone}
-                            onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="avatar">Profila attēls</Label>
-                          <Input
-                            id="avatar"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleAvatarUpload}
-                          />
-                          {editedProfile.avatar && (
-                            <div className="mt-2">
-                              <img src={editedProfile.avatar} alt="Avatar preview" className="w-24 h-24 rounded-full object-cover" />
-                            </div>
-                          )}
-                        </div>
-                        <Button onClick={handleUpdateProfile} className="w-full" disabled={uploadingImage}>
-                          {uploadingImage ? 'Augšupielādē...' : 'Saglabāt izmaiņas'}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="w-16 h-16">
-                      <AvatarImage src={userProfile?.avatar} alt={userProfile?.name} />
-                      <AvatarFallback>{userProfile?.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{userProfile?.name}</p>
-                      <p className="text-sm text-muted-foreground">{userProfile?.phone || 'Nav telefona'}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* KPI Stats */}
+            <DashboardStats
+              todayEarnings={stats.todayEarnings}
+              monthlyEarnings={stats.monthlyEarnings}
+              todayBookings={stats.todayBookings}
+              completedServices={stats.completedBookings}
+            />
 
-              <Card className="shadow-card border-0">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Profesionālā informācija</CardTitle>
-                  <Dialog open={editProfessionalInfoOpen} onOpenChange={setEditProfessionalInfoOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4 mr-2" />
-                        Labot
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Labot profesionālo informāciju</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="category">Kategorija</Label>
-                          <Select
-                            value={editedProfInfo.category}
-                            onValueChange={(value) => setEditedProfInfo({...editedProfInfo, category: value})}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.name}>
-                                  {category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="city">Pilsēta</Label>
-                          <CityAutocomplete
-                            value={editedProfInfo.city}
-                            onChange={(value) => setEditedProfInfo({...editedProfInfo, city: value})}
-                            placeholder="Sāciet rakstīt pilsētas nosaukumu..."
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Izvēlieties pilsētu no ieteikumiem
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="address">Pilna adrese (iela un mājas numurs)</Label>
-                          <Input
-                            id="address"
-                            value={editedProfInfo.address}
-                            onChange={(e) => setEditedProfInfo({...editedProfInfo, address: e.target.value})}
-                            placeholder="Piemēram: Latgales iela 245"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Ievadiet pilnu adresi ar ielas nosaukumu un mājas numuru
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="bio">Bio</Label>
-                          <Textarea
-                            id="bio"
-                            value={editedProfInfo.bio}
-                            onChange={(e) => setEditedProfInfo({...editedProfInfo, bio: e.target.value})}
-                            rows={4}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Atzīmējiet atrašanās vietu kartē</Label>
-                          <EditableLocationMap
-                            latitude={editedProfInfo.latitude}
-                            longitude={editedProfInfo.longitude}
-                            onLocationChange={(lat, lng, address, city) => {
-                              setEditedProfInfo({
-                                ...editedProfInfo,
-                                latitude: lat,
-                                longitude: lng,
-                                address: address,
-                                city: city
-                              });
-                            }}
-                          />
-                        </div>
-                        <Button onClick={handleUpdateProfessionalInfo} className="w-full">
-                          Saglabāt izmaiņas
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Kategorija</p>
-                    <Badge variant="secondary">{profile?.category}</Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Pilsēta</p>
-                    <p className="font-medium">{profile?.city}</p>
-                  </div>
-                  {profile?.address && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Adrese</p>
-                      <p className="font-medium">{profile.address}</p>
-                    </div>
-                  )}
-                  {profile?.bio && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Bio</p>
-                      <p className="text-sm">{profile.bio}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-3 gap-3">
+              <QuickActionButton
+                icon={Plus}
+                label="Pievienot pakalpojumu"
+                onClick={() => {
+                  setEditingService(null);
+                  setNewService({ name: '', price: '', duration: '', description: '' });
+                  setServiceDialogOpen(true);
+                }}
+              />
+              <QuickActionButton
+                icon={CalendarDays}
+                label="Rediģēt grafiku"
+                onClick={() => setSelectedTab('schedule')}
+                gradient="from-secondary to-primary"
+              />
+              <QuickActionButton
+                icon={Calendar}
+                label="Rezervācijas"
+                onClick={() => setSelectedTab('bookings')}
+                gradient="from-primary via-secondary to-primary"
+              />
             </div>
 
-            {profile?.latitude && profile?.longitude && (
-              <Card className="shadow-card border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
-                    Atrašanās vieta kartē
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <LocationMap
-                    key={`${profile.latitude}-${profile.longitude}`}
-                    latitude={profile.latitude}
-                    longitude={profile.longitude}
-                    address={profile.address}
-                  />
-                </CardContent>
-              </Card>
+            {/* Upcoming Bookings */}
+            {upcomingBookings.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Tuvākās rezervācijas</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedTab('bookings')}>
+                    Skatīt visas
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {upcomingBookings.map((booking) => (
+                    <UpcomingBookingCard
+                      key={booking.id}
+                      booking={booking}
+                      onClick={() => setSelectedTab('bookings')}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Services Overview */}
+            {services.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Mani pakalpojumi</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedTab('services')}>
+                    Pārvaldīt
+                  </Button>
+                </div>
+                <div className="grid gap-3">
+                  {services.slice(0, 3).map((service) => (
+                    <ServiceCard
+                      key={service.id}
+                      service={service}
+                      onEdit={handleEditService}
+                      onDelete={handleDeleteService}
+                    />
+                  ))}
+                </div>
+              </div>
             )}
           </TabsContent>
 
+          {/* Bookings Tab */}
           <TabsContent value="bookings" className="space-y-4">
-            <Card className="shadow-card border-0">
-              <CardHeader>
-                <CardTitle>{t.bookings}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {bookings.length === 0 ? (
-                  <EmptyStateAnimation 
-                    size={100}
-                    title="Nav rezervāciju"
-                    description="Kad klienti veiks rezervācijas, tās parādīsies šeit"
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    {bookings.map((booking) => (
-                      <Card key={booking.id} className="border">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <h4 className="font-semibold">{booking.profiles?.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {booking.services?.name}
-                              </p>
-                              <p className="text-sm mt-2">
-                                {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
-                              </p>
-                            </div>
-                            
-                            <Badge 
-                              variant={
-                                booking.status === 'confirmed' ? 'default' :
-                                booking.status === 'completed' ? 'secondary' :
-                                booking.status === 'canceled' ? 'destructive' : 'outline'
-                              }
-                            >
-                              {t[booking.status as keyof typeof t] || booking.status}
-                            </Badge>
-                          </div>
-                          
-                          {booking.status === 'pending' && (
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleBookingAction(booking.id, 'confirmed')}
-                                className="flex-1"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                {t.confirmBooking}
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="destructive"
-                                onClick={() => handleBookingAction(booking.id, 'canceled')}
-                                className="flex-1"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                {t.cancelBooking}
-                              </Button>
-                            </div>
-                          )}
-                          
-                          {booking.status === 'confirmed' && (
-                            <Button 
-                              size="sm" 
-                              onClick={() => handleBookingAction(booking.id, 'completed')}
-                              className="w-full"
-                            >
-                              {t.completeBooking}
-                            </Button>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Rezervācijas</h2>
+              <Badge variant="outline">
+                {bookings.length} kopā
+              </Badge>
+            </div>
+
+            {bookings.length === 0 ? (
+              <Card className="border-0 shadow-card">
+                <CardContent className="p-12">
+                  <EmptyStateAnimation size={120} />
+                  <p className="text-center text-muted-foreground mt-4">Nav rezervāciju</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {bookings.map((booking) => (
+                  <Card key={booking.id} className="border-0 shadow-card">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-semibold text-lg">{booking.profiles.name}</p>
+                          <p className="text-sm text-muted-foreground">{booking.profiles.phone}</p>
+                        </div>
+                        <Badge
+                          variant={
+                            booking.status === 'confirmed' ? 'default' :
+                            booking.status === 'completed' ? 'outline' :
+                            booking.status === 'canceled' ? 'destructive' :
+                            'secondary'
+                          }
+                        >
+                          {booking.status === 'pending' && 'Gaida'}
+                          {booking.status === 'confirmed' && 'Apstiprināts'}
+                          {booking.status === 'completed' && 'Pabeigts'}
+                          {booking.status === 'canceled' && 'Atcelts'}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span>{format(new Date(booking.booking_date), 'dd.MM.yyyy', { locale: lv })}</span>
+                          <Clock className="w-4 h-4 text-muted-foreground ml-2" />
+                          <span>{booking.booking_time}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Sparkles className="w-4 h-4 text-muted-foreground" />
+                          <span>{booking.services.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Euro className="w-4 h-4 text-primary" />
+                          <span className="font-bold text-primary">€{booking.services.price}</span>
+                        </div>
+                      </div>
+
+                      {booking.notes && (
+                        <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Piezīme:</strong> {booking.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      {booking.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleBookingAction(booking.id, 'confirmed')}
+                            className="flex-1 bg-gradient-to-r from-primary to-secondary border-0"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Apstiprināt
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleBookingAction(booking.id, 'canceled')}
+                            className="flex-1 border-destructive/20 text-destructive"
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Atcelt
+                          </Button>
+                        </div>
+                      )}
+
+                      {booking.status === 'confirmed' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleBookingAction(booking.id, 'completed')}
+                            className="flex-1 bg-gradient-to-r from-primary to-secondary border-0"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Atzīmēt kā pabeigtu
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleBookingAction(booking.id, 'canceled')}
+                            className="border-destructive/20 text-destructive"
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Atcelt
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
+          {/* Services Tab */}
           <TabsContent value="services" className="space-y-4">
-            <Card className="shadow-card border-0">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Mani pakalpojumi</h2>
+              <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={() => {
+                      setEditingService(null);
+                      setNewService({ name: '', price: '', duration: '', description: '' });
+                    }}
+                    className="bg-gradient-to-r from-primary to-secondary border-0"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Pievienot pakalpojumu
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingService ? 'Labot pakalpojumu' : 'Pievienot pakalpojumu'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddService} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Pakalpojuma nosaukums</Label>
+                      <Input
+                        id="name"
+                        value={newService.name}
+                        onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                        placeholder="Piemēram: Manikīrs"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="price">Cena (€)</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          step="0.01"
+                          value={newService.price}
+                          onChange={(e) => setNewService({ ...newService, price: e.target.value })}
+                          placeholder="25.00"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="duration">Ilgums (min)</Label>
+                        <Input
+                          id="duration"
+                          type="number"
+                          value={newService.duration}
+                          onChange={(e) => setNewService({ ...newService, duration: e.target.value })}
+                          placeholder="60"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Apraksts</Label>
+                      <Textarea
+                        id="description"
+                        value={newService.description}
+                        onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                        placeholder="Pakalpojuma apraksts..."
+                        rows={3}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary border-0">
+                      {editingService ? 'Saglabāt izmaiņas' : 'Pievienot pakalpojumu'}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {services.length === 0 ? (
+              <Card className="border-0 shadow-card">
+                <CardContent className="p-12">
+                  <EmptyStateAnimation size={120} />
+                  <p className="text-center text-muted-foreground mt-4">Nav pakalpojumu</p>
+                  <p className="text-center text-muted-foreground text-sm">
+                    Pievienojiet savus pakalpojumus, lai klienti varētu rezervēt laiku
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-3">
+                {services.map((service) => (
+                  <ServiceCard
+                    key={service.id}
+                    service={service}
+                    onEdit={handleEditService}
+                    onDelete={handleDeleteService}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Schedule Tab */}
+          <TabsContent value="schedule" className="space-y-4">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold mb-2">Darba grafiks</h2>
+              <p className="text-sm text-muted-foreground">
+                Uzstādiet savus darba laikus katrai nedēļas dienai
+              </p>
+            </div>
+            <WorkScheduleManager professionalId={profile.id} />
+          </TabsContent>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            {/* User Profile Card */}
+            <Card className="border-0 shadow-card">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{t.myServices}</CardTitle>
-                <Dialog open={serviceDialogOpen} onOpenChange={(open) => {
-                  setServiceDialogOpen(open);
-                  if (!open) {
-                    setEditingService(null);
-                    setNewService({ name: '', price: '', duration: '', description: '' });
-                  }
-                }}>
+                <CardTitle>Lietotāja profils</CardTitle>
+                <Dialog open={editProfileDialogOpen} onOpenChange={setEditProfileDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t.addService}
+                    <Button size="sm" variant="outline">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Labot
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>{editingService ? 'Labot pakalpojumu' : t.addService}</DialogTitle>
+                      <DialogTitle>Labot profilu</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleAddService} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">{t.serviceName}</Label>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Vārds</Label>
                         <Input
                           id="name"
-                          value={newService.name}
-                          onChange={(e) => setNewService({...newService, name: e.target.value})}
-                          required
+                          value={editedProfile.name}
+                          onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
                         />
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="price">{t.servicePrice}</Label>
-                          <Input
-                            id="price"
-                            type="number"
-                            step="0.01"
-                            value={newService.price}
-                            onChange={(e) => setNewService({...newService, price: e.target.value})}
-                            required
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="duration">{t.serviceDuration}</Label>
-                          <Input
-                            id="duration"
-                            type="number"
-                            value={newService.duration}
-                            onChange={(e) => setNewService({...newService, duration: e.target.value})}
-                            required
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="description">{t.serviceDescription}</Label>
-                        <Textarea
-                          id="description"
-                          value={newService.description}
-                          onChange={(e) => setNewService({...newService, description: e.target.value})}
-                          rows={3}
+                      <div>
+                        <Label htmlFor="phone">Telefons</Label>
+                        <Input
+                          id="phone"
+                          value={editedProfile.phone}
+                          onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
                         />
                       </div>
-                      
-                      <Button type="submit" className="w-full">
-                        {editingService ? 'Saglabāt izmaiņas' : t.addService}
+                      <div>
+                        <Label htmlFor="avatar">Profila attēls</Label>
+                        <Input
+                          id="avatar"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                        />
+                        {editedProfile.avatar && (
+                          <div className="mt-2">
+                            <img src={editedProfile.avatar} alt="Avatar preview" className="w-24 h-24 rounded-full object-cover" />
+                          </div>
+                        )}
+                      </div>
+                      <Button onClick={handleUpdateProfile} className="w-full" disabled={uploadingImage}>
+                        {uploadingImage ? 'Augšupielādē...' : 'Saglabāt izmaiņas'}
                       </Button>
-                    </form>
+                    </div>
                   </DialogContent>
                 </Dialog>
               </CardHeader>
               <CardContent>
-                {services.length === 0 ? (
-                  <EmptyStateAnimation 
-                    size={100}
-                    title="Jums vēl nav pievienotu pakalpojumu"
-                    description="Pievienojiet savus pakalpojumus, lai klienti varētu veikt rezervācijas"
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    {services.map((service) => (
-                      <Card key={service.id} className="border">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h4 className="font-semibold">{service.name}</h4>
-                              {service.description && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {service.description}
-                                </p>
-                              )}
-                              <div className="flex gap-4 mt-2 text-sm">
-                                <span className="flex items-center gap-1 text-primary">
-                                  <Euro className="w-4 h-4" />
-                                  {service.price}
-                                </span>
-                                <span className="flex items-center gap-1 text-muted-foreground">
-                                  <Clock className="w-4 h-4" />
-                                  {service.duration} min
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditService(service)}
-                                className="text-primary hover:text-primary hover:bg-primary/10"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteService(service.id)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={userProfile?.avatar} alt={userProfile?.name} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
+                      {userProfile?.name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-lg">{userProfile?.name}</p>
+                    <p className="text-sm text-muted-foreground">{userProfile?.phone || 'Nav telefona'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Professional Info Card */}
+            <Card className="border-0 shadow-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Profesionālā informācija</CardTitle>
+                <Dialog open={editProfessionalInfoOpen} onOpenChange={setEditProfessionalInfoOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Labot
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Labot profesionālo informāciju</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="category">Kategorija</Label>
+                        <Select
+                          value={editedProfInfo.category}
+                          onValueChange={(value) => setEditedProfInfo({ ...editedProfInfo, category: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.name}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="city">Pilsēta</Label>
+                        <CityAutocomplete
+                          value={editedProfInfo.city}
+                          onChange={(value) => setEditedProfInfo({ ...editedProfInfo, city: value })}
+                          placeholder="Sāciet rakstīt pilsētas nosaukumu..."
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="address">Pilna adrese</Label>
+                        <Input
+                          id="address"
+                          value={editedProfInfo.address}
+                          onChange={(e) => setEditedProfInfo({ ...editedProfInfo, address: e.target.value })}
+                          placeholder="Piemēram: Latgales iela 245"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="bio">Bio</Label>
+                        <Textarea
+                          id="bio"
+                          value={editedProfInfo.bio}
+                          onChange={(e) => setEditedProfInfo({ ...editedProfInfo, bio: e.target.value })}
+                          rows={4}
+                        />
+                      </div>
+                      <div>
+                        <Label>Atzīmējiet atrašanās vietu kartē</Label>
+                        <EditableLocationMap
+                          latitude={editedProfInfo.latitude}
+                          longitude={editedProfInfo.longitude}
+                          onLocationChange={(lat, lng) => {
+                            setEditedProfInfo({
+                              ...editedProfInfo,
+                              latitude: lat,
+                              longitude: lng
+                            });
+                          }}
+                        />
+                      </div>
+                      <Button onClick={handleUpdateProfessionalInfo} className="w-full">
+                        Saglabāt izmaiņas
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Kategorija</p>
+                  <p className="font-semibold">{profile.category}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Pilsēta</p>
+                  <p className="font-semibold">{profile.city}</p>
+                </div>
+                {profile.address && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Adrese</p>
+                    <p className="font-semibold">{profile.address}</p>
+                  </div>
+                )}
+                {profile.bio && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Bio</p>
+                    <p className="text-sm">{profile.bio}</p>
+                  </div>
+                )}
+                {profile.latitude && profile.longitude && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Atrašanās vieta</p>
+                    <LocationMap latitude={profile.latitude} longitude={profile.longitude} />
                   </div>
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-          
-          <TabsContent value="schedule" className="space-y-4">
-            <WorkScheduleManager professionalId={profile.id} />
-          </TabsContent>
-          
-          <TabsContent value="gallery" className="space-y-4">
-            <Card className="shadow-card border-0">
+
+            {/* Gallery Card */}
+            <Card className="border-0 shadow-card">
               <CardHeader>
-                <CardTitle>Mana galerija</CardTitle>
+                <CardTitle>Foto galerija</CardTitle>
+                <CardDescription>Pievienojiet bildes savai galerijai</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="image-upload" className="cursor-pointer">
-                      <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
-                        <Plus className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {uploadingImage ? 'Augšupielādē...' : 'Klikšķiniet, lai pievienotu bildi'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          PNG, JPG, WEBP līdz 5MB
-                        </p>
-                      </div>
-                      <Input
-                        id="image-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        disabled={uploadingImage}
-                        className="hidden"
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {profile.gallery?.map((imageUrl: string, index: number) => (
+                    <div key={index} className="relative aspect-square group">
+                      <img
+                        src={imageUrl}
+                        alt={`Gallery ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
                       />
-                    </Label>
-                  </div>
-                  
-                  {profile?.gallery && profile.gallery.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {profile.gallery.map((imageUrl: string, index: number) => (
-                        <div key={index} className="relative group aspect-square">
-                          <img
-                            src={imageUrl}
-                            alt={`Galerijas bilde ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteImage(imageUrl)}
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleDeleteImage(imageUrl)}
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </Button>
                     </div>
-                  ) : (
-                    <p className="text-center text-muted-foreground py-8">
-                      Jums vēl nav pievienotu bilžu galerijā
-                    </p>
-                  )}
+                  ))}
                 </div>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                />
+                {uploadingImage && <p className="text-sm text-muted-foreground mt-2">Augšupielādē...</p>}
               </CardContent>
             </Card>
           </TabsContent>
