@@ -63,12 +63,14 @@ const calendarAnimation = {
 interface ModernBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  service: any;
+  services: any[];
+  professionalId: string;
   professionalName: string;
   onSubmit: (data: BookingFormData) => void;
 }
 
 export interface BookingFormData {
+  serviceId: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -77,12 +79,13 @@ export interface BookingFormData {
   notes?: string;
 }
 
-const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubmit }: ModernBookingModalProps) => {
+const ModernBookingModal = ({ isOpen, onClose, services, professionalId, professionalName, onSubmit }: ModernBookingModalProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState<Partial<BookingFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [timeSlots, setTimeSlots] = useState<Array<{ time: string; isBooked: boolean }>>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [availableServices, setAvailableServices] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -96,20 +99,35 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
     }
   }, [isOpen]);
 
-  // Load available time slots when date changes
+  // Load available services when date changes
   useEffect(() => {
-    if (formData.date && service.professional_id) {
-      loadAvailableTimeSlots(service.professional_id, formData.date);
+    if (formData.date) {
+      loadAvailableServices(formData.date);
+    } else {
+      setAvailableServices([]);
     }
-  }, [formData.date, service.professional_id]);
+  }, [formData.date, services]);
+
+  // Load available time slots when service and date are selected
+  useEffect(() => {
+    if (formData.date && formData.serviceId && professionalId) {
+      const selectedService = services.find(s => s.id === formData.serviceId);
+      if (selectedService) {
+        loadAvailableTimeSlots(professionalId, formData.date, selectedService);
+      }
+    } else {
+      setTimeSlots([]);
+    }
+  }, [formData.date, formData.serviceId, professionalId, services]);
 
   // Realtime subscription for bookings changes
   useEffect(() => {
-    if (!formData.date || !service.professional_id) return;
+    if (!formData.date || !formData.serviceId || !professionalId) return;
 
-    const dateStr = formData.date.toISOString().split('T')[0];
+    const selectedService = services.find(s => s.id === formData.serviceId);
+    if (!selectedService) return;
 
-    console.log('Setting up realtime subscription for professional:', service.professional_id);
+    console.log('Setting up realtime subscription for professional:', professionalId);
 
     // Subscribe to bookings changes
     const channel = supabase
@@ -120,13 +138,13 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
           event: '*',
           schema: 'public',
           table: 'bookings',
-          filter: `professional_id=eq.${service.professional_id}`
+          filter: `professional_id=eq.${professionalId}`
         },
         (payload) => {
           console.log('Booking changed via realtime:', payload);
           // Reload time slots when any booking changes for this professional
-          if (formData.date) {
-            loadAvailableTimeSlots(service.professional_id, formData.date);
+          if (formData.date && formData.serviceId) {
+            loadAvailableTimeSlots(professionalId, formData.date, selectedService);
           }
         }
       )
@@ -138,16 +156,50 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
       console.log('Removing realtime channel');
       supabase.removeChannel(channel);
     };
-  }, [formData.date, service.professional_id]);
+  }, [formData.date, formData.serviceId, professionalId]);
 
-  const loadAvailableTimeSlots = async (professionalId: string, date: Date) => {
+  const loadAvailableServices = async (date: Date) => {
+    try {
+      const dayOfWeek = date.getDay();
+
+      // Fetch schedules for this day to get available_services
+      const { data: schedules, error } = await supabase
+        .from('professional_schedules')
+        .select('available_services')
+        .eq('professional_id', professionalId)
+        .eq('day_of_week', dayOfWeek)
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      // Collect all available service IDs for this day
+      const serviceIds = new Set<string>();
+      schedules?.forEach(schedule => {
+        (schedule.available_services || []).forEach((id: string) => serviceIds.add(id));
+      });
+
+      // Filter services that are available on this day
+      const filtered = services.filter(s => serviceIds.has(s.id));
+      setAvailableServices(filtered);
+
+      // If currently selected service is not available, clear it
+      if (formData.serviceId && !serviceIds.has(formData.serviceId)) {
+        setFormData(prev => ({ ...prev, serviceId: undefined, time: undefined }));
+      }
+    } catch (error) {
+      console.error('Error loading available services:', error);
+      setAvailableServices([]);
+    }
+  };
+
+  const loadAvailableTimeSlots = async (professionalId: string, date: Date, service: any) => {
     setLoadingSlots(true);
     console.log('Loading available time slots for:', professionalId, date);
     try {
       const dayOfWeek = date.getDay();
       const dateStr = date.toISOString().split('T')[0];
 
-      // Fetch professional's schedule for this day
+      // Fetch professional's schedule for this day that includes this service
       const { data: schedules, error: scheduleError } = await supabase
         .from('professional_schedules')
         .select('*')
@@ -155,11 +207,16 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         .eq('day_of_week', dayOfWeek)
         .eq('is_active', true);
 
-      console.log('Schedules loaded:', schedules);
+      // Filter schedules that include this service
+      const filteredSchedules = (schedules || []).filter(schedule =>
+        (schedule.available_services || []).includes(service.id)
+      );
+
+      console.log('Schedules loaded:', filteredSchedules);
       if (scheduleError) throw scheduleError;
 
-      if (!schedules || schedules.length === 0) {
-        console.log('No schedules found for this day');
+      if (!filteredSchedules || filteredSchedules.length === 0) {
+        console.log('No schedules found for this day with this service');
         setTimeSlots([]);
         return;
       }
@@ -212,7 +269,7 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
 
       // Generate ALL time slots (both available and booked) with status
       const slots: Array<{ time: string; isBooked: boolean }> = [];
-      schedules.forEach(schedule => {
+      filteredSchedules.forEach(schedule => {
         const startHour = parseInt(schedule.start_time.split(':')[0]);
         const startMinute = parseInt(schedule.start_time.split(':')[1]);
         const endHour = parseInt(schedule.end_time.split(':')[0]);
@@ -284,6 +341,9 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    if (!formData.serviceId) {
+      newErrors.service = 'Pakalpojums ir obligāts';
+    }
     if (!formData.firstName?.trim()) {
       newErrors.firstName = 'Vārds ir obligāts';
     }
@@ -365,22 +425,73 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Pieteikt vizīti</h2>
             <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
               <span className="font-semibold">{professionalName}</span>
-              <span>•</span>
-              <span>{service.name}</span>
-            </div>
-            <div className="flex items-center justify-center gap-3 mt-2 text-sm text-gray-500">
-              <span className="flex items-center gap-1">
-                💶 €{service.price}
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                ⏱️ {service.duration} min
-              </span>
             </div>
           </div>
 
           {/* Form */}
           <div className="space-y-5">
+            {/* Date Picker */}
+            <div>
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+                Izvēlies datumu <span className="text-red-500">*</span>
+              </Label>
+              <div className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
+                <Calendar
+                  mode="single"
+                  selected={formData.date}
+                  onSelect={(date) => setFormData({ ...formData, date, serviceId: undefined, time: undefined })}
+                  disabled={(date) => date < new Date()}
+                  className={cn("rounded-xl pointer-events-auto")}
+                />
+              </div>
+              {errors.date && (
+                <p className="text-xs text-red-500 mt-1">{errors.date}</p>
+              )}
+            </div>
+
+            {/* Service Selection */}
+            {formData.date && (
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Izvēlies pakalpojumu <span className="text-red-500">*</span>
+                </Label>
+                {availableServices.length === 0 ? (
+                  <div className="text-sm text-amber-600 text-center py-4 bg-amber-50 rounded-xl">
+                    Šajā dienā nav pieejami pakalpojumi
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    {availableServices.map((svc) => (
+                      <button
+                        key={svc.id}
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('light');
+                          setFormData({ ...formData, serviceId: svc.id, time: undefined });
+                        }}
+                        className={cn(
+                          "p-4 rounded-xl border-2 text-left transition-all",
+                          formData.serviceId === svc.id
+                            ? "border-primary bg-primary/5"
+                            : "border-gray-200 hover:border-gray-300"
+                        )}
+                      >
+                        <div className="font-semibold text-gray-900">{svc.name}</div>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                          <span>💶 €{svc.price}</span>
+                          <span>•</span>
+                          <span>⏱️ {svc.duration} min</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {errors.service && (
+                  <p className="text-xs text-red-500 mt-1">{errors.service}</p>
+                )}
+              </div>
+            )}
+
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -442,27 +553,8 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
               )}
             </div>
 
-            {/* Date Picker */}
-            <div>
-              <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                Izvēlies datumu <span className="text-red-500">*</span>
-              </Label>
-              <div className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
-                <Calendar
-                  mode="single"
-                  selected={formData.date}
-                  onSelect={(date) => setFormData({ ...formData, date })}
-                  disabled={(date) => date < new Date()}
-                  className={cn("rounded-xl pointer-events-auto")}
-                />
-              </div>
-              {errors.date && (
-                <p className="text-xs text-red-500 mt-1">{errors.date}</p>
-              )}
-            </div>
-
             {/* Time Slots */}
-            {formData.date && (
+            {formData.date && formData.serviceId && (
               <div>
                 <Label className="text-sm font-semibold text-gray-700 mb-2 block">
                   Izvēlies laiku <span className="text-red-500">*</span>
