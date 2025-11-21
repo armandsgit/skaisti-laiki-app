@@ -54,21 +54,43 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
 
   const loadServices = async () => {
     try {
-      let query = supabase
-        .from('services')
-        .select('*')
-        .eq('professional_id', professionalId);
-
       if (staffMemberId) {
-        query = query.eq('staff_member_id', staffMemberId);
+        // For specific staff member, load services via master_services table
+        const { data: masterServices, error: msError } = await supabase
+          .from('master_services')
+          .select('service_id')
+          .eq('staff_member_id', staffMemberId);
+
+        if (msError) throw msError;
+
+        const serviceIds = masterServices?.map(ms => ms.service_id) || [];
+
+        if (serviceIds.length === 0) {
+          setServices([]);
+          return;
+        }
+
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('professional_id', professionalId)
+          .in('id', serviceIds)
+          .order('name');
+
+        if (servicesError) throw servicesError;
+        setServices(servicesData || []);
       } else {
-        query = query.is('staff_member_id', null);
+        // For professional without staff member, load all services
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .eq('professional_id', professionalId)
+          .is('staff_member_id', null)
+          .order('name');
+
+        if (error) throw error;
+        setServices(data || []);
       }
-
-      const { data, error } = await query.order('name');
-
-      if (error) throw error;
-      setServices(data || []);
     } catch (error) {
       console.error('Error loading services:', error);
       toast.error('Neizdevās ielādēt pakalpojumus');
