@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Search, Star, MapPin, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
@@ -147,51 +145,39 @@ const ClientDashboard = () => {
       </header>
 
       <main className="max-w-screen-sm mx-auto px-4 py-6 overflow-x-hidden">
-        <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
-            <TabsTrigger value="search">
-              <Search className="w-4 h-4 mr-2" />
-              {t.searchProfessionals}
-            </TabsTrigger>
-            <TabsTrigger value="bookings">
-              <Calendar className="w-4 h-4 mr-2" />
-              {t.bookings}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="search" className="space-y-6">
-            <Card className="shadow-card border">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">{t.searchProfessionals}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <div className="flex-1 w-full">
-                    <Input
-                      placeholder={t.search}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full"
-                    />
-                  </div>
-                  
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder={t.filterByCategory} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t.allCategories}</SelectItem>
-                      {categories.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+        <div className="w-full space-y-6">
+          <Card className="shadow-card border">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">{t.searchProfessionals}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className="flex-1 w-full">
+                  <Input
+                    placeholder={t.search}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder={t.filterByCategory} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.allCategories}</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="grid grid-cols-1 gap-4">
-              {filteredProfessionals.map((prof) => (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredProfessionals.map((prof) => (
                 <Card 
                   key={prof.id} 
                   className={`touch-ripple tap-feedback cursor-pointer border shadow-card overflow-hidden hover:shadow-elegant transition-shadow ${
@@ -248,62 +234,10 @@ const ClientDashboard = () => {
                 </Card>
               ))}
             </div>
-          </TabsContent>
-
-          <TabsContent value="bookings" className="space-y-4">
-            <Card className="shadow-card border">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">{t.bookings}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {bookings.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8 text-base">
-                    Jums vēl nav nevienas rezervācijas
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {bookings.map((booking) => (
-                      <Card key={booking.id} className="border shadow-soft overflow-hidden">
-                        <CardContent className="p-4">
-                          <div className="flex flex-col gap-2.5">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-base truncate">
-                                  {booking.professional_profiles?.profiles?.name}
-                                </h4>
-                                <p className="text-sm text-muted-foreground truncate mt-0.5">
-                                  {booking.services?.name}
-                                </p>
-                              </div>
-                              
-                              <Badge 
-                                variant={
-                                  booking.status === 'confirmed' ? 'default' :
-                                  booking.status === 'completed' ? 'secondary' :
-                                  booking.status === 'canceled' ? 'destructive' : 'outline'
-                                }
-                                className="text-sm px-2.5 py-1 whitespace-nowrap flex-shrink-0"
-                              >
-                                {t[booking.status as keyof typeof t] || booking.status}
-                              </Badge>
-                            </div>
-                            
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
-  );
-};
-
-export default ClientDashboard;
+          </div>
+        </main>
+      </div>
+    );
+  };
+  
+  export default ClientDashboard;
