@@ -170,19 +170,31 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
             </span>
           </div>
 
-          {/* View Profile Button */}
-          <button
-            onClick={() => {
-              setIsVisible(false);
-              setTimeout(() => {
-                navigate(`/professional/${master.id}`);
-              }, 150);
-            }}
-            className="w-full py-4 bg-gradient-to-r from-primary via-primary to-secondary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2"
-          >
-            <span>Skatīt profilu</span>
-            <span className="text-lg">→</span>
-          </button>
+          {/* Buttons */}
+          <div className="space-y-3">
+            {/* Navigate Button */}
+            <button
+              onClick={() => setShowNavigationPicker(true)}
+              className="w-full py-3.5 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <span>🗺️</span>
+              <span>Navigēt</span>
+            </button>
+
+            {/* View Profile Button */}
+            <button
+              onClick={() => {
+                setIsVisible(false);
+                setTimeout(() => {
+                  navigate(`/professional/${master.id}`);
+                }, 150);
+              }}
+              className="w-full py-3.5 bg-white border-2 border-primary text-primary rounded-2xl font-bold text-base hover:bg-primary/5 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <span>Skatīt profilu</span>
+              <span className="text-lg">→</span>
+            </button>
+          </div>
         </div>
       </div>
 
