@@ -198,7 +198,8 @@ const ProfessionalDashboard = () => {
       .select(`
         *,
         services(name, price),
-        profiles!bookings_client_id_fkey(name, phone)
+        profiles!bookings_client_id_fkey(name, phone, email),
+        staff_members(name, avatar)
       `)
       .eq('professional_id', profile.id)
       .order('booking_date', { ascending: false });
@@ -740,9 +741,16 @@ const ProfessionalDashboard = () => {
                   <Card key={booking.id} className="border-0 shadow-card">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-semibold text-lg">{booking.profiles.name}</p>
-                          <p className="text-sm text-muted-foreground">{booking.profiles.phone}</p>
+                          <div className="space-y-1 mt-1">
+                            {booking.profiles.email && (
+                              <p className="text-sm text-muted-foreground">📧 {booking.profiles.email}</p>
+                            )}
+                            {booking.profiles.phone && (
+                              <p className="text-sm text-muted-foreground">📱 {booking.profiles.phone}</p>
+                            )}
+                          </div>
                         </div>
                         <Badge
                           variant={
@@ -770,6 +778,12 @@ const ProfessionalDashboard = () => {
                           <Sparkles className="w-4 h-4 text-muted-foreground" />
                           <span>{booking.services.name}</span>
                         </div>
+                        {booking.staff_members && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span>Meistars: {booking.staff_members.name}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <Euro className="w-4 h-4 text-primary" />
                           <span className="font-bold text-primary">€{booking.services.price}</span>
