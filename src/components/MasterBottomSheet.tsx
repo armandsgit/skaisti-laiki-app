@@ -129,37 +129,48 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
 
         {/* Content */}
         <div className="px-5 pb-4">
-          {/* Header */}
-          <div className="flex items-center gap-3.5 mb-4">
-            <div className="relative flex-shrink-0">
-              <img 
-                src={avatarUrl}
-                alt={master.profiles.name}
-                className="w-16 h-16 rounded-full object-cover border-3 border-primary/30 shadow-md"
-              />
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 
-                onClick={() => {
-                  setIsVisible(false);
-                  setTimeout(() => {
-                    navigate(`/professional/${master.id}`);
-                  }, 150);
-                }}
-                className="text-xl font-bold text-gray-900 mb-1.5 leading-tight cursor-pointer hover:text-primary transition-colors active:scale-[0.98]"
-              >
-                {master.profiles.name}
-              </h3>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
-                  <span className="text-amber-500 text-sm">⭐</span>
-                  <span className="text-gray-800 font-bold text-sm">
-                    {master.rating || '5.0'}
-                  </span>
+          {/* Header with Navigation Button */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3.5 flex-1 min-w-0">
+              <div className="relative flex-shrink-0">
+                <img 
+                  src={avatarUrl}
+                  alt={master.profiles.name}
+                  className="w-16 h-16 rounded-full object-cover border-3 border-primary/30 shadow-md"
+                />
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 
+                  onClick={() => {
+                    setIsVisible(false);
+                    setTimeout(() => {
+                      navigate(`/professional/${master.id}`);
+                    }, 150);
+                  }}
+                  className="text-xl font-bold text-gray-900 mb-1.5 leading-tight cursor-pointer hover:text-primary transition-colors active:scale-[0.98]"
+                >
+                  {master.profiles.name}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
+                    <span className="text-amber-500 text-sm">⭐</span>
+                    <span className="text-gray-800 font-bold text-sm">
+                      {master.rating || '5.0'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+            
+            {/* Navigation Button */}
+            <button
+              onClick={() => setShowNavigationPicker(true)}
+              className="rounded-full p-2.5 bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-all duration-150 active:scale-95 flex-shrink-0 ml-2"
+              aria-label="Navigēt"
+            >
+              <span className="text-xl">🗺️</span>
+            </button>
           </div>
 
           {/* Address */}
@@ -170,31 +181,19 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
             </span>
           </div>
 
-          {/* Buttons */}
-          <div className="space-y-3">
-            {/* Navigate Button */}
-            <button
-              onClick={() => setShowNavigationPicker(true)}
-              className="w-full py-3.5 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <span>🗺️</span>
-              <span>Navigēt</span>
-            </button>
-
-            {/* View Profile Button */}
-            <button
-              onClick={() => {
-                setIsVisible(false);
-                setTimeout(() => {
-                  navigate(`/professional/${master.id}`);
-                }, 150);
-              }}
-              className="w-full py-3.5 bg-white border-2 border-primary text-primary rounded-2xl font-bold text-base hover:bg-primary/5 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <span>Skatīt profilu</span>
-              <span className="text-lg">→</span>
-            </button>
-          </div>
+          {/* View Profile Button */}
+          <button
+            onClick={() => {
+              setIsVisible(false);
+              setTimeout(() => {
+                navigate(`/professional/${master.id}`);
+              }, 150);
+            }}
+            className="w-full py-4 bg-gradient-to-r from-primary via-primary to-secondary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2"
+          >
+            <span>Skatīt profilu</span>
+            <span className="text-lg">→</span>
+          </button>
         </div>
       </div>
 
