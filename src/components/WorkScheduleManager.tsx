@@ -249,10 +249,28 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
         <p className="text-sm text-muted-foreground">
           Iestatiet savus darba laikus katrai nedēļas dienai
         </p>
-        <div className="mt-3 px-4 py-2 bg-muted/50 rounded-lg border border-border/50">
-          <p className="text-xs text-muted-foreground">
-            ℹ️ <span className="font-medium">Laika solis:</span> Pieejamie rezervācijas laiki tiek ģenerēti automātiski, pamatojoties uz pakalpojuma ilgumu. Piemēram, 20 min pakalpojumam → laiki: 09:00, 09:20, 09:40 utt.
-          </p>
+        
+        <div className="mt-3 space-y-2">
+          <div className="px-4 py-2 bg-muted/50 rounded-lg border border-border/50">
+            <p className="text-xs text-muted-foreground">
+              ℹ️ <span className="font-medium">Laika solis:</span> Pieejamie rezervācijas laiki tiek ģenerēti automātiski, pamatojoties uz pakalpojuma ilgumu.
+            </p>
+          </div>
+          
+          {services.length > 0 && (
+            <div className="px-4 py-3 bg-primary/5 rounded-lg border border-primary/20">
+              <p className="text-xs font-medium text-primary mb-2">Jūsu pakalpojumu laika soļi:</p>
+              <div className="space-y-1">
+                {services.map(service => (
+                  <div key={service.id} className="text-xs text-muted-foreground flex items-center gap-2">
+                    <Clock className="w-3 h-3" />
+                    <span className="font-medium">{service.name}:</span>
+                    <span>{service.duration} min → laiki ar {service.duration} min soli</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
