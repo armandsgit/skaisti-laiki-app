@@ -543,19 +543,10 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                       const slots = staffTimeSlots[staff.id] || [];
                       const selectedService = services.find(s => s.id === formData.serviceId);
                       const serviceDuration = selectedService?.duration || 60;
-                      
-                      // Helper function to calculate end time
-                      const calculateEndTime = (startTime: string): string => {
-                        const [hours, minutes] = startTime.split(':').map(Number);
-                        const totalMinutes = hours * 60 + minutes + serviceDuration;
-                        const endHours = Math.floor(totalMinutes / 60);
-                        const endMinutes = totalMinutes % 60;
-                        return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
-                      };
 
                       return (
                         <div key={staff.id} className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
-                          <div className="flex items-center gap-3 mb-3">
+                          <div className="flex items-center gap-3 mb-2">
                             {staff.avatar ? (
                               <img 
                                 src={staff.avatar} 
@@ -572,9 +563,12 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                               {staff.position && (
                                 <div className="text-sm text-gray-500">{staff.position}</div>
                               )}
+                              <div className="text-xs text-primary font-medium mt-0.5">
+                                Ilgums: {serviceDuration} min
+                              </div>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-3 gap-2">
                             {slots.map((slot) => (
                               <button
                                 key={`${staff.id}-${slot.time}`}
@@ -592,7 +586,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                                 }}
                                 disabled={slot.isBooked}
                                 className={cn(
-                                  "p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200 flex flex-col items-center",
+                                  "p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200",
                                   slot.isBooked
                                     ? "bg-gray-100 border-gray-300 text-gray-400 line-through pointer-events-none"
                                     : formData.time === slot.time && formData.staffMemberId === staff.id
@@ -600,8 +594,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                                       : "border-gray-200 bg-white hover:border-primary/50 hover:scale-105 active:scale-95"
                                 )}
                               >
-                                <span className="font-bold">{slot.time}</span>
-                                <span className="text-xs opacity-75">- {calculateEndTime(slot.time)}</span>
+                                {slot.time}
                               </button>
                             ))}
                           </div>
