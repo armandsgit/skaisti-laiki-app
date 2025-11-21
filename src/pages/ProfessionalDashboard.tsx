@@ -742,11 +742,15 @@ const ProfessionalDashboard = () => {
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <p className="font-semibold text-lg">{booking.profiles.name}</p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-semibold text-lg">{booking.profiles.name}</p>
+                          </div>
                           <div className="space-y-1 mt-1">
-                            <p className="text-sm text-muted-foreground">
-                              📧 {booking.profiles.email || 'Nav e-pasta'}
-                            </p>
+                            <div className="flex items-start gap-2">
+                              <span className="text-xs font-mono bg-muted px-2 py-1 rounded-md text-muted-foreground break-all">
+                                {booking.profiles.email || 'Nav e-pasta'}
+                              </span>
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               📱 {booking.profiles.phone || 'Nav telefona'}
                             </p>
