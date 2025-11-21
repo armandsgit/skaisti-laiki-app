@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { Sparkles } from 'lucide-react';
+import LoadingAnimation from '@/components/LoadingAnimation';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -55,10 +55,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center">
       <div className="text-center">
-        <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mb-6 shadow-soft animate-pulse">
-          <Sparkles className="w-10 h-10 text-primary-foreground" />
-        </div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+        <LoadingAnimation size={100} />
+        <h1 className="text-3xl font-bold text-foreground mt-4 mb-2">
           BeautyOn
         </h1>
         <p className="text-muted-foreground">Ielādē...</p>

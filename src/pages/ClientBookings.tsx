@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from 'lucide-react';
+import LoadingAnimation from '@/components/LoadingAnimation';
+import EmptyStateAnimation from '@/components/EmptyStateAnimation';
 
 const ClientBookings = () => {
   const t = useTranslation('lv');
@@ -42,10 +44,7 @@ const ClientBookings = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Calendar className="w-12 h-12 mx-auto mb-4 text-primary animate-pulse" />
-          <p className="text-muted-foreground">{t.loading}</p>
-        </div>
+        <LoadingAnimation size={100} text={t.loading} />
       </div>
     );
   }
@@ -60,10 +59,11 @@ const ClientBookings = () => {
 
       <main className="max-w-screen-sm mx-auto px-4 py-6">
         {bookings.length === 0 ? (
-          <div className="text-center py-16">
-            <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="text-muted-foreground text-base">Jums vēl nav nevienas rezervācijas</p>
-          </div>
+          <EmptyStateAnimation 
+            size={140}
+            title="Jums vēl nav nevienas rezervācijas"
+            description="Sāciet meklēt meistarnieces un izveidojiet savu pirmo rezervāciju!"
+          />
         ) : (
           <div className="space-y-3">
             {bookings.map((booking) => (

@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import LocationMap from '@/components/LocationMap';
 import { bookingSchema } from '@/lib/validation';
 import BookingSuccessModal from '@/components/BookingSuccessModal';
+import { triggerHaptic } from '@/lib/haptic';
+import LoadingAnimation from '@/components/LoadingAnimation';
 
 const ProfessionalProfile = () => {
   const { id } = useParams();
@@ -83,6 +85,9 @@ const ProfessionalProfile = () => {
       return;
     }
 
+    // Trigger haptic feedback
+    triggerHaptic('medium');
+
     try {
       // Validate booking data
       const validatedData = bookingSchema.parse({
@@ -121,7 +126,7 @@ const ProfessionalProfile = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center">
-        <p className="text-muted-foreground">{t.loading}</p>
+        <LoadingAnimation size={100} text={t.loading} />
       </div>
     );
   }
@@ -138,7 +143,15 @@ const ProfessionalProfile = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary overflow-x-hidden">
       <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm">
         <div className="container mx-auto px-4 py-3 sm:py-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-sm">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {
+              triggerHaptic('light');
+              navigate('/');
+            }} 
+            className="text-sm button-press"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             <span className="truncate">Atpakaļ</span>
           </Button>
@@ -269,8 +282,9 @@ const ProfessionalProfile = () => {
                         
                         <Button
                           size="sm"
-                          className="w-full sm:w-auto flex-shrink-0"
+                          className="w-full sm:w-auto flex-shrink-0 button-press"
                           onClick={() => {
+                            triggerHaptic('light');
                             setSelectedService(service);
                             setBookingDialogOpen(true);
                           }}
@@ -381,7 +395,7 @@ const ProfessionalProfile = () => {
               
               <Button 
                 onClick={handleBooking} 
-                className="w-full"
+                className="w-full button-press"
                 disabled={!bookingDate || !bookingTime}
               >
                 {t.confirmBooking}
