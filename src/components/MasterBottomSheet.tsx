@@ -44,9 +44,6 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
 
   const avatarUrl = master.profiles.avatar || 
     'https://api.dicebear.com/7.x/avataaars/svg?seed=' + master.profiles.name;
-  const shortAddress = master.address 
-    ? (master.address.length > 35 ? master.address.substring(0, 35) + '...' : master.address)
-    : master.city;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setStartY(e.touches[0].clientY);
@@ -150,17 +147,22 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
                       navigate(`/professional/${master.id}`);
                     }, 150);
                   }}
-                  className="text-xl font-bold text-gray-900 mb-1.5 leading-tight cursor-pointer hover:text-primary transition-colors active:scale-[0.98]"
+                  className="text-xl font-bold text-gray-900 mb-1 leading-tight cursor-pointer hover:text-primary transition-colors active:scale-[0.98]"
                 >
                   {master.profiles.name}
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
                     <span className="text-amber-500 text-sm">⭐</span>
                     <span className="text-gray-800 font-bold text-sm">
                       {master.rating || '5.0'}
                     </span>
                   </div>
+                  {master.category && (
+                    <div className="px-2 py-1 bg-primary/10 rounded-lg">
+                      <span className="text-xs font-semibold text-primary">{master.category}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -182,7 +184,7 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
           <div className="flex items-start gap-2.5 mb-5 p-3.5 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-200/50">
             <span className="text-xl mt-0.5">📍</span>
             <span className="text-sm text-gray-700 font-medium leading-relaxed">
-              {shortAddress}
+              {master.address && master.city ? `${master.address}, ${master.city}` : master.address || master.city}
             </span>
           </div>
 
