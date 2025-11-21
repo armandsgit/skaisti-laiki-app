@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SortedMaster } from '@/lib/master-sorting';
+import NavigationPicker from './NavigationPicker';
 
 interface MasterBottomSheetProps {
   master: SortedMaster | null;
@@ -12,6 +13,7 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
   const [currentY, setCurrentY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [showNavigationPicker, setShowNavigationPicker] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -29,6 +31,7 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
       setIsVisible(false);
       document.body.style.overflow = '';
       setDragOffset(0);
+      setShowNavigationPicker(false);
     }
     return () => {
       document.body.style.overflow = '';
@@ -182,6 +185,16 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
           </button>
         </div>
       </div>
+
+      {/* Navigation Picker */}
+      {master && (
+        <NavigationPicker
+          latitude={master.latitude}
+          longitude={master.longitude}
+          isOpen={showNavigationPicker}
+          onClose={() => setShowNavigationPicker(false)}
+        />
+      )}
     </>
   );
 };
