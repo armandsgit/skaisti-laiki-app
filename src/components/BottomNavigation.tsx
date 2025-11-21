@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Map, Calendar, User, Search } from 'lucide-react';
+import { Home, Map, Calendar, User, Search, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 const BottomNavigation = () => {
@@ -25,7 +25,8 @@ const BottomNavigation = () => {
   const currentTab = searchParams.get('tab') || 'pending';
   
   const tabs = isAdminPanel ? [
-    { icon: Home, label: 'Gaida', path: '/admin?tab=pending', isActive: currentTab === 'pending', isMain: false },
+    { icon: Home, label: 'Sākums', path: '/admin', isActive: false, isMain: false, scrollToTop: true },
+    { icon: CheckCircle, label: 'Gaida', path: '/admin?tab=pending', isActive: currentTab === 'pending' },
     { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: currentTab === 'professionals' },
     { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: currentTab === 'bookings' },
     { icon: Search, label: 'Klienti', path: '/admin?tab=clients', isActive: currentTab === 'clients' },
@@ -49,7 +50,13 @@ const BottomNavigation = () => {
           {tabs.map((tab, index) => (
             <button
               key={index}
-              onClick={() => navigate(tab.path)}
+              onClick={() => {
+                if (tab.scrollToTop) {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  navigate(tab.path);
+                }
+              }}
               className={`
                 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative
                 ${tab.isMain 
