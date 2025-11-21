@@ -38,7 +38,7 @@ const BottomNavigation = () => {
   ] : [
     { icon: Home, label: 'Sākums', path: '/client', isActive: location.pathname === '/client' || location.pathname === '/' },
     { icon: Search, label: 'Meklēt', path: '/map', isActive: location.pathname === '/map' },
-    { icon: Calendar, label: 'Rezervācijas', path: '/bookings', isActive: location.pathname === '/bookings' },
+    { icon: Calendar, label: 'Rezervācijas', path: '/client/bookings', isActive: location.pathname === '/client/bookings' },
     { icon: User, label: 'Konts', path: '/client/settings', isActive: location.pathname === '/client/settings' },
   ];
 
