@@ -249,6 +249,11 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
         <p className="text-sm text-muted-foreground">
           Iestatiet savus darba laikus katrai nedēļas dienai
         </p>
+        <div className="mt-3 px-4 py-2 bg-muted/50 rounded-lg border border-border/50">
+          <p className="text-xs text-muted-foreground">
+            ℹ️ <span className="font-medium">Laika solis:</span> Pieejamie rezervācijas laiki tiek ģenerēti automātiski, pamatojoties uz pakalpojuma ilgumu. Piemēram, 20 min pakalpojumam → laiki: 09:00, 09:20, 09:40 utt.
+          </p>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {DAYS.map((day) => (
