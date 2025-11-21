@@ -81,7 +81,7 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState<Partial<BookingFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [timeSlots, setTimeSlots] = useState<Array<{ time: string; isBooked: boolean }>>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   useEffect(() => {
@@ -184,8 +184,8 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
       );
       console.log('Booked times (normalized):', Array.from(bookedTimes));
 
-      // Generate time slots from schedules
-      const slots: string[] = [];
+      // Generate ALL time slots (both available and booked) with status
+      const slots: Array<{ time: string; isBooked: boolean }> = [];
       schedules.forEach(schedule => {
         const startHour = parseInt(schedule.start_time.split(':')[0]);
         const startMinute = parseInt(schedule.start_time.split(':')[1]);
@@ -201,9 +201,11 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         ) {
           const timeSlot = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
           
-          if (!bookedTimes.has(timeSlot)) {
-            slots.push(timeSlot);
-          }
+          // Add all slots with their booked status
+          slots.push({
+            time: timeSlot,
+            isBooked: bookedTimes.has(timeSlot)
+          });
 
           // Increment by service duration (default 30 min intervals)
           currentMinute += 30;
@@ -214,8 +216,8 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
         }
       });
 
-      console.log('Available time slots:', slots);
-      setTimeSlots(slots.sort());
+      console.log('All time slots with status:', slots);
+      setTimeSlots(slots.sort((a, b) => a.time.localeCompare(b.time)));
     } catch (error) {
       console.error('Error loading time slots:', error);
       toast.error('Neizdevās ielādēt pieejamos laikus');
@@ -429,21 +431,26 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
-                    {timeSlots.map((time) => (
+                    {timeSlots.map((slot) => (
                       <button
-                        key={time}
+                        key={slot.time}
                         onClick={() => {
-                          triggerHaptic('light');
-                          setFormData({ ...formData, time });
+                          if (!slot.isBooked) {
+                            triggerHaptic('light');
+                            setFormData({ ...formData, time: slot.time });
+                          }
                         }}
+                        disabled={slot.isBooked}
                         className={cn(
-                          "py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95",
-                          formData.time === time
-                            ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          "py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200",
+                          slot.isBooked
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed line-through opacity-60"
+                            : formData.time === slot.time
+                            ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg active:scale-95"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95"
                         )}
                       >
-                        {time}
+                        {slot.time}
                       </button>
                     ))}
                   </div>
