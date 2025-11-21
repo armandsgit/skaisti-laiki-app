@@ -13,6 +13,7 @@ import ProfessionalSettings from './pages/ProfessionalSettings';
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminReviews from "./pages/AdminReviews";
 import MapView from "./pages/MapView";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
 import NotFound from "./pages/NotFound";
@@ -97,6 +98,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/reviews" 
+              element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminReviews />
                 </ProtectedRoute>
               } 
             />

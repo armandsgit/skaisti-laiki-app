@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Map, Calendar, User, Search, CheckCircle } from 'lucide-react';
+import { Home, Map, Calendar, User, Search, CheckCircle, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 const BottomNavigation = () => {
@@ -17,19 +17,19 @@ const BottomNavigation = () => {
   
   // Determine user role route prefix
   const isAdminPanel = location.pathname.startsWith('/admin');
-  const isProfessionalDashboard = location.pathname === '/professional/dashboard' || 
-                                  location.pathname === '/professional/settings';
+  const isProfessionalDashboard = (location.pathname === '/professional/dashboard' || 
+                                   location.pathname === '/professional/settings') && !isViewingProfile;
   const isClient = !isProfessionalDashboard && !isViewingProfile && !isAdminPanel;
   
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get('tab');
   
   const tabs = isAdminPanel ? [
-    { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab, scrollToTop: true },
+    { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab && location.pathname === '/admin', scrollToTop: true },
     { icon: CheckCircle, label: 'Gaida', path: '/admin?tab=pending', isActive: currentTab === 'pending' },
+    { icon: MessageSquare, label: 'Atsauksmes', path: '/admin/reviews', isActive: location.pathname === '/admin/reviews' },
     { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: currentTab === 'professionals' },
     { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: currentTab === 'bookings' },
-    { icon: Search, label: 'Klienti', path: '/admin?tab=clients', isActive: currentTab === 'clients' },
   ] : isProfessionalDashboard ? [
     { icon: Home, label: 'Sākums', path: '/professional/dashboard', isActive: location.pathname === '/professional/dashboard' },
     { icon: Calendar, label: 'Rezervācijas', path: '/professional/dashboard', isActive: false },

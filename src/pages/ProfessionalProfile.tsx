@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import LocationMap from '@/components/LocationMap';
 import { bookingSchema } from '@/lib/validation';
 import BookingSuccessModal from '@/components/BookingSuccessModal';
+import ReviewsList from '@/components/ReviewsList';
 import { triggerHaptic } from '@/lib/haptic';
 import LoadingAnimation from '@/components/LoadingAnimation';
 
@@ -27,7 +28,6 @@ const ProfessionalProfile = () => {
   
   const [professional, setProfessional] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<any[]>([]);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [bookingDate, setBookingDate] = useState<Date>();
@@ -39,7 +39,6 @@ const ProfessionalProfile = () => {
     if (id) {
       loadProfessional();
       loadServices();
-      loadReviews();
     }
   }, [id]);
 
@@ -64,19 +63,6 @@ const ProfessionalProfile = () => {
       .eq('professional_id', id);
     
     setServices(data || []);
-  };
-
-  const loadReviews = async () => {
-    const { data } = await supabase
-      .from('reviews')
-      .select(`
-        *,
-        profiles!reviews_client_id_fkey(name)
-      `)
-      .eq('professional_id', id)
-      .order('created_at', { ascending: false });
-    
-    setReviews(data || []);
   };
 
   const handleBooking = async () => {
@@ -300,50 +286,7 @@ const ProfessionalProfile = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card border-0 overflow-hidden">
-          <CardHeader className="p-3 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">{t.reviews}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            {reviews.length === 0 ? (
-              <p className="text-center text-muted-foreground py-6 text-sm">
-                Nav atsauksmju
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {reviews.map((review) => (
-                  <Card key={review.id} className="border">
-                    <CardContent className="p-3 sm:p-4">
-                      <div className="flex flex-col sm:flex-row items-start justify-between gap-2 mb-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm sm:text-base truncate">{review.profiles?.name}</p>
-                          <div className="flex items-center gap-1 mt-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                                  i < review.rating
-                                    ? 'fill-accent text-accent'
-                                    : 'text-muted'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {new Date(review.created_at).toLocaleDateString('lv-LV')}
-                        </span>
-                      </div>
-                      {review.comment && (
-                        <p className="text-xs sm:text-sm text-muted-foreground break-words">{review.comment}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <ReviewsList professionalId={id!} />
       </main>
 
       <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
