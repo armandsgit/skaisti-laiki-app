@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Lottie from 'lottie-react';
 import { triggerHaptic } from '@/lib/haptic';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Simple calendar animation data
 const calendarAnimation = {
@@ -79,12 +81,8 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState<Partial<BookingFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Available time slots (TODO: get from professional's schedule)
-  const timeSlots = [
-    '09:00', '10:00', '11:00', '12:00', '13:00', 
-    '14:00', '15:00', '16:00', '17:00', '18:00'
-  ];
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -97,6 +95,86 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
       setIsVisible(false);
     }
   }, [isOpen]);
+
+  // Load available time slots when date changes
+  useEffect(() => {
+    if (formData.date && service.professional_id) {
+      loadAvailableTimeSlots(service.professional_id, formData.date);
+    }
+  }, [formData.date, service.professional_id]);
+
+  const loadAvailableTimeSlots = async (professionalId: string, date: Date) => {
+    setLoadingSlots(true);
+    try {
+      const dayOfWeek = date.getDay();
+      const dateStr = date.toISOString().split('T')[0];
+
+      // Fetch professional's schedule for this day
+      const { data: schedules, error: scheduleError } = await supabase
+        .from('professional_schedules')
+        .select('*')
+        .eq('professional_id', professionalId)
+        .eq('day_of_week', dayOfWeek)
+        .eq('is_active', true);
+
+      if (scheduleError) throw scheduleError;
+
+      if (!schedules || schedules.length === 0) {
+        setTimeSlots([]);
+        return;
+      }
+
+      // Fetch existing bookings for this date
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('booking_time')
+        .eq('professional_id', professionalId)
+        .eq('booking_date', dateStr)
+        .in('status', ['pending', 'confirmed']);
+
+      if (bookingsError) throw bookingsError;
+
+      const bookedTimes = new Set(bookings?.map(b => b.booking_time) || []);
+
+      // Generate time slots from schedules
+      const slots: string[] = [];
+      schedules.forEach(schedule => {
+        const startHour = parseInt(schedule.start_time.split(':')[0]);
+        const startMinute = parseInt(schedule.start_time.split(':')[1]);
+        const endHour = parseInt(schedule.end_time.split(':')[0]);
+        const endMinute = parseInt(schedule.end_time.split(':')[1]);
+
+        let currentHour = startHour;
+        let currentMinute = startMinute;
+
+        while (
+          currentHour < endHour || 
+          (currentHour === endHour && currentMinute < endMinute)
+        ) {
+          const timeSlot = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+          
+          if (!bookedTimes.has(timeSlot)) {
+            slots.push(timeSlot);
+          }
+
+          // Increment by service duration (default 30 min intervals)
+          currentMinute += 30;
+          if (currentMinute >= 60) {
+            currentHour += 1;
+            currentMinute -= 60;
+          }
+        }
+      });
+
+      setTimeSlots(slots.sort());
+    } catch (error) {
+      console.error('Error loading time slots:', error);
+      toast.error('Neizdevās ielādēt pieejamos laikus');
+      setTimeSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -292,25 +370,35 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
                 <Label className="text-sm font-semibold text-gray-700 mb-2 block">
                   Izvēlies laiku <span className="text-red-500">*</span>
                 </Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map((time) => (
-                    <button
-                      key={time}
-                      onClick={() => {
-                        triggerHaptic('light');
-                        setFormData({ ...formData, time });
-                      }}
-                      className={cn(
-                        "py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95",
-                        formData.time === time
-                          ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      )}
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
+                {loadingSlots ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Ielādē pieejamos laikus...
+                  </div>
+                ) : timeSlots.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Šajā dienā nav pieejamu laiku
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {timeSlots.map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => {
+                          triggerHaptic('light');
+                          setFormData({ ...formData, time });
+                        }}
+                        className={cn(
+                          "py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95",
+                          formData.time === time
+                            ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        )}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {errors.time && (
                   <p className="text-xs text-red-500 mt-1">{errors.time}</p>
                 )}
