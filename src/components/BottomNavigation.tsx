@@ -44,9 +44,20 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 nav-blur border-t border-border pb-safe">
-      <div className="max-w-screen-sm mx-auto px-0">
-        <div className="flex items-center justify-evenly py-2.5 h-[72px]">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 nav-blur border-t border-border"
+      style={{
+        paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
+      }}
+    >
+      <div className="w-full max-w-screen-sm mx-auto">
+        <div 
+          className="flex items-end justify-evenly px-2 pt-2"
+          style={{
+            minHeight: '68px',
+            height: 'calc(68px + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           {tabs.map((tab, index) => (
             <button
               key={index}
@@ -59,26 +70,36 @@ const BottomNavigation = () => {
                 }
               }}
               className={`
-                flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative
+                flex flex-col items-center justify-center transition-all duration-300 relative flex-1 max-w-[80px]
                 ${tab.isMain 
-                  ? 'bg-gradient-to-br from-primary to-secondary p-4 rounded-full shadow-elegant -mt-7 scale-110' 
-                  : tab.isActive 
-                    ? 'text-primary' 
-                    : 'text-foreground/60 active:text-primary'
+                  ? 'bg-gradient-to-br from-primary to-secondary rounded-full shadow-elegant -mb-4' 
+                  : 'mb-0'
                 }
-                ${tab.isMain ? '' : 'tap-feedback px-4 py-2'}
+                ${!tab.isMain && tab.isActive ? 'text-primary' : ''}
+                ${!tab.isMain && !tab.isActive ? 'text-foreground/60 active:text-primary' : ''}
+                ${!tab.isMain ? 'tap-feedback py-2' : ''}
                 ${tab.isActive && !tab.isMain ? 'glow-effect' : ''}
               `}
+              style={{
+                minHeight: tab.isMain ? '56px' : '52px',
+                minWidth: tab.isMain ? '56px' : '44px',
+                width: tab.isMain ? '56px' : 'auto',
+                height: tab.isMain ? '56px' : 'auto',
+              }}
             >
               <tab.icon 
                 className={`
-                  ${tab.isMain ? 'w-7 h-7 text-white' : 'w-6 h-6'}
-                  transition-all duration-300
+                  ${tab.isMain ? 'w-7 h-7 text-white' : 'w-[22px] h-[22px]'}
+                  transition-all duration-300 flex-shrink-0
                   ${tab.isActive && !tab.isMain ? 'scale-110 drop-shadow-glow' : ''}
                 `}
+                strokeWidth={2.5}
               />
               {!tab.isMain && (
-                <span className={`text-[11px] font-semibold tracking-wide ${tab.isActive ? 'text-primary' : ''}`}>
+                <span 
+                  className={`text-[10px] font-semibold tracking-wide mt-1 whitespace-nowrap ${tab.isActive ? 'text-primary' : ''}`}
+                  style={{ lineHeight: '1.2' }}
+                >
                   {tab.label}
                 </span>
               )}

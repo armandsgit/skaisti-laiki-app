@@ -28,7 +28,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <div className="relative min-h-screen pb-20">
+          <div 
+            className="relative min-h-screen"
+            style={{
+              paddingBottom: 'max(88px, calc(68px + env(safe-area-inset-bottom, 12px)))',
+            }}
+          >
             <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route 
