@@ -968,7 +968,7 @@ const ProfessionalDashboard = () => {
               }}
             />
 
-            {selectedStaffMember && (
+            {selectedStaffMember ? (
               <div className="mt-6">
                 <Button
                   variant="outline"
@@ -982,10 +982,15 @@ const ProfessionalDashboard = () => {
                   staffMemberId={selectedStaffMember}
                 />
               </div>
-            )}
-
-            {!selectedStaffMember && (
-              <WorkScheduleManager professionalId={profile.id} />
+            ) : (
+              <Card className="mt-6">
+                <CardContent className="py-12 text-center">
+                  <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground">
+                    Izvēlieties meistaru no saraksta, lai pārvaldītu viņa darba grafiku
+                  </p>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
