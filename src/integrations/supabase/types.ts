@@ -165,6 +165,42 @@ export type Database = {
         }
         Relationships: []
       }
+      master_services: {
+        Row: {
+          created_at: string | null
+          id: string
+          service_id: string
+          staff_member_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          service_id: string
+          staff_member_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          service_id?: string
+          staff_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "master_services_staff_member_id_fkey"
+            columns: ["staff_member_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_profiles: {
         Row: {
           active: boolean | null
