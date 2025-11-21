@@ -7,8 +7,8 @@ const BottomNavigation = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  // Don't show on auth page, admin panel, or when not logged in
-  if (location.pathname === '/auth' || location.pathname.startsWith('/admin') || !user) return null;
+  // Don't show on auth page or when not logged in
+  if (location.pathname === '/auth' || !user) return null;
 
   // Check if viewing a professional profile (not dashboard)
   const isViewingProfile = location.pathname.startsWith('/professional/') && 
@@ -16,11 +16,17 @@ const BottomNavigation = () => {
                           location.pathname !== '/professional/settings';
   
   // Determine user role route prefix
+  const isAdminPanel = location.pathname.startsWith('/admin');
   const isProfessionalDashboard = location.pathname === '/professional/dashboard' || 
                                   location.pathname === '/professional/settings';
-  const isClient = !isProfessionalDashboard && !isViewingProfile;
+  const isClient = !isProfessionalDashboard && !isViewingProfile && !isAdminPanel;
   
-  const tabs = isProfessionalDashboard ? [
+  const tabs = isAdminPanel ? [
+    { icon: Home, label: 'Dashboard', path: '/admin', isActive: location.pathname === '/admin', isMain: false },
+    { icon: User, label: 'Meistari', path: '/admin', isActive: false },
+    { icon: Calendar, label: 'Rezervācijas', path: '/admin', isActive: false },
+    { icon: Search, label: 'Klienti', path: '/admin', isActive: false },
+  ] : isProfessionalDashboard ? [
     { icon: Home, label: 'Sākums', path: '/professional/dashboard', isActive: location.pathname === '/professional/dashboard' },
     { icon: Calendar, label: 'Rezervācijas', path: '/professional/dashboard', isActive: false },
     { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map', isMain: true },
