@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
@@ -86,7 +86,7 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
     '14:00', '15:00', '16:00', '17:00', '18:00'
   ];
 
-  useState(() => {
+  useEffect(() => {
     if (isOpen) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -96,7 +96,7 @@ const ModernBookingModal = ({ isOpen, onClose, service, professionalName, onSubm
     } else {
       setIsVisible(false);
     }
-  });
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
