@@ -177,27 +177,108 @@
     opacity: 0.3;
   }
 
-  /* Bottom nav blur effect - Light mode */
+  /* Bottom nav blur effect - Light mode with enhanced iOS support */
   .nav-blur {
     background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border-top: 1px solid rgba(0, 0, 0, 0.08);
   }
 
-  /* Safe area padding for notched devices */
+  /* Safe area padding for notched devices - enhanced */
   .pb-safe {
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   
-  /* Hide scrollbar for category filter */
+  /* iOS specific fixes for bottom navigation */
+  @supports (-webkit-touch-callout: none) {
+    .nav-blur {
+      /* Safari-specific backdrop blur enhancement */
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+    }
+    
+    /* Fix for iOS to ensure bottom nav items don't get cut off */
+    nav button {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  }
+  
+  /* Enhanced icon rendering for high DPI displays */
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    svg {
+      shape-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  }
+  
+  /* Ensure main nav icon (map) is always visible and properly sized */
+  nav button[class*="rounded-full"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    position: relative;
+  }
+  
+  nav button[class*="rounded-full"] svg {
+    display: block !important;
+    flex-shrink: 0 !important;
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Force proper icon sizing on all devices */
+  nav button svg {
+    min-width: 20px;
+    min-height: 20px;
+    max-width: 28px;
+    max-height: 28px;
+  }
+  
+  /* iOS Safari specific fixes for touch targets and rendering */
+  @media (max-width: 640px) {
+    nav button {
+      min-height: 44px; /* iOS minimum touch target */
+      min-width: 44px;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    nav button svg {
+      pointer-events: none; /* Prevent icon from blocking touch events */
+    }
+  }
+  
+  /* Fix for notched iPhones (X, 11, 12, 13, 14, 15, 16, 17) */
+  @supports (padding: max(0px)) {
+    nav {
+      padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    }
+  }
+  
+  /* Hide scrollbar for category filter - iOS compatible */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+    width: 0;
+    height: 0;
   }
   
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent horizontal overflow on mobile */
+  @media (max-width: 640px) {
+    .no-scrollbar {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
   }
 
   /* Skeleton Loaders */

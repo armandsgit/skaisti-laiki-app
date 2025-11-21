@@ -379,7 +379,12 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       />
       
       {/* Category filter - floating above bottom navigation */}
-      <div className="absolute bottom-[88px] left-3 right-3 z-20 pointer-events-none">
+      <div 
+        className="absolute left-3 right-3 z-20 pointer-events-none"
+        style={{
+          bottom: 'max(88px, calc(68px + env(safe-area-inset-bottom, 12px) + 12px))',
+        }}
+      >
         <div className="bg-white/98 backdrop-blur-md rounded-[24px] shadow-elegant border border-border/20 p-2.5 pointer-events-auto">
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
             <Button

@@ -6,7 +6,13 @@ const MapView = () => {
   const selectedMasterId = searchParams.get('masterId');
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-background">
+    <div 
+      className="fixed inset-0 w-full h-full bg-background"
+      style={{
+        paddingBottom: '0',
+        marginBottom: '0',
+      }}
+    >
       <AllMastersMap selectedMasterId={selectedMasterId || undefined} />
     </div>
   );
