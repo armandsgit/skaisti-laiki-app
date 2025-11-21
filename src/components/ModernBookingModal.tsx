@@ -67,6 +67,7 @@ interface ModernBookingModalProps {
   professionalId: string;
   professionalName: string;
   onSubmit: (data: BookingFormData) => void;
+  initialServiceId?: string | null;
 }
 
 export interface BookingFormData {
@@ -80,7 +81,7 @@ export interface BookingFormData {
   notes?: string;
 }
 
-const ModernBookingModal = ({ isOpen, onClose, services, professionalId, professionalName, onSubmit }: ModernBookingModalProps) => {
+const ModernBookingModal = ({ isOpen, onClose, services, professionalId, professionalName, onSubmit, initialServiceId }: ModernBookingModalProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState<Partial<BookingFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -97,10 +98,16 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
           setIsVisible(true);
         });
       });
+      // Set initial service if provided
+      if (initialServiceId) {
+        setFormData(prev => ({ ...prev, serviceId: initialServiceId }));
+      }
     } else {
       setIsVisible(false);
+      // Reset form when modal closes
+      setFormData({});
     }
-  }, [isOpen]);
+  }, [isOpen, initialServiceId]);
 
   // Load available staff and their time slots when date or service changes
   useEffect(() => {
