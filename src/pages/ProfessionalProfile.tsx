@@ -270,23 +270,19 @@ const ProfessionalProfile = () => {
         {/* Location Map */}
         {professional.latitude && professional.longitude && (
           <Card className="border-0 shadow-sm overflow-hidden animate-fade-in">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                    <h3 className="font-semibold text-sm">Atrašanās vieta</h3>
+            <CardContent className="p-4">
+              {/* Header Row: Icon left, Button right */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-4 h-4 text-primary" />
                   </div>
-                  {professional.address && (
-                    <p className="text-sm text-muted-foreground leading-relaxed break-words">
-                      {professional.address}, {professional.city}
-                    </p>
-                  )}
+                  <h3 className="font-semibold text-sm">Atrašanās vieta</h3>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-shrink-0"
+                  className="rounded-[18px] border-2 border-primary bg-background hover:bg-primary/5 px-3 py-1.5 h-auto flex-shrink-0"
                   onClick={() => {
                     triggerHaptic('light');
                     window.open(
@@ -295,12 +291,20 @@ const ProfessionalProfile = () => {
                     );
                   }}
                 >
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="w-4 h-4 text-foreground" />
                 </Button>
               </div>
               
-              <div className="w-full overflow-hidden rounded-xl border">
-                <div className="relative w-full h-44">
+              {/* Address */}
+              {professional.address && (
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  {professional.address}, {professional.city}
+                </p>
+              )}
+              
+              {/* Map */}
+              <div className="w-full overflow-hidden rounded-[24px] border">
+                <div className="relative w-full h-48">
                   <LocationMap
                     latitude={professional.latitude}
                     longitude={professional.longitude}
