@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +36,7 @@ const ProfessionalDashboard = () => {
   const t = useTranslation('lv');
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [profile, setProfile] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
@@ -85,6 +86,14 @@ const ProfessionalDashboard = () => {
       loadCategories();
     }
   }, [user]);
+
+  // Handle tab query parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['dashboard', 'bookings', 'services', 'schedule', 'profile'].includes(tabParam)) {
+      setSelectedTab(tabParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (profile) {

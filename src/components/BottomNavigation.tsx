@@ -12,12 +12,12 @@ const BottomNavigation = () => {
 
   // Check if viewing a professional profile (not dashboard)
   const isViewingProfile = location.pathname.startsWith('/professional/') && 
-                          location.pathname !== '/professional/dashboard' && 
+                          location.pathname !== '/professional' && 
                           location.pathname !== '/professional/settings';
   
   // Determine user role route prefix
   const isAdminPanel = location.pathname.startsWith('/admin');
-  const isProfessionalDashboard = (location.pathname === '/professional/dashboard' || 
+  const isProfessionalDashboard = (location.pathname === '/professional' || 
                                    location.pathname === '/professional/settings') && !isViewingProfile;
   const isClient = !isProfessionalDashboard && !isViewingProfile && !isAdminPanel;
   
@@ -31,8 +31,8 @@ const BottomNavigation = () => {
     { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: currentTab === 'professionals' },
     { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: currentTab === 'bookings' },
   ] : isProfessionalDashboard ? [
-    { icon: Home, label: 'Sākums', path: '/professional/dashboard', isActive: location.pathname === '/professional/dashboard' },
-    { icon: Calendar, label: 'Rezervācijas', path: '/professional/dashboard', isActive: false },
+    { icon: Home, label: 'Sākums', path: '/professional', isActive: location.pathname === '/professional' },
+    { icon: Calendar, label: 'Rezervācijas', path: '/professional?tab=bookings', isActive: location.pathname === '/professional' && searchParams.get('tab') === 'bookings' },
     { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map' },
     { icon: User, label: 'Profils', path: '/professional/settings', isActive: location.pathname === '/professional/settings' },
   ] : [
@@ -66,6 +66,10 @@ const BottomNavigation = () => {
                   setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
                 } else {
                   navigate(tab.path);
+                  // If navigating to professional dashboard with tab param, scroll to top
+                  if (tab.path.includes('/professional?tab=')) {
+                    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+                  }
                 }
               }}
               className={`
