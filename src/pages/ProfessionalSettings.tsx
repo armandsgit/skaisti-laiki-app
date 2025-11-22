@@ -42,7 +42,7 @@ export default function ProfessionalSettings() {
       <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
         <Button
           variant="ghost"
-          onClick={() => navigate('/professional/dashboard')}
+          onClick={() => navigate('/professional')}
           className="mb-2 sm:mb-4"
           size="sm"
         >
