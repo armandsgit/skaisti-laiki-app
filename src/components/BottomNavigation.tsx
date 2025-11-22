@@ -1,28 +1,49 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Map, Calendar, User, Search, CheckCircle, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useEffect, useState } from 'react';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Don't show on auth page or when not logged in
   if (location.pathname === '/auth' || !user) return null;
 
-  // Check if viewing a professional profile (not dashboard)
-  const isViewingProfile = location.pathname.startsWith('/professional/') && 
-                          location.pathname !== '/professional' && 
-                          location.pathname !== '/professional/settings';
-  
-  // Determine user role route prefix
-  const isAdminPanel = location.pathname.startsWith('/admin');
-  const isProfessionalDashboard = (location.pathname === '/professional' || 
-                                   location.pathname === '/professional/settings') && !isViewingProfile;
-  const isClient = !isProfessionalDashboard && !isViewingProfile && !isAdminPanel;
+  // Load user role from profiles table
+  useEffect(() => {
+    const loadUserRole = async () => {
+      if (!user?.id) return;
+      
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (data) {
+        setUserRole(data.role);
+      }
+    };
+    
+    loadUserRole();
+  }, [user]);
+
+  // Check if viewing someone else's professional profile
+  const isViewingOthersProfile = location.pathname.startsWith('/professional/') && 
+                                 location.pathname !== '/professional' && 
+                                 location.pathname !== '/professional/settings';
   
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get('tab');
+  
+  // Determine which navigation to show based on user role
+  const isAdminPanel = userRole === 'ADMIN';
+  const isProfessionalUser = userRole === 'PROFESSIONAL' && !isViewingOthersProfile;
+  const isClientUser = userRole === 'CLIENT' || isViewingOthersProfile;
   
   const tabs = isAdminPanel ? [
     { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab && location.pathname === '/admin', scrollToTop: true },
@@ -30,16 +51,56 @@ const BottomNavigation = () => {
     { icon: MessageSquare, label: 'Atsauksmes', path: '/admin/reviews', isActive: location.pathname === '/admin/reviews' },
     { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: currentTab === 'professionals' },
     { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: currentTab === 'bookings' },
-  ] : isProfessionalDashboard ? [
-    { icon: Home, label: 'Sākums', path: '/professional', isActive: location.pathname === '/professional' },
-    { icon: Calendar, label: 'Rezervācijas', path: '/professional?tab=bookings', isActive: location.pathname === '/professional' && searchParams.get('tab') === 'bookings' },
-    { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map' },
-    { icon: User, label: 'Profils', path: '/professional/settings', isActive: location.pathname === '/professional/settings' },
+  ] : isProfessionalUser ? [
+    { 
+      icon: Home, 
+      label: 'Sākums', 
+      path: '/professional', 
+      isActive: location.pathname === '/professional' && !currentTab 
+    },
+    { 
+      icon: Calendar, 
+      label: 'Rezervācijas', 
+      path: '/professional?tab=bookings', 
+      isActive: location.pathname === '/professional' && currentTab === 'bookings' 
+    },
+    { 
+      icon: Map, 
+      label: 'Karte', 
+      path: '/map', 
+      isActive: location.pathname === '/map' 
+    },
+    { 
+      icon: User, 
+      label: 'Profils', 
+      path: '/professional/settings', 
+      isActive: location.pathname === '/professional/settings' 
+    },
   ] : [
-    { icon: Home, label: 'Sākums', path: '/client', isActive: location.pathname === '/client' || location.pathname === '/' },
-    { icon: Search, label: 'Meklēt', path: '/map', isActive: location.pathname === '/map' },
-    { icon: Calendar, label: 'Rezervācijas', path: '/client/bookings', isActive: location.pathname === '/client/bookings' },
-    { icon: User, label: 'Konts', path: '/client/settings', isActive: location.pathname === '/client/settings' },
+    { 
+      icon: Home, 
+      label: 'Sākums', 
+      path: '/client', 
+      isActive: location.pathname === '/client' || location.pathname === '/' 
+    },
+    { 
+      icon: Search, 
+      label: 'Meklēt', 
+      path: '/map', 
+      isActive: location.pathname === '/map' 
+    },
+    { 
+      icon: Calendar, 
+      label: 'Rezervācijas', 
+      path: '/client/bookings', 
+      isActive: location.pathname === '/client/bookings' 
+    },
+    { 
+      icon: User, 
+      label: 'Konts', 
+      path: '/client/settings', 
+      isActive: location.pathname === '/client/settings' 
+    },
   ];
 
   return (
