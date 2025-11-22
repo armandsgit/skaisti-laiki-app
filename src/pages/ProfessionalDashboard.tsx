@@ -92,6 +92,9 @@ const ProfessionalDashboard = () => {
     const tabParam = searchParams.get('tab');
     if (tabParam && ['dashboard', 'bookings', 'services', 'schedule', 'profile'].includes(tabParam)) {
       setSelectedTab(tabParam);
+    } else {
+      // Reset to dashboard when no tab parameter
+      setSelectedTab('dashboard');
     }
   }, [searchParams]);
 
@@ -633,7 +636,15 @@ const ProfessionalDashboard = () => {
           </motion.div>
         )}
 
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+        <Tabs value={selectedTab} onValueChange={(value) => {
+          setSelectedTab(value);
+          // Update URL when tab changes
+          if (value === 'dashboard') {
+            navigate('/professional', { replace: true });
+          } else {
+            navigate(`/professional?tab=${value}`, { replace: true });
+          }
+        }} className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6 bg-card shadow-soft">
             <TabsTrigger value="dashboard">
               <LayoutDashboard className="w-4 h-4 mr-2" />
