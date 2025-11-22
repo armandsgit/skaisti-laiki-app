@@ -90,7 +90,7 @@ const ProfessionalDashboard = () => {
   // Handle tab query parameter
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['dashboard', 'bookings', 'services', 'schedule', 'profile'].includes(tabParam)) {
+    if (tabParam && ['dashboard', 'bookings', 'services', 'schedule'].includes(tabParam)) {
       setSelectedTab(tabParam);
     } else {
       // Reset to dashboard when no tab parameter
@@ -645,7 +645,7 @@ const ProfessionalDashboard = () => {
             navigate(`/professional?tab=${value}`, { replace: true });
           }
         }} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6 bg-card shadow-soft">
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-card shadow-soft">
             <TabsTrigger value="dashboard">
               <LayoutDashboard className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Galvenā</span>
@@ -661,10 +661,6 @@ const ProfessionalDashboard = () => {
             <TabsTrigger value="schedule">
               <CalendarDays className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Grafiks</span>
-            </TabsTrigger>
-            <TabsTrigger value="profile">
-              <User className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Profils</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1199,225 +1195,6 @@ const ProfessionalDashboard = () => {
                 )}
               </>
             )}
-          </TabsContent>
-
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            {/* User Profile Card */}
-            <Card className="border-0 shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Lietotāja profils</CardTitle>
-                <Dialog open={editProfileDialogOpen} onOpenChange={setEditProfileDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline">
-                      <Edit className="w-4 h-4 mr-2" />
-                      Labot
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Labot profilu</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="name">Vārds</Label>
-                        <Input
-                          id="name"
-                          value={editedProfile.name}
-                          onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="phone">Telefons</Label>
-                        <Input
-                          id="phone"
-                          value={editedProfile.phone}
-                          onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="avatar">Profila attēls</Label>
-                        <Input
-                          id="avatar"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleAvatarUpload}
-                        />
-                        {editedProfile.avatar && (
-                          <div className="mt-2">
-                            <img src={editedProfile.avatar} alt="Avatar preview" className="w-24 h-24 rounded-full object-cover" />
-                          </div>
-                        )}
-                      </div>
-                      <Button onClick={handleUpdateProfile} className="w-full" disabled={uploadingImage}>
-                        {uploadingImage ? 'Augšupielādē...' : 'Saglabāt izmaiņas'}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={userProfile?.avatar} alt={userProfile?.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
-                      {userProfile?.name?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold text-lg">{userProfile?.name}</p>
-                    <p className="text-sm text-muted-foreground">{userProfile?.phone || 'Nav telefona'}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Professional Info Card */}
-            <Card className="border-0 shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Profesionālā informācija</CardTitle>
-                <Dialog open={editProfessionalInfoOpen} onOpenChange={setEditProfessionalInfoOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline">
-                      <Edit className="w-4 h-4 mr-2" />
-                      Labot
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Labot profesionālo informāciju</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="category">Kategorija</Label>
-                        <Select
-                          value={editedProfInfo.category}
-                          onValueChange={(value) => setEditedProfInfo({ ...editedProfInfo, category: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.name}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="city">Pilsēta</Label>
-                        <CityAutocomplete
-                          value={editedProfInfo.city}
-                          onChange={(value) => setEditedProfInfo({ ...editedProfInfo, city: value })}
-                          placeholder="Sāciet rakstīt pilsētas nosaukumu..."
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="address">Pilna adrese</Label>
-                        <Input
-                          id="address"
-                          value={editedProfInfo.address}
-                          onChange={(e) => setEditedProfInfo({ ...editedProfInfo, address: e.target.value })}
-                          placeholder="Piemēram: Latgales iela 245"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="bio">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          value={editedProfInfo.bio}
-                          onChange={(e) => setEditedProfInfo({ ...editedProfInfo, bio: e.target.value })}
-                          rows={4}
-                        />
-                      </div>
-                      <div>
-                        <Label>Atzīmējiet atrašanās vietu kartē</Label>
-                        <EditableLocationMap
-                          latitude={editedProfInfo.latitude}
-                          longitude={editedProfInfo.longitude}
-                          onLocationChange={(lat, lng) => {
-                            setEditedProfInfo({
-                              ...editedProfInfo,
-                              latitude: lat,
-                              longitude: lng
-                            });
-                          }}
-                        />
-                      </div>
-                      <Button onClick={handleUpdateProfessionalInfo} className="w-full">
-                        Saglabāt izmaiņas
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Kategorija</p>
-                  <p className="font-semibold">{profile.category}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Pilsēta</p>
-                  <p className="font-semibold">{profile.city}</p>
-                </div>
-                {profile.address && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Adrese</p>
-                    <p className="font-semibold">{profile.address}</p>
-                  </div>
-                )}
-                {profile.bio && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Bio</p>
-                    <p className="text-sm">{profile.bio}</p>
-                  </div>
-                )}
-                {profile.latitude && profile.longitude && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Atrašanās vieta</p>
-                    <LocationMap latitude={profile.latitude} longitude={profile.longitude} />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Gallery Card */}
-            <Card className="border-0 shadow-card">
-              <CardHeader>
-                <CardTitle>Foto galerija</CardTitle>
-                <CardDescription>Pievienojiet bildes savai galerijai</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  {profile.gallery?.map((imageUrl: string, index: number) => (
-                    <div key={index} className="relative aspect-square group">
-                      <img
-                        src={imageUrl}
-                        alt={`Gallery ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDeleteImage(imageUrl)}
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImage}
-                />
-                {uploadingImage && <p className="text-sm text-muted-foreground mt-2">Augšupielādē...</p>}
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </main>
