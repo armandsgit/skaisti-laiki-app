@@ -3,11 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Search, Star, MapPin, Briefcase, ChevronRight, Map, User } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Search, Star, MapPin, Briefcase, Map, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 
 const ClientDashboard = () => {
   const t = useTranslation('lv');
@@ -21,14 +26,28 @@ const ClientDashboard = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [recentlyViewed, setRecentlyViewed] = useState<SortedMaster[]>([]);
 
   useEffect(() => {
     if (user) {
       initializeData();
       loadCategories();
       loadProfile();
+      loadRecentlyViewed();
     }
   }, [user]);
+
+  const loadRecentlyViewed = () => {
+    const viewed = localStorage.getItem('recentlyViewed');
+    if (viewed) {
+      try {
+        const parsedViewed = JSON.parse(viewed);
+        setRecentlyViewed(parsedViewed.slice(0, 10)); // Keep last 10
+      } catch (e) {
+        console.error('Error parsing recently viewed:', e);
+      }
+    }
+  };
 
   const loadProfile = async () => {
     const { data } = await supabase
@@ -87,146 +106,251 @@ const ClientDashboard = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const handleMasterClick = (master: SortedMaster) => {
+    // Save to recently viewed
+    const viewed = localStorage.getItem('recentlyViewed');
+    let viewedList: SortedMaster[] = [];
+    
+    if (viewed) {
+      try {
+        viewedList = JSON.parse(viewed);
+      } catch (e) {
+        viewedList = [];
+      }
+    }
+    
+    // Remove if already exists and add to beginning
+    viewedList = viewedList.filter(v => v.id !== master.id);
+    viewedList.unshift(master);
+    viewedList = viewedList.slice(0, 10); // Keep only last 10
+    
+    localStorage.setItem('recentlyViewed', JSON.stringify(viewedList));
+    navigate(`/professional/${master.id}`);
+  };
+
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Header */}
-      <header className="bg-white border-b border-border/30">
-        <div className="max-w-lg mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-[32px] font-bold text-foreground leading-tight tracking-tight">
-                {t.forYou}
-              </h1>
-            </div>
+      <header className="bg-white sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-[42px] font-bold text-foreground leading-tight tracking-tight">
+              For You
+            </h1>
             <button
               onClick={() => navigate('/client/settings')}
               className="p-3 rounded-full border border-border/30 hover:border-border transition-all duration-200 active:scale-95"
             >
-              <Search className="h-5 w-5 stroke-[1.5]" />
+              <Search className="h-6 w-6 stroke-[1.5]" />
             </button>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative mb-6">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground stroke-[1.5]" />
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-[52px] pl-14 pr-5 rounded-[16px] border border-border/50 bg-background text-foreground placeholder:text-muted-foreground text-[15px] focus:outline-none focus:ring-1 focus:ring-foreground/20 focus:border-foreground/30 transition-all duration-200"
-            />
-          </div>
-
-          {/* Category Pills */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`px-6 py-3 rounded-full whitespace-nowrap text-[14px] font-medium transition-all duration-200 active:scale-95 ${
-                selectedCategory === null
-                  ? 'bg-foreground text-background'
-                  : 'bg-white text-foreground border border-foreground/15 hover:border-foreground/30'
-              }`}
-            >
-              {t.allCategories}
-            </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={`px-6 py-3 rounded-full whitespace-nowrap text-[14px] font-medium transition-all duration-200 active:scale-95 ${
-                  selectedCategory === cat.name
-                    ? 'bg-foreground text-background'
-                    : 'bg-white text-foreground border border-foreground/15 hover:border-foreground/30'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-lg mx-auto px-6 py-6 space-y-8">
+      <main className="max-w-7xl mx-auto space-y-8 pb-6">
         {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-muted/30 rounded-2xl animate-pulse" />
-            ))}
+          <div className="px-4 sm:px-6 space-y-8">
+            <div className="space-y-4">
+              <div className="h-8 w-48 bg-muted/30 rounded-lg animate-pulse" />
+              <div className="flex gap-4 overflow-hidden">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-[280px] h-[380px] bg-muted/30 rounded-3xl animate-pulse flex-shrink-0" />
+                ))}
+              </div>
+            </div>
           </div>
-        ) : filteredProfessionals.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground text-[15px]">{t.noProfessionals}</p>
-          </Card>
         ) : (
-          <div className="space-y-4">
-            {filteredProfessionals.map((prof) => (
-              <Card
-                key={prof.id}
-                onClick={() => navigate(`/professional/${prof.id}`)}
-                className="p-5 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-[0.98] border-border/50"
+          <>
+            {/* Recently Viewed */}
+            {recentlyViewed.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-[28px] font-bold text-foreground px-4 sm:px-6 tracking-tight">
+                  Recently viewed
+                </h2>
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: false,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent className="-ml-4 px-4 sm:px-6">
+                    {recentlyViewed.map((prof) => (
+                      <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
+                        <Card
+                          onClick={() => handleMasterClick(prof)}
+                          className="cursor-pointer hover:shadow-xl transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-3xl"
+                        >
+                          {/* Image */}
+                          <div className="relative w-full h-[200px] bg-muted overflow-hidden">
+                            {(prof as any).gallery && (prof as any).gallery.length > 0 ? (
+                              <img
+                                src={(prof as any).gallery[0]}
+                                alt={prof.profiles?.name || ''}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : prof.profiles?.avatar ? (
+                              <img
+                                src={prof.profiles.avatar}
+                                alt={prof.profiles.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-muted">
+                                <User className="h-16 w-16 text-muted-foreground stroke-[1.5]" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Content */}
+                          <div className="p-4 space-y-2">
+                            <h3 className="font-bold text-[18px] text-foreground truncate">
+                              {prof.profiles?.name}
+                            </h3>
+                            
+                            {/* Rating */}
+                            <div className="flex items-center gap-1.5">
+                              <Star className="h-4 w-4 fill-foreground stroke-foreground" />
+                              <span className="text-[15px] font-semibold text-foreground">
+                                {prof.rating ? prof.rating.toFixed(1) : '5.0'}
+                              </span>
+                              <span className="text-[14px] text-muted-foreground">
+                                ({prof.total_reviews || 0})
+                              </span>
+                            </div>
+
+                            {/* Location */}
+                            <div className="flex items-start gap-1.5 pt-1">
+                              <MapPin className="h-4 w-4 text-muted-foreground stroke-[1.5] mt-0.5 flex-shrink-0" />
+                              <span className="text-[14px] text-muted-foreground line-clamp-2">
+                                {prof.address || prof.city}
+                              </span>
+                            </div>
+
+                            {/* Category */}
+                            <div className="pt-2">
+                              <span className="text-[13px] text-muted-foreground">
+                                {prof.category}
+                              </span>
+                            </div>
+                          </div>
+                        </Card>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                </Carousel>
+              </div>
+            )}
+
+            {/* Recommended / Nearby */}
+            <div className="space-y-4">
+              <h2 className="text-[28px] font-bold text-foreground px-4 sm:px-6 tracking-tight">
+                Recommended
+              </h2>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: false,
+                }}
+                className="w-full"
               >
-                <div className="flex gap-4">
-                  {/* Avatar */}
-                  <div className="relative flex-shrink-0">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-muted border border-border/50">
-                      {prof.profiles?.avatar ? (
-                        <img
-                          src={prof.profiles.avatar}
-                          alt={prof.profiles.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <User className="h-8 w-8 text-muted-foreground stroke-[1.5]" />
+                <CarouselContent className="-ml-4 px-4 sm:px-6">
+                  {filteredProfessionals.map((prof) => (
+                    <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
+                      <Card
+                        onClick={() => handleMasterClick(prof)}
+                        className="cursor-pointer hover:shadow-xl transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-3xl"
+                      >
+                        {/* Image */}
+                        <div className="relative w-full h-[200px] bg-muted overflow-hidden">
+                          {(prof as any).gallery && (prof as any).gallery.length > 0 ? (
+                            <img
+                              src={(prof as any).gallery[0]}
+                              alt={prof.profiles?.name || ''}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : prof.profiles?.avatar ? (
+                            <img
+                              src={prof.profiles.avatar}
+                              alt={prof.profiles.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-muted">
+                              <User className="h-16 w-16 text-muted-foreground stroke-[1.5]" />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-[16px] text-foreground mb-1 truncate">
-                      {prof.profiles?.name}
-                    </h3>
-                    
-                    {/* Rating */}
-                    {prof.rating && (
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <Star className="h-4 w-4 fill-foreground stroke-foreground" />
-                        <span className="text-[15px] font-semibold text-foreground">
-                          {prof.rating.toFixed(1)}
-                        </span>
-                        <span className="text-[13px] text-muted-foreground">
-                          ({prof.total_reviews || 0})
-                        </span>
-                      </div>
-                    )}
+                        {/* Content */}
+                        <div className="p-4 space-y-2">
+                          <h3 className="font-bold text-[18px] text-foreground truncate">
+                            {prof.profiles?.name}
+                          </h3>
+                          
+                          {/* Rating */}
+                          <div className="flex items-center gap-1.5">
+                            <Star className="h-4 w-4 fill-foreground stroke-foreground" />
+                            <span className="text-[15px] font-semibold text-foreground">
+                              {prof.rating ? prof.rating.toFixed(1) : '5.0'}
+                            </span>
+                            <span className="text-[14px] text-muted-foreground">
+                              ({prof.total_reviews || 0})
+                            </span>
+                          </div>
 
-                    {/* Category */}
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <Briefcase className="h-3.5 w-3.5 text-muted-foreground stroke-[1.5]" />
-                      <span className="text-[13px] text-muted-foreground">{prof.category}</span>
-                    </div>
+                          {/* Location */}
+                          <div className="flex items-start gap-1.5 pt-1">
+                            <MapPin className="h-4 w-4 text-muted-foreground stroke-[1.5] mt-0.5 flex-shrink-0" />
+                            <span className="text-[14px] text-muted-foreground line-clamp-2">
+                              {prof.address || prof.city}
+                            </span>
+                          </div>
 
-                    {/* Location */}
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground stroke-[1.5]" />
-                      <span className="text-[13px] text-muted-foreground truncate">
-                        {prof.address || prof.city}
-                      </span>
-                    </div>
-                  </div>
+                          {/* Category */}
+                          <div className="pt-2">
+                            <span className="text-[13px] text-muted-foreground">
+                              {prof.category}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </div>
 
-                  {/* Arrow */}
-                  <div className="flex items-center">
-                    <ChevronRight className="h-5 w-5 text-muted-foreground stroke-[1.5]" />
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+            {/* Category Filters - Moved Below Carousels */}
+            <div className="px-4 sm:px-6 pt-6">
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-6 py-3 rounded-full whitespace-nowrap text-[14px] font-medium transition-all duration-200 active:scale-95 ${
+                    selectedCategory === null
+                      ? 'bg-foreground text-background'
+                      : 'bg-white text-foreground border border-foreground/15 hover:border-foreground/30'
+                  }`}
+                >
+                  {t.allCategories}
+                </button>
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.name)}
+                    className={`px-6 py-3 rounded-full whitespace-nowrap text-[14px] font-medium transition-all duration-200 active:scale-95 ${
+                      selectedCategory === cat.name
+                        ? 'bg-foreground text-background'
+                        : 'bg-white text-foreground border border-foreground/15 hover:border-foreground/30'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
         {/* Map Button */}
