@@ -10,7 +10,7 @@ interface PlanBadgeProps {
 export default function PlanBadge({ plan, isVerified, className = '' }: PlanBadgeProps) {
   if (plan === 'premium') {
     return (
-      <Badge className={`bg-warning text-white ${className}`}>
+      <Badge className={`bg-gradient-to-r from-amber-500 to-amber-600 text-white ${className}`}>
         <Crown className="w-3 h-3 mr-1" />
         Premium
       </Badge>
@@ -19,7 +19,7 @@ export default function PlanBadge({ plan, isVerified, className = '' }: PlanBadg
   
   if (plan === 'pro') {
     return (
-      <Badge className={`bg-primary text-primary-foreground ${className}`}>
+      <Badge className={`bg-gradient-to-r from-primary to-accent text-primary-foreground ${className}`}>
         <Star className="w-3 h-3 mr-1" />
         Pro
       </Badge>

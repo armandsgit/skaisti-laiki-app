@@ -155,6 +155,7 @@
   /* Premium Card Styles - Mobile First (No Hover) */
   .card-premium {
     @apply rounded-2xl bg-card shadow-[var(--shadow-card)] border border-border/50 backdrop-blur-sm;
+    background: var(--gradient-card);
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
   

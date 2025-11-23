@@ -76,7 +76,7 @@ export default function ReviewsList({ professionalId }: ReviewsListProps) {
 
         {/* Average Rating */}
         {reviews.length > 0 && (
-          <div className="bg-secondary rounded-2xl p-4 mb-4">
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-4 mb-4">
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-5xl font-bold text-foreground mb-2">
