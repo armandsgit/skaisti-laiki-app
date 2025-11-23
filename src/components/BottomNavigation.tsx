@@ -9,9 +9,6 @@ const BottomNavigation = () => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Don't show on auth page or when not logged in
-  if (location.pathname === '/auth' || !user) return null;
-
   // Load user role from profiles table
   useEffect(() => {
     const loadUserRole = async () => {
@@ -31,6 +28,9 @@ const BottomNavigation = () => {
     
     loadUserRole();
   }, [user?.id]);
+
+  // Don't show on auth page or when not logged in
+  if (location.pathname === '/auth' || !user) return null;
 
   // Check if viewing someone else's professional profile
   const isViewingOthersProfile = location.pathname.startsWith('/professional/') && 
