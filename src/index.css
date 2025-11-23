@@ -666,7 +666,7 @@
   }
   
   /* ========================================
-     CUSTOM MAP MARKERS - Modern Minimalist Style
+     CUSTOM MAP MARKERS - Black Circle with White Text
      ======================================== */
   .custom-map-marker {
     position: absolute !important;
@@ -684,11 +684,11 @@
   }
 
   .marker-badge {
-    background: white;
-    border: 2px solid #000;
-    border-radius: 18px;
-    padding: 6px 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: #000000;
+    border: none;
+    border-radius: 50px;
+    padding: 6px 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -697,24 +697,11 @@
     z-index: 2;
   }
 
-  .marker-badge-empty {
-    min-width: 36px;
-    padding: 8px;
-  }
-
-  .marker-dot {
-    width: 8px;
-    height: 8px;
-    background: #000;
-    border-radius: 50%;
-    display: block;
-  }
-
   .marker-rating {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 14px;
     font-weight: 700;
-    color: #000;
+    color: #FFFFFF;
     line-height: 1;
     letter-spacing: -0.02em;
   }
@@ -724,22 +711,11 @@
     height: 0;
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
-    border-top: 10px solid white;
+    border-top: 10px solid #000000;
     position: relative;
     margin-top: -2px;
     z-index: 1;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  }
-
-  .marker-pointer::after {
-    content: '';
-    position: absolute;
-    top: -11px;
-    left: -7px;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-top: 9px solid #000;
-    z-index: -1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   }
 
   .custom-map-marker:active .marker-badge {
@@ -758,52 +734,32 @@
   /* Mobile Responsive Markers - 320px to 430px */
   @media (max-width: 430px) {
     .marker-badge {
-      padding: 4px 10px;
+      padding: 5px 8px;
       min-width: 40px;
-      border-width: 2px;
-      border-radius: 16px;
-    }
-
-    .marker-badge-empty {
-      min-width: 30px;
-      padding: 6px;
-    }
-
-    .marker-dot {
-      width: 6px;
-      height: 6px;
+      border-radius: 50px;
     }
     
     .marker-rating {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
     }
     
     .marker-pointer {
       border-left: 6px solid transparent;
       border-right: 6px solid transparent;
-      border-top: 8px solid white;
+      border-top: 8px solid #000000;
       margin-top: -2px;
-    }
-
-    .marker-pointer::after {
-      top: -9px;
-      left: -5.5px;
-      border-left: 5.5px solid transparent;
-      border-right: 5.5px solid transparent;
-      border-top: 7px solid #000;
     }
   }
   
   @media (min-width: 320px) and (max-width: 360px) {
     .marker-badge {
-      padding: 3px 8px;
+      padding: 4px 8px;
       min-width: 36px;
-      font-size: 10px;
     }
     
     .marker-rating {
-      font-size: 10px;
+      font-size: 11px;
     }
   }
   
