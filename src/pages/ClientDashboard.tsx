@@ -4,7 +4,6 @@ import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { SearchInput } from '@/components/ui/search-input';
 import { Star, Briefcase, Map, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
@@ -17,7 +16,6 @@ const ClientDashboard = () => {
   } = useAuth();
   const navigate = useNavigate();
   const [professionals, setProfessionals] = useState<SortedMaster[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{
@@ -89,9 +87,8 @@ const ClientDashboard = () => {
     setLoading(false);
   };
   const filteredProfessionals = professionals.filter(prof => {
-    const matchesSearch = prof.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || prof.bio?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || prof.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    return matchesCategory;
   });
   const handleMasterClick = (master: SortedMaster) => {
     // Save to recently viewed
@@ -133,13 +130,6 @@ const ClientDashboard = () => {
               <Map className="h-5 w-5 text-white stroke-[2]" />
             </button>
           </div>
-          
-          {/* Search Bar */}
-          <SearchInput
-            placeholder="Meklēt meistarus, pakalpojumus..."
-            value={searchTerm}
-            onSearchChange={setSearchTerm}
-          />
         </div>
       </header>
 
