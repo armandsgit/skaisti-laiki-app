@@ -35,10 +35,10 @@ const BottomNavigation = () => {
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get('tab');
   
-  // CRITICAL: Admin role ALWAYS gets admin navigation, no matter what page they're on
+  // Determine navigation based on user role - Admin takes absolute priority
   const isAdminPanel = userRole === 'ADMIN';
   
-  // Only check these if NOT an admin
+  // Only check professional/client logic if NOT admin
   const isViewingOthersProfile = !isAdminPanel && 
                                  location.pathname.startsWith('/professional/') && 
                                  location.pathname !== '/professional' && 
@@ -48,11 +48,36 @@ const BottomNavigation = () => {
   const isClientUser = !isAdminPanel && (userRole === 'CLIENT' || isViewingOthersProfile);
   
   const tabs = isAdminPanel ? [
-    { icon: Home, label: 'Sākums', path: '/admin', isActive: location.pathname === '/admin' && !currentTab, scrollToTop: true },
-    { icon: CheckCircle, label: 'Gaida', path: '/admin?tab=pending', isActive: location.pathname === '/admin' && currentTab === 'pending' },
-    { icon: MessageSquare, label: 'Atsauksmes', path: '/admin/reviews', isActive: location.pathname === '/admin/reviews' },
-    { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: location.pathname === '/admin' && currentTab === 'professionals' },
-    { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: location.pathname === '/admin' && currentTab === 'bookings' },
+    { 
+      icon: Home, 
+      label: 'Sākums', 
+      path: '/admin', 
+      isActive: location.pathname === '/admin' && !currentTab
+    },
+    { 
+      icon: CheckCircle, 
+      label: 'Gaida', 
+      path: '/admin?tab=pending', 
+      isActive: location.pathname === '/admin' && currentTab === 'pending'
+    },
+    { 
+      icon: MessageSquare, 
+      label: 'Atsauksmes', 
+      path: '/admin/reviews', 
+      isActive: location.pathname === '/admin/reviews'
+    },
+    { 
+      icon: User, 
+      label: 'Meistari', 
+      path: '/admin?tab=professionals', 
+      isActive: location.pathname === '/admin' && currentTab === 'professionals'
+    },
+    { 
+      icon: Calendar, 
+      label: 'Rezervācijas', 
+      path: '/admin?tab=bookings', 
+      isActive: location.pathname === '/admin' && currentTab === 'bookings'
+    },
   ] : isProfessionalUser ? [
     { 
       icon: Home, 
@@ -125,8 +150,8 @@ const BottomNavigation = () => {
               key={index}
               onClick={() => {
                 navigate(tab.path);
-                // Scroll to top for all admin tabs and tabs with scrollToTop flag
-                if (isAdminPanel || tab.scrollToTop) {
+                // Always scroll to top for admin navigation
+                if (isAdminPanel) {
                   setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
                 }
               }}
