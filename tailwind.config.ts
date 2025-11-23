@@ -65,9 +65,9 @@ export default {
         info: "hsl(var(--info))",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        body: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        heading: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        body: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        heading: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'display': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
@@ -81,12 +81,12 @@ export default {
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-        xl: "1.125rem",
-        "2xl": "1.25rem",
-        "3xl": "1.5rem",
-        "button": "1.25rem",
+        md: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 8px)",
+        xl: "1.5rem",
+        "2xl": "1.75rem",
+        "3xl": "2rem",
+        "button": "1.5rem",
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
