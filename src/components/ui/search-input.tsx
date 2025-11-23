@@ -16,14 +16,14 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     return (
       <div className="relative w-full">
         <Search 
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
+          className="hidden sm:block absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
           size={20}
         />
         <input
           ref={ref}
           type="text"
           className={cn(
-            "flex h-12 w-full rounded-2xl border border-border/30 bg-background pl-11 pr-4 py-3 text-base transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-12 w-full rounded-2xl border border-border/30 bg-background pl-4 sm:pl-11 pr-4 py-3 text-base transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
           onChange={handleChange}
