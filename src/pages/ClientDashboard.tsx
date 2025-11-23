@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Search, Star, MapPin, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, Search, Star, MapPin, Sparkles, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -139,8 +140,11 @@ const ClientDashboard = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="bg-card/95 backdrop-blur-sm border-b sticky top-0 z-10 shadow-soft">
-        <div className="max-w-screen-sm mx-auto px-4 py-4">
-          <h1 className="text-xl font-bold text-center">BeautyOn</h1>
+        <div className="max-w-screen-sm mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-xl font-bold">BeautyOn</h1>
+          <Button variant="ghost" size="icon" onClick={signOut}>
+            <User className="w-5 h-5" />
+          </Button>
         </div>
       </header>
 
