@@ -146,54 +146,31 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 nav-blur border-t border-border"
-      style={{
-        paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
-      }}
-    >
-      <div className="w-full max-w-screen-sm mx-auto">
-        <div 
-          className="flex items-end justify-evenly px-2 pt-2"
-          style={{
-            minHeight: '68px',
-            height: 'calc(68px + env(safe-area-inset-bottom, 0px))',
-          }}
-        >
-          {tabs.map((tab, index) => (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
+      <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
+        {tabs.map((tab, index) => {
+          const Icon = tab.icon;
+          return (
             <button
               key={index}
               onClick={() => {
                 navigate(tab.path);
-                // Always scroll to top for admin navigation
                 if (isAdminPanel) {
                   setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
                 }
               }}
               className={`
-                flex flex-col items-center justify-center transition-all duration-300 relative flex-1 max-w-[80px]
-                tap-feedback py-2
-                ${tab.isActive ? 'text-primary' : 'text-foreground/60 active:text-primary'}
-                ${tab.isActive ? 'glow-effect' : ''}
+                flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-150 min-w-[60px] active:scale-95
+                ${tab.isActive ? 'text-foreground bg-primary/10' : 'text-muted-foreground hover:text-foreground'}
               `}
-              style={{
-                minHeight: '52px',
-                minWidth: '44px',
-              }}
             >
-              <tab.icon 
-                className="w-[22px] h-[22px] transition-all duration-300 flex-shrink-0"
-                strokeWidth={2.5}
-              />
-              <span 
-                className={`text-[10px] font-semibold tracking-wide mt-1 whitespace-nowrap ${tab.isActive ? 'text-primary' : ''}`}
-                style={{ lineHeight: '1.2' }}
-              >
+              <Icon className={`h-6 w-6 transition-all duration-150 ${tab.isActive ? 'text-primary' : ''}`} />
+              <span className={`text-[11px] font-medium transition-all duration-150 ${tab.isActive ? 'font-semibold text-foreground' : ''}`}>
                 {tab.label}
               </span>
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </nav>
   );

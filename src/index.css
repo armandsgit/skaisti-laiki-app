@@ -8,56 +8,68 @@
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
   
-  /* Light mode colors - Fresha inspired */
-  --background: 0 0% 99%; /* #FCFCFC - Very light background */
-  --foreground: 0 0% 9%; /* #171717 - Dark text */
+  /* Premium Black & White with Gold Accent */
+  --background: 0 0% 100%; /* #FFFFFF - Pure white background */
+  --foreground: 0 0% 0%; /* #000000 - Black text */
 
   --card: 0 0% 100%; /* #FFFFFF - Pure white cards */
-  --card-foreground: 0 0% 9%;
+  --card-foreground: 0 0% 0%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 9%;
+  --popover-foreground: 0 0% 0%;
 
-  --primary: 225 73% 57%; /* Blue #4C6FFF - Fresha accent */
-  --primary-foreground: 0 0% 100%;
-  --primary-soft: 225 73% 97%;
+  --primary: 42 60% 59%; /* Gold #D4A857 - Champagne accent */
+  --primary-foreground: 0 0% 0%;
+  --primary-soft: 42 50% 95%;
+  --primary-muted: 42 30% 88%;
+  --primary-glow: 42 65% 62%;
   
-  --secondary: 225 20% 95%; /* Light gray */
-  --secondary-foreground: 0 0% 9%;
+  --secondary: 0 0% 96%; /* #F5F5F5 - Light gray */
+  --secondary-foreground: 0 0% 0%;
 
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 45%;
+  --muted: 0 0% 94%; /* #EFEFEF */
+  --muted-foreground: 0 0% 47%; /* #777 */
 
-  --accent: 47 96% 53%; /* Gold/amber for stars */
-  --accent-foreground: 0 0% 9%;
+  --accent: 42 60% 59%; /* Gold */
+  --accent-foreground: 0 0% 0%;
 
   --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 0 0% 93%; /* #EDEDED */
-  --input: 0 0% 98%;
-  --ring: 225 73% 57%;
+  --border: 0 0% 91%; /* #E8E8E8 */
+  --input: 0 0% 96%;
+  --ring: 42 60% 59%;
 
-  --radius: 0.75rem; /* 12px - Fresha uses softer corners */
+  --radius: 1rem; /* 16px - Slightly more rounded */
 
   /* Sidebar Colors */
   --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 0 0% 13%;
-  --sidebar-primary: 330 81% 60%;
-  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-foreground: 0 0% 0%;
+  --sidebar-primary: 42 60% 59%;
+  --sidebar-primary-foreground: 0 0% 0%;
   --sidebar-accent: 0 0% 96%;
-  --sidebar-accent-foreground: 0 0% 13%;
-  --sidebar-border: 0 0% 90%;
-  --sidebar-ring: 330 81% 60%;
+  --sidebar-accent-foreground: 0 0% 0%;
+  --sidebar-border: 0 0% 91%;
+  --sidebar-ring: 42 60% 59%;
   
-  /* Shadows - Softer, more subtle */
-  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-elegant: 0 4px 16px rgba(0, 0, 0, 0.08);
+  /* Ultra minimal shadows */
+  --shadow-soft: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 4px 8px 0 rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 0 3px rgba(212, 168, 87, 0.15);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
   
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), #6B8AFF);
-  --gradient-card: linear-gradient(180deg, #ffffff 0%, #fefefe 100%);
+  /* No gradients - solid colors only */
+  --gradient-primary: linear-gradient(135deg, hsl(42 60% 59%), hsl(42 65% 62%));
+  --gradient-secondary: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
+  --gradient-soft: linear-gradient(135deg, hsl(0 0% 98%), hsl(0 0% 100%));
+  --gradient-header: linear-gradient(135deg, hsl(42 60% 59%), hsl(42 65% 62%));
+  --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 99%));
+  
+  /* Utility colors */
+  --success: 142 76% 36%;
+  --warning: 38 92% 50%;
+  --info: 221 83% 53%;
 }
 
 @layer base {
