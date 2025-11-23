@@ -144,7 +144,7 @@ const ClientDashboard = () => {
               placeholder="Meklēt..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-[52px] pr-4 py-6 text-base rounded-2xl border-border/30 bg-white focus:border-foreground transition-all relative z-0"
+              className="pl-16 pr-4 py-6 text-base rounded-2xl border-border/30 bg-white focus:border-foreground transition-all relative z-0"
             />
           </div>
         </div>
