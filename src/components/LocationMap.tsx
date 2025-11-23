@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_TOKEN } from '@/lib/mapbox-config';
@@ -16,6 +16,7 @@ interface LocationMapProps {
 const LocationMap = ({ latitude, longitude, address, className = '', showOpenButton = true, professionalName }: LocationMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -27,6 +28,13 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [longitude, latitude],
       zoom: 15,
+      attributionControl: false,
+    });
+
+    // Wait for map to load
+    map.current.on('load', () => {
+      setIsMapReady(true);
+      map.current?.resize();
     });
 
     // Create custom marker - same style as AllMastersMap with professional's initial
@@ -54,8 +62,17 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
     // Pievienot navigācijas kontroles
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
+    // Handle window resize
+    const handleResize = () => {
+      map.current?.resize();
+    };
+    
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
       map.current?.remove();
+      map.current = null;
     };
   }, [latitude, longitude]);
 
@@ -64,17 +81,13 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
   };
 
   return (
-    <div className="space-y-2 sm:space-y-3 w-full">
+    <div className="relative w-full space-y-2 sm:space-y-3">
       <div 
         ref={mapContainer} 
-        className={`map-container rounded-2xl overflow-hidden border shadow-sm w-full ${className}`}
+        className={`relative w-full h-[280px] sm:h-[320px] rounded-2xl overflow-hidden border shadow-sm ${className}`}
         style={{ 
-          height: '320px',
-          maxHeight: '320px',
-          minHeight: '320px',
-          maxWidth: '100%',
-          width: '100%',
-          touchAction: 'pan-x pan-y'
+          touchAction: 'pan-x pan-y',
+          maxWidth: '100%'
         }}
       />
       {showOpenButton && (

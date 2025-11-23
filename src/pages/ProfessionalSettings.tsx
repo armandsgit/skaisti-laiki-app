@@ -522,9 +522,15 @@ export default function ProfessionalSettings() {
                   </div>
                 )}
                 {profile.latitude && profile.longitude && (
-                  <div>
+                  <div className="w-full">
                     <p className="text-sm text-muted-foreground mb-2">Atrašanās vieta</p>
-                    <LocationMap latitude={profile.latitude} longitude={profile.longitude} />
+                    <div className="w-full max-w-full">
+                      <LocationMap 
+                        latitude={profile.latitude} 
+                        longitude={profile.longitude}
+                        professionalName={userProfile?.name}
+                      />
+                    </div>
                   </div>
                 )}
               </CardContent>
