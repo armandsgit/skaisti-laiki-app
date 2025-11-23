@@ -640,21 +640,21 @@ const ProfessionalDashboard = () => {
             navigate(`/professional?tab=${value}`, { replace: true });
           }
         }} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6 bg-card shadow-soft">
-            <TabsTrigger value="dashboard">
-              <LayoutDashboard className="w-4 h-4 mr-2" />
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="dashboard" className="gap-2">
+              <LayoutDashboard className="w-4 h-4 stroke-[1.5]" />
               <span className="hidden sm:inline">Galvenā</span>
             </TabsTrigger>
-            <TabsTrigger value="bookings">
-              <Calendar className="w-4 h-4 mr-2" />
+            <TabsTrigger value="bookings" className="gap-2">
+              <Calendar className="w-4 h-4 stroke-[1.5]" />
               <span className="hidden sm:inline">Rezervācijas</span>
             </TabsTrigger>
-            <TabsTrigger value="services">
-              <Sparkles className="w-4 h-4 mr-2" />
+            <TabsTrigger value="services" className="gap-2">
+              <Sparkles className="w-4 h-4 stroke-[1.5]" />
               <span className="hidden sm:inline">Pakalpojumi</span>
             </TabsTrigger>
-            <TabsTrigger value="schedule">
-              <CalendarDays className="w-4 h-4 mr-2" />
+            <TabsTrigger value="schedule" className="gap-2">
+              <CalendarDays className="w-4 h-4 stroke-[1.5]" />
               <span className="hidden sm:inline">Grafiks</span>
             </TabsTrigger>
           </TabsList>
