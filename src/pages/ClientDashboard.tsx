@@ -251,18 +251,6 @@ const ClientDashboard = () => {
                 </CarouselContent>
               </Carousel>
             </div>
-
-            {/* Category Filters - Moved Below Carousels */}
-            <div className="px-4 sm:px-6 pt-6">
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                <button onClick={() => setSelectedCategory(null)} className={`px-6 py-3 rounded-full whitespace-nowrap text-[14px] font-medium transition-all duration-200 active:scale-95 ${selectedCategory === null ? 'bg-foreground text-background' : 'bg-white text-foreground border border-foreground/15 hover:border-foreground/30'}`}>
-                  {t.allCategories}
-                </button>
-                {categories.map(cat => <button key={cat.id} onClick={() => setSelectedCategory(cat.name)} className={`px-6 py-3 rounded-full whitespace-nowrap text-[14px] font-medium transition-all duration-200 active:scale-95 ${selectedCategory === cat.name ? 'bg-foreground text-background' : 'bg-white text-foreground border border-foreground/15 hover:border-foreground/30'}`}>
-                    {cat.name}
-                  </button>)}
-              </div>
-            </div>
           </>}
 
       </main>
