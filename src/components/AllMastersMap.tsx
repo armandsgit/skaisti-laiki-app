@@ -258,7 +258,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
     : masters.filter(m => m.category === selectedCategory);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="relative w-full h-screen">
       {/* Full-screen map container */}
       <div 
         ref={mapContainer} 
@@ -266,19 +266,19 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         style={{ 
           width: '100%',
           height: '100%',
-          touchAction: 'pan-x pan-y'
+          touchAction: 'pan-x pan-y',
+          overflow: 'visible'
         }}
       />
       
       {/* Category filter - floating at top */}
       <div 
-        className="fixed left-0 right-0 px-3 pointer-events-none"
+        className="absolute left-0 right-0 px-3 pointer-events-none z-[9997]"
         style={{
-          top: 'max(env(safe-area-inset-top), 20px)',
-          zIndex: 9997
+          top: 'max(env(safe-area-inset-top), 12px)'
         }}
       >
-        <div className="bg-background backdrop-blur-md rounded-2xl shadow-card border border-border p-2 pointer-events-auto">
+        <div className="bg-white backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 p-2 pointer-events-auto max-w-full">
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1" style={{ WebkitOverflowScrolling: 'touch' }}>
             <Button
               size="sm"
