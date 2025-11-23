@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/translations";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +40,7 @@ const AdminDashboard = () => {
   const t = useTranslation("lv");
   const { signOut, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -62,8 +63,8 @@ const AdminDashboard = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedUserType, setSelectedUserType] = useState<"professional" | "client">("professional");
   const [selectedClient, setSelectedClient] = useState<any>(null);
-  const [selectedTab, setSelectedTab] = useState<"pending" | "professionals" | "clients" | "bookings" | "categories">(
-    "pending",
+  const [selectedTab, setSelectedTab] = useState<"home" | "pending" | "professionals" | "clients" | "bookings" | "categories">(
+    "home",
   );
 
   // Sync selectedTab with URL parameter
@@ -72,6 +73,9 @@ const AdminDashboard = () => {
     const tab = searchParams.get('tab');
     if (tab && ["pending", "professionals", "clients", "bookings", "categories"].includes(tab)) {
       setSelectedTab(tab as any);
+    } else {
+      // No tab parameter means we're on home/dashboard
+      setSelectedTab("home");
     }
   }, [location.search]);
 
@@ -517,20 +521,33 @@ const AdminDashboard = () => {
         {/* Navigation Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <button
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="p-5 rounded-2xl border-2 transition-all tap-feedback border-border bg-card hover:border-primary/30 hover:shadow-soft"
+            onClick={() => {
+              navigate('/admin');
+              setSelectedTab('home');
+              setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+            }}
+            className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
+              selectedTab === "home"
+                ? "border-primary bg-primary/10 shadow-card"
+                : "border-border bg-card hover:border-primary/30 hover:shadow-soft"
+            }`}
           >
             <LogOut
-              className="w-8 h-8 mx-auto mb-2 text-muted-foreground"
+              className={`w-8 h-8 mx-auto mb-2 ${selectedTab === "home" ? "text-primary" : "text-muted-foreground"}`}
             />
-            <p className="text-sm font-semibold text-center text-foreground">
+            <p
+              className={`text-sm font-semibold text-center ${selectedTab === "home" ? "text-primary" : "text-foreground"}`}
+            >
               Sākums
             </p>
             <p className="text-xs text-muted-foreground text-center mt-1">uz augšu</p>
           </button>
 
           <button
-            onClick={() => setSelectedTab("pending")}
+            onClick={() => {
+              navigate('/admin?tab=pending');
+              setSelectedTab("pending");
+            }}
             className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "pending"
                 ? "border-primary bg-primary/10 shadow-card"
@@ -549,7 +566,10 @@ const AdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => setSelectedTab("professionals")}
+            onClick={() => {
+              navigate('/admin?tab=professionals');
+              setSelectedTab("professionals");
+            }}
             className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "professionals"
                 ? "border-primary bg-primary/10 shadow-card"
@@ -568,7 +588,10 @@ const AdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => setSelectedTab("clients")}
+            onClick={() => {
+              navigate('/admin?tab=clients');
+              setSelectedTab("clients");
+            }}
             className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "clients"
                 ? "border-primary bg-primary/10 shadow-card"
@@ -587,7 +610,10 @@ const AdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => setSelectedTab("bookings")}
+            onClick={() => {
+              navigate('/admin?tab=bookings');
+              setSelectedTab("bookings");
+            }}
             className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "bookings"
                 ? "border-primary bg-primary/10 shadow-card"
@@ -606,7 +632,10 @@ const AdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => setSelectedTab("categories")}
+            onClick={() => {
+              navigate('/admin?tab=categories');
+              setSelectedTab("categories");
+            }}
             className={`p-5 rounded-2xl border-2 transition-all tap-feedback ${
               selectedTab === "categories"
                 ? "border-primary bg-primary/10 shadow-card"
