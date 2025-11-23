@@ -191,6 +191,44 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          brevo_message_id: string | null
+          created_at: string
+          email_type: string
+          id: string
+          professional_id: string
+          recipient_email: string
+          status: string
+        }
+        Insert: {
+          brevo_message_id?: string | null
+          created_at?: string
+          email_type: string
+          id?: string
+          professional_id: string
+          recipient_email: string
+          status?: string
+        }
+        Update: {
+          brevo_message_id?: string | null
+          created_at?: string
+          email_type?: string
+          id?: string
+          professional_id?: string
+          recipient_email?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_packages: {
         Row: {
           credits: number
@@ -298,6 +336,9 @@ export type Database = {
           longitude: number | null
           plan: string | null
           rating: number | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_end_date: string | null
           subscription_last_changed: string | null
           subscription_status: string | null
           total_reviews: number | null
@@ -321,6 +362,9 @@ export type Database = {
           longitude?: number | null
           plan?: string | null
           rating?: number | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
           subscription_last_changed?: string | null
           subscription_status?: string | null
           total_reviews?: number | null
@@ -344,6 +388,9 @@ export type Database = {
           longitude?: number | null
           plan?: string | null
           rating?: number | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
           subscription_last_changed?: string | null
           subscription_status?: string | null
           total_reviews?: number | null
@@ -606,6 +653,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "staff_members_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_history: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          plan: string
+          professional_id: string
+          started_at: string
+          status: string
+          stripe_subscription_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          plan: string
+          professional_id: string
+          started_at?: string
+          status: string
+          stripe_subscription_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          plan?: string
+          professional_id?: string
+          started_at?: string
+          status?: string
+          stripe_subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_history_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professional_profiles"

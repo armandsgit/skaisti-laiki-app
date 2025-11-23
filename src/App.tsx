@@ -12,6 +12,7 @@ import ClientBookings from './pages/ClientBookings';
 import ProfessionalSettings from './pages/ProfessionalSettings';
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
+import Billing from "./pages/Billing";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminReviews from "./pages/AdminReviews";
 import MapView from "./pages/MapView";
@@ -122,6 +123,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="PROFESSIONAL">
                   <SubscriptionPlans />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/billing" 
+              element={
+                <ProtectedRoute requiredRole="PROFESSIONAL">
+                  <Billing />
                 </ProtectedRoute>
               } 
             />

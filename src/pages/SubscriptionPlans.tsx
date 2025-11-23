@@ -66,6 +66,7 @@ export default function SubscriptionPlans() {
           description: 'Lietotājs nav autentificēts',
           variant: 'destructive',
         });
+        navigate('/auth');
         return;
       }
 
@@ -85,32 +86,52 @@ export default function SubscriptionPlans() {
         return;
       }
 
-      // Update subscription
-      const { error } = await supabase
-        .from('professional_profiles')
-        .update({
-          plan: planId,
-          subscription_status: 'active',
-          subscription_last_changed: new Date().toISOString(),
-        })
-        .eq('id', profile.id);
+      // Map plan to Stripe price IDs (replace with actual Stripe price IDs from your Stripe dashboard)
+      const stripePriceIds: Record<string, string> = {
+        starter: 'price_starter_monthly', // Replace with actual Stripe price ID
+        pro: 'price_pro_monthly',
+        premium: 'price_premium_monthly'
+      };
 
-      if (error) throw error;
+      const priceId = stripePriceIds[planId];
+      if (!priceId) {
+        toast({
+          title: 'Kļūda',
+          description: 'Nederīgs plāns',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-      toast({
-        title: 'Veiksmīgi!',
-        description: `${planId.charAt(0).toUpperCase() + planId.slice(1)} plāns aktivizēts`,
+      // Create Stripe checkout session
+      const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+        body: {
+          priceId,
+          professionalId: profile.id,
+          successUrl: `${window.location.origin}/professional?session_success=true`,
+          cancelUrl: `${window.location.origin}/subscription-plans?session_canceled=true`
+        }
       });
 
-      // Mock Stripe subscription (placeholder for future)
-      console.log('subscribeWithStripe:', planId);
+      if (error) {
+        console.error('Checkout error:', error);
+        toast({
+          title: 'Kļūda',
+          description: 'Neizdevās izveidot maksājumu sesiju',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-      navigate('/professional');
+      // Redirect to Stripe Checkout
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     } catch (error) {
       console.error('Error activating plan:', error);
       toast({
         title: 'Kļūda',
-        description: 'Neizdevās aktivizēt plānu',
+        description: 'Radās neparedzēta kļūda',
         variant: 'destructive',
       });
     } finally {
@@ -176,8 +197,8 @@ export default function SubscriptionPlans() {
         </div>
 
         <div className="mt-12 text-center text-sm text-muted-foreground">
-          <p>* Pagaidām plāni ir bez maksājuma (mock versija)</p>
-          <p>Stripe integrācija tiks pievienota nākotnē</p>
+          <p>⚠️ Pirms maksājuma, lūdzu pārliecinies, ka Stripe Price ID ir pareizi konfigurēti kodā</p>
+          <p>Aizvieto 'price_starter_monthly', 'price_pro_monthly', 'price_premium_monthly' ar taviem faktiskajiem Stripe Price ID</p>
         </div>
       </div>
     </div>

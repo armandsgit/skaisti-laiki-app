@@ -46,89 +46,149 @@ serve(async (req) => {
     }
 
     console.log('Processing event:', event.type);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Handle checkout.session.completed event
+    // Handle email credits purchase
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      
-      console.log('Checkout session completed:', session.id);
-      
-      // Extract metadata
       const masterId = session.metadata?.masterId;
       const packageId = session.metadata?.packageId;
       
-      if (!masterId || !packageId) {
-        console.error('Missing masterId or packageId in session metadata');
-        return new Response('Missing metadata', { status: 400, headers: corsHeaders });
-      }
-
-      console.log('Master ID:', masterId, 'Package ID:', packageId);
-
-      // Create Supabase client
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-      // Get package details
-      const { data: packageData, error: packageError } = await supabase
-        .from('email_packages')
-        .select('credits')
-        .eq('id', packageId)
-        .single();
-
-      if (packageError || !packageData) {
-        console.error('Error fetching package:', packageError);
-        return new Response('Package not found', { status: 404, headers: corsHeaders });
-      }
-
-      console.log('Package credits:', packageData.credits);
-
-      // Check if email_credits record exists
-      const { data: existingCredits, error: fetchError } = await supabase
-        .from('email_credits')
-        .select('credits')
-        .eq('master_id', masterId)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('Error fetching credits:', fetchError);
-        return new Response('Database error', { status: 500, headers: corsHeaders });
-      }
-
-      if (existingCredits) {
-        // Update existing record
-        const newCredits = existingCredits.credits + packageData.credits;
-        console.log('Updating credits from', existingCredits.credits, 'to', newCredits);
+      // If this is an email credits purchase
+      if (masterId && packageId) {
+        console.log('Processing email credits purchase for master:', masterId);
         
-        const { error: updateError } = await supabase
-          .from('email_credits')
-          .update({ 
-            credits: newCredits,
-            updated_at: new Date().toISOString()
+        const { data: packageData, error: packageError } = await supabase
+          .from('email_packages')
+          .select('credits')
+          .eq('id', packageId)
+          .single();
+
+        if (!packageError && packageData) {
+          const { data: existingCredits } = await supabase
+            .from('email_credits')
+            .select('credits')
+            .eq('master_id', masterId)
+            .single();
+
+          if (existingCredits) {
+            await supabase
+              .from('email_credits')
+              .update({ 
+                credits: existingCredits.credits + packageData.credits,
+                updated_at: new Date().toISOString()
+              })
+              .eq('master_id', masterId);
+          } else {
+            await supabase
+              .from('email_credits')
+              .insert({
+                master_id: masterId,
+                credits: packageData.credits,
+                updated_at: new Date().toISOString()
+              });
+          }
+          console.log('Email credits updated successfully');
+        }
+      }
+    }
+
+    // Handle subscription events
+    if (event.type === 'customer.subscription.created' || 
+        event.type === 'customer.subscription.updated') {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+
+      console.log('Processing subscription event:', event.type, 'for customer:', customerId);
+
+      // Find professional by stripe_customer_id
+      const { data: professional, error: findError } = await supabase
+        .from('professional_profiles')
+        .select('id, plan, subscription_status')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+      if (findError || !professional) {
+        console.error('Professional not found for customer:', customerId);
+        return new Response('Professional not found', { status: 404, headers: corsHeaders });
+      }
+
+      // Determine plan from price
+      const priceId = subscription.items.data[0]?.price.id;
+      let plan = 'free';
+      if (priceId === Deno.env.get('STRIPE_PRICE_STARTER')) plan = 'starter';
+      else if (priceId === Deno.env.get('STRIPE_PRICE_PRO')) plan = 'pro';
+      else if (priceId === Deno.env.get('STRIPE_PRICE_PREMIUM')) plan = 'premium';
+
+      const status = subscription.status === 'active' ? 'active' : 'inactive';
+      const endDate = new Date(subscription.current_period_end * 1000);
+
+      // Update professional profile
+      const { error: updateError } = await supabase
+        .from('professional_profiles')
+        .update({
+          plan,
+          subscription_status: status,
+          stripe_subscription_id: subscription.id,
+          subscription_end_date: endDate.toISOString(),
+          subscription_last_changed: new Date().toISOString()
+        })
+        .eq('id', professional.id);
+
+      if (updateError) {
+        console.error('Error updating professional profile:', updateError);
+        return new Response('Failed to update profile', { status: 500, headers: corsHeaders });
+      }
+
+      // Log subscription history
+      await supabase
+        .from('subscription_history')
+        .insert({
+          professional_id: professional.id,
+          plan,
+          status,
+          stripe_subscription_id: subscription.id,
+          started_at: new Date().toISOString()
+        });
+
+      console.log('Subscription updated successfully for professional:', professional.id);
+    }
+
+    // Handle subscription deletion/cancellation
+    if (event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+
+      console.log('Processing subscription deletion for customer:', customerId);
+
+      const { data: professional } = await supabase
+        .from('professional_profiles')
+        .select('id')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+      if (professional) {
+        await supabase
+          .from('professional_profiles')
+          .update({
+            plan: 'free',
+            subscription_status: 'inactive',
+            stripe_subscription_id: null,
+            subscription_end_date: null,
+            subscription_last_changed: new Date().toISOString()
           })
-          .eq('master_id', masterId);
+          .eq('id', professional.id);
 
-        if (updateError) {
-          console.error('Error updating credits:', updateError);
-          return new Response('Failed to update credits', { status: 500, headers: corsHeaders });
-        }
-      } else {
-        // Create new record
-        console.log('Creating new credits record with', packageData.credits, 'credits');
-        
-        const { error: insertError } = await supabase
-          .from('email_credits')
-          .insert({
-            master_id: masterId,
-            credits: packageData.credits,
-            updated_at: new Date().toISOString()
-          });
+        // Close subscription history
+        await supabase
+          .from('subscription_history')
+          .update({ ended_at: new Date().toISOString() })
+          .eq('professional_id', professional.id)
+          .eq('stripe_subscription_id', subscription.id)
+          .is('ended_at', null);
 
-        if (insertError) {
-          console.error('Error inserting credits:', insertError);
-          return new Response('Failed to create credits', { status: 500, headers: corsHeaders });
-        }
+        console.log('Subscription cancelled for professional:', professional.id);
       }
-
-      console.log('Credits successfully updated for master:', masterId);
     }
 
     return new Response(JSON.stringify({ received: true }), {
