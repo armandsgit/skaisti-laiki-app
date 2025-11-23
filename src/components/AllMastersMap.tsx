@@ -154,13 +154,13 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       // Add markers for filtered masters
       filteredMasters.forEach((master) => {
 
-        // Create custom marker - modern dark design
+        // Create custom marker - modern beauty salon design
         const markerEl = document.createElement('div');
         markerEl.className = 'custom-map-marker clickable-marker';
         markerEl.innerHTML = `
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="10" fill="#1a1a1a" stroke="white" stroke-width="2"/>
-            <path d="M12 8v8M8 12h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 3L13.545 8.13L18 6.545L14.455 11L18 15.455L13.545 13.87L12 19L10.455 13.87L6 15.455L9.545 11L6 6.545L10.455 8.13L12 3Z" fill="white"/>
           </svg>
         `;
         markerEl.dataset.masterId = master.id;
