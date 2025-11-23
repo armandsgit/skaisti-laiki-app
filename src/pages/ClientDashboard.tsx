@@ -220,15 +220,13 @@ const ClientDashboard = () => {
                               </span>
                             </div>
 
-                            {/* Location - Address */}
-                            {prof.address && (
-                              <div className="flex items-start gap-2 pt-0.5">
-                                <MapPin className="h-4 w-4 text-muted-foreground stroke-[1.5] mt-0.5 flex-shrink-0" />
-                                <span className="text-[14px] text-muted-foreground line-clamp-2 leading-relaxed">
-                                  {prof.address}
-                                </span>
-                              </div>
-                            )}
+                            {/* Location with Distance */}
+                            <div className="flex items-center gap-2 pt-0.5">
+                              <MapPin className="h-4 w-4 text-[#7D7D7D] stroke-[1.5] flex-shrink-0" />
+                              <span className="text-[14px] text-[#7D7D7D] truncate">
+                                {prof.city} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                              </span>
+                            </div>
 
                             {/* Category */}
                             <div className="pt-1">
@@ -302,15 +300,13 @@ const ClientDashboard = () => {
                             </span>
                           </div>
 
-                          {/* Location - Address */}
-                          {prof.address && (
-                            <div className="flex items-start gap-2 pt-0.5">
-                              <MapPin className="h-4 w-4 text-muted-foreground stroke-[1.5] mt-0.5 flex-shrink-0" />
-                              <span className="text-[14px] text-muted-foreground line-clamp-2 leading-relaxed">
-                                {prof.address}
-                              </span>
-                            </div>
-                          )}
+                          {/* Location with Distance */}
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <MapPin className="h-4 w-4 text-[#7D7D7D] stroke-[1.5] flex-shrink-0" />
+                            <span className="text-[14px] text-[#7D7D7D] truncate">
+                              {prof.city} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                            </span>
+                          </div>
 
                           {/* Category */}
                           <div className="pt-1">
