@@ -48,11 +48,11 @@ const BottomNavigation = () => {
   const isClientUser = !isAdminPanel && (userRole === 'CLIENT' || isViewingOthersProfile);
   
   const tabs = isAdminPanel ? [
-    { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab && location.pathname === '/admin', scrollToTop: true },
-    { icon: CheckCircle, label: 'Gaida', path: '/admin?tab=pending', isActive: currentTab === 'pending' },
+    { icon: Home, label: 'Sākums', path: '/admin', isActive: location.pathname === '/admin' && !currentTab, scrollToTop: true },
+    { icon: CheckCircle, label: 'Gaida', path: '/admin?tab=pending', isActive: location.pathname === '/admin' && currentTab === 'pending' },
     { icon: MessageSquare, label: 'Atsauksmes', path: '/admin/reviews', isActive: location.pathname === '/admin/reviews' },
-    { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: currentTab === 'professionals' },
-    { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: currentTab === 'bookings' },
+    { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map' },
+    { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: location.pathname === '/admin' && currentTab === 'professionals' },
   ] : isProfessionalUser ? [
     { 
       icon: Home, 
