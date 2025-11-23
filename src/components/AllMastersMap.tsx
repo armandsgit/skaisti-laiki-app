@@ -159,8 +159,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         markerEl.className = 'custom-map-marker clickable-marker';
         
         const rating = master.rating || 0;
-        const hasRating = rating > 0;
-        const displayRating = hasRating ? rating.toFixed(1) : '—';
+        const displayRating = rating.toFixed(1);
         
         markerEl.innerHTML = `
           <div class="marker-container">
