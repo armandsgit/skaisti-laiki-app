@@ -589,11 +589,11 @@ const ProfessionalDashboard = () => {
       <header className="bg-white border-b border-border/30 sticky top-0 z-10 shadow-soft">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-foreground rounded-2xl flex items-center justify-center shadow-card">
-              <Sparkles className="w-5 h-5 text-background stroke-[2]" />
+            <div className="w-10 h-10 bg-black rounded-2xl flex items-center justify-center shadow-[0_2px_12px_rgba(0,0,0,0.12)]">
+              <span className="text-white text-lg font-bold tracking-tight">B</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">
+              <h1 className="text-xl font-bold text-foreground tracking-tight">
                 BeautyOn
               </h1>
               <p className="text-xs text-muted-foreground">Meistara panelis</p>

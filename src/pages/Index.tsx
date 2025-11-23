@@ -56,7 +56,7 @@ const Index = () => {
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">
         <LoadingAnimation size={100} />
-        <h1 className="text-3xl font-bold text-foreground mt-4 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mt-4 mb-2 tracking-tight">
           BeautyOn
         </h1>
         <p className="text-muted-foreground">Ielādē...</p>

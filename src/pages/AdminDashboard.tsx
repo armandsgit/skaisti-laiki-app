@@ -416,11 +416,11 @@ const AdminDashboard = () => {
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center shadow-elegant flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-black rounded-2xl flex items-center justify-center shadow-[0_2px_12px_rgba(0,0,0,0.12)] flex-shrink-0">
+                <span className="text-white text-lg font-bold tracking-tight">B</span>
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
                   BeautyOn Admin
                 </h1>
                 <p className="text-sm text-muted-foreground hidden sm:block">Administratora panelis</p>
