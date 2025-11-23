@@ -113,57 +113,59 @@ const ClientDashboard = () => {
     localStorage.setItem('recentlyViewed', JSON.stringify(viewedList));
     navigate(`/professional/${master.id}`);
   };
-  return <div className="min-h-screen bg-white pb-20">
+  return <div className="min-h-screen bg-[#FAFAFA] pb-20">
       {/* Header */}
-      <header className="bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight tracking-tight">
+      <header className="bg-white sticky top-0 z-50 border-b border-border/5">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 pt-6 pb-5">
+          <div className="flex items-start justify-between mb-5">
+            <div className="flex-1">
+              <h1 className="text-[32px] sm:text-[36px] font-bold text-foreground leading-none tracking-tight mb-1.5">
                 Tieši tev
               </h1>
-              <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
+              <p className="text-[15px] sm:text-base text-muted-foreground font-normal">
                 Sveiki, {profile?.name || 'Viesis'}
               </p>
             </div>
-            <button onClick={() => navigate('/map')} className="p-3 rounded-full border border-border/30 hover:border-border transition-all duration-200 active:scale-95">
-              <Map className="h-6 w-6 stroke-[1.5]" />
+            <button 
+              onClick={() => navigate('/map')} 
+              className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-black hover:bg-black/90 active:scale-95 transition-all duration-200 shadow-sm"
+            >
+              <Map className="h-5 w-5 text-white stroke-[2]" />
             </button>
           </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto space-y-8 pb-6">
-        {/* Search Bar */}
-        <div className="px-4 sm:px-6 pt-2">
+          
+          {/* Search Bar */}
           <SearchInput
             placeholder="Meklēt meistarus, pakalpojumus..."
             value={searchTerm}
             onSearchChange={setSearchTerm}
           />
         </div>
+      </header>
 
-        {loading ? <div className="px-4 sm:px-6 space-y-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto space-y-8 pb-6 pt-6">
+
+        {loading ? <div className="px-5 sm:px-6 space-y-8">
             <div className="space-y-4">
-              <div className="h-8 w-48 bg-muted/30 rounded-lg animate-pulse" />
+              <div className="h-8 w-48 bg-muted/30 rounded-xl animate-pulse" />
               <div className="flex gap-4 overflow-hidden">
-                {[1, 2, 3].map(i => <div key={i} className="w-[280px] h-[380px] bg-muted/30 rounded-3xl animate-pulse flex-shrink-0" />)}
+                {[1, 2, 3].map(i => <div key={i} className="w-[280px] h-[380px] bg-white rounded-3xl animate-pulse flex-shrink-0 shadow-sm" />)}
               </div>
             </div>
           </div> : <>
             {/* Recently Viewed */}
-            {recentlyViewed.length > 0 && <div className="space-y-4">
-                <h2 className="text-[28px] font-bold text-foreground px-4 sm:px-6 tracking-tight">
+            {recentlyViewed.length > 0 && <div className="space-y-5">
+                <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
                   Nesen skatītie
                 </h2>
                 <Carousel opts={{
             align: "start",
             loop: false
           }} className="w-full">
-                  <CarouselContent className="-ml-4 px-4 sm:px-6">
+                  <CarouselContent className="-ml-4 px-5 sm:px-6">
                     {recentlyViewed.map(prof => <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
-                        <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-xl transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-3xl">
+                        <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-[24px] shadow-sm">
                           {/* Image */}
                           <div className="relative w-full h-[200px] bg-muted overflow-hidden">
                             {/* Category Badge in Top-Right Corner */}
@@ -208,17 +210,17 @@ const ClientDashboard = () => {
               </div>}
 
             {/* Recommended / Nearby */}
-            <div className="space-y-4">
-              <h2 className="text-[28px] font-bold text-foreground px-4 sm:px-6 tracking-tight">
+            <div className="space-y-5">
+              <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
                 Rekomendētie
               </h2>
               <Carousel opts={{
             align: "start",
             loop: false
           }} className="w-full">
-                <CarouselContent className="-ml-4 px-4 sm:px-6">
+                <CarouselContent className="-ml-4 px-5 sm:px-6">
                   {filteredProfessionals.map(prof => <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
-                      <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-xl transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-3xl">
+                      <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-[24px] shadow-sm">
                         {/* Image */}
                         <div className="relative w-full h-[200px] bg-muted overflow-hidden">
                           {/* Category Badge in Top-Right Corner */}
