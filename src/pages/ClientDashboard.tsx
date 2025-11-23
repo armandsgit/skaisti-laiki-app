@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Search, Star, MapPin, Briefcase, Map, User } from 'lucide-react';
+import { Search, Star, Briefcase, Map, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -174,10 +174,9 @@ const ClientDashboard = () => {
                             </div>
 
                           {/* Location with Distance */}
-                          <div className="flex items-center gap-1.5 pt-0.5 w-full overflow-hidden">
-                            <MapPin className="h-[14px] w-[14px] text-[#7D7D7D] stroke-[1.5] flex-shrink-0" />
-                            <span className="text-[13px] text-[#7D7D7D] leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                              {prof.city} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                          <div className="pt-0.5">
+                            <span className="text-[13px] text-[#6A6A6A] leading-tight block">
+                              {prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
                             </span>
                           </div>
 
@@ -231,10 +230,9 @@ const ClientDashboard = () => {
                           </div>
 
                         {/* Location with Distance */}
-                        <div className="flex items-center gap-1.5 pt-0.5 w-full overflow-hidden">
-                          <MapPin className="h-[14px] w-[14px] text-[#7D7D7D] stroke-[1.5] flex-shrink-0" />
-                          <span className="text-[13px] text-[#7D7D7D] leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                            {prof.city} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                        <div className="pt-0.5">
+                          <span className="text-[13px] text-[#6A6A6A] leading-tight block">
+                            {prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
                           </span>
                         </div>
 
