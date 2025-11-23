@@ -204,14 +204,14 @@ const EditableLocationMap = ({
         ref={mapContainer} 
         className={`map-container rounded-2xl overflow-hidden border shadow-sm w-full ${className}`}
         style={{ 
-          height: '280px',
-          maxHeight: '280px',
-          minHeight: '280px',
+          height: '320px',
+          maxHeight: '320px',
+          minHeight: '320px',
           maxWidth: '100%',
           width: '100%'
         }}
       />
-      <p className="text-[11px] sm:text-xs text-muted-foreground px-1">
+      <p className="text-xs text-muted-foreground">
         Noklikšķiniet uz kartes, lai atzīmētu savu atrašanās vietu. Marķieri var arī vilkt.
       </p>
     </div>
