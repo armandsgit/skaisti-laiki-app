@@ -4,8 +4,8 @@ import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Star, Briefcase, Map, User, Search } from 'lucide-react';
+import { SearchInput } from '@/components/ui/search-input';
+import { Star, Briefcase, Map, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -137,16 +137,11 @@ const ClientDashboard = () => {
       <main className="max-w-7xl mx-auto space-y-8 pb-6">
         {/* Search Bar */}
         <div className="px-4 sm:px-6 pt-2">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Meklēt meistarus, pakalpojumus..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-6 text-base rounded-2xl border-border/30 bg-white focus:border-foreground transition-all"
-            />
-          </div>
+          <SearchInput
+            placeholder="Meklēt meistarus, pakalpojumus..."
+            value={searchTerm}
+            onSearchChange={setSearchTerm}
+          />
         </div>
 
         {loading ? <div className="px-4 sm:px-6 space-y-8">
