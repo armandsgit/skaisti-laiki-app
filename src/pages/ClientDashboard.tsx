@@ -3,80 +3,59 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Calendar, Search, Star, MapPin, Sparkles, LogOut } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Star, MapPin, Briefcase, ChevronRight, Map, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
-import PlanBadge from '@/components/PlanBadge';
-
 
 const ClientDashboard = () => {
   const t = useTranslation('lv');
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   const [professionals, setProfessionals] = useState<SortedMaster[]>([]);
-  const [bookings, setBookings] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
       initializeData();
       loadCategories();
+      loadProfile();
     }
   }, [user]);
 
-  useEffect(() => {
-    // Real-time atjauninājums kategorijām
-    const channel = supabase
-      .channel('categories-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'categories'
-        },
-        () => {
-          loadCategories();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const loadProfile = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user?.id)
+      .single();
+    
+    if (data) setProfile(data);
+  };
 
   const loadCategories = async () => {
     const { data, error } = await supabase
       .from('categories')
-      .select('name')
+      .select('*')
       .eq('active', true)
       .order('display_order', { ascending: true });
 
     if (!error && data) {
-      setCategories(data.map(cat => cat.name));
+      setCategories(data);
     }
   };
 
   const initializeData = async () => {
-    // Iegūst lietotāja atrašanās vietu
     const location = await getUserLocation();
     setUserLocation(location);
-    
-    // Ielādē datus
-    await Promise.all([loadProfessionals(location), loadBookings()]);
+    await loadProfessionals(location);
   };
 
   const loadProfessionals = async (location: { lat: number; lon: number }) => {
@@ -87,7 +66,8 @@ const ClientDashboard = () => {
         profiles!professional_profiles_user_id_fkey(name, avatar)
       `)
       .eq('approved', true)
-      .eq('active', true);
+      .eq('active', true)
+      .eq('is_blocked', false);
     
     if (error) {
       toast.error(t.error);
@@ -95,160 +75,171 @@ const ClientDashboard = () => {
       return;
     }
     
-    // Kārto meistarus pēc prioritātes
     const sortedMasters = getSortedMasters(data || [], location.lat, location.lon);
     setProfessionals(sortedMasters);
     setLoading(false);
   };
 
-  const loadBookings = async () => {
-    const { data, error } = await supabase
-      .from('bookings')
-      .select(`
-        *,
-        services(name, price),
-        professional_profiles(
-          profiles!professional_profiles_user_id_fkey(name, avatar)
-        )
-      `)
-      .eq('client_id', user?.id)
-      .order('booking_date', { ascending: false });
-    
-    if (!error && data) {
-      setBookings(data);
-    }
-  };
-
   const filteredProfessionals = professionals.filter(prof => {
     const matchesSearch = prof.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          prof.bio?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || prof.category === categoryFilter;
+    const matchesCategory = !selectedCategory || prof.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center">
-        <div className="text-center">
-          <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary animate-pulse" />
-          <p className="text-muted-foreground">{t.loading}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header - Fresha style */}
-      <header className="bg-card border-b sticky top-0 z-10">
-        <div className="max-w-screen-lg mx-auto px-5 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">BeautyOn</h1>
-          <Button variant="ghost" size="icon" onClick={signOut} className="rounded-full">
-            <LogOut className="w-5 h-5" />
-          </Button>
-        </div>
-      </header>
-
-      <main className="max-w-screen-lg mx-auto px-5 py-8 overflow-x-hidden">
-        <div className="w-full space-y-8">
-          {/* Search Section - Fresha style */}
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Atrodi savu meistaru</h2>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  placeholder="Meklēt pēc nosaukuma vai apraksta..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 h-14 text-base rounded-2xl border-border/50"
-                />
-              </div>
-              
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full sm:w-[220px] h-14 rounded-2xl border-border/50">
-                  <SelectValue placeholder="Visi pakalpojumi" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Visi pakalpojumi</SelectItem>
-                  {categories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+    <div className="min-h-screen bg-white pb-20">
+      {/* Header */}
+      <header className="bg-white border-b border-border/30">
+        <div className="max-w-lg mx-auto px-6 py-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-[32px] font-bold text-foreground leading-tight tracking-tight">
+                {t.forYou}
+              </h1>
             </div>
+            <button
+              onClick={() => navigate('/client/settings')}
+              className="p-3 rounded-full border border-border/30 hover:border-border transition-all duration-200 active:scale-95"
+            >
+              <Search className="h-5 w-5 stroke-[1.5]" />
+            </button>
           </div>
 
-          {/* Professional Cards - Fresha style */}
-          <div className="grid grid-cols-1 gap-5">
-            {filteredProfessionals.map((prof) => (
-              <Card 
-                key={prof.id} 
-                className="cursor-pointer border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-200 overflow-hidden rounded-2xl"
-                onClick={() => navigate(`/professional/${prof.id}`)}
+          {/* Search Bar */}
+          <div className="relative mb-6">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground stroke-[1.5]" />
+            <input
+              type="text"
+              placeholder={t.searchPlaceholder}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-[52px] pl-14 pr-5 rounded-[16px] border border-border/50 bg-background text-foreground placeholder:text-muted-foreground text-[15px] focus:outline-none focus:ring-1 focus:ring-foreground/20 focus:border-foreground/30 transition-all duration-200"
+            />
+          </div>
+
+          {/* Category Pills */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`px-6 py-3 rounded-full whitespace-nowrap text-[14px] font-medium transition-all duration-200 active:scale-95 ${
+                selectedCategory === null
+                  ? 'bg-foreground text-background'
+                  : 'bg-white text-foreground border border-foreground/15 hover:border-foreground/30'
+              }`}
+            >
+              {t.allCategories}
+            </button>
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.name)}
+                className={`px-6 py-3 rounded-full whitespace-nowrap text-[14px] font-medium transition-all duration-200 active:scale-95 ${
+                  selectedCategory === cat.name
+                    ? 'bg-foreground text-background'
+                    : 'bg-white text-foreground border border-foreground/15 hover:border-foreground/30'
+                }`}
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
-                    {/* Avatar */}
-                    <Avatar className="w-20 h-20 border-2 border-border flex-shrink-0 rounded-2xl">
-                      <AvatarImage src={prof.profiles?.avatar} className="object-cover" />
-                      <AvatarFallback className="bg-primary/5 text-primary text-xl font-semibold rounded-2xl">
-                        {prof.profiles?.name?.charAt(0) || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <div>
-                        <h3 className="font-bold text-xl text-foreground mb-1 truncate">
-                          {prof.profiles?.name}
-                        </h3>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full font-medium">
-                            {prof.category}
-                          </Badge>
-                          {prof.is_verified && (
-                            <Badge className="bg-primary/10 text-primary hover:bg-primary/10 text-xs px-2 py-0.5 rounded-full">
-                              Verificēts
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1.5 text-sm">
-                        {(prof.rating > 0 || prof.total_reviews > 0) && (
-                          <div className="flex items-center gap-1.5">
-                            <Star className="w-4 h-4 fill-accent text-accent" />
-                            <span className="font-semibold text-foreground">{prof.rating?.toFixed(1) || '0.0'}</span>
-                            <span className="text-muted-foreground">({prof.total_reviews || 0} atsauksmes)</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                          <MapPin className="w-4 h-4" />
-                          <span>{prof.city}</span>
-                          {prof.distance < 9999 && (
-                            <span>• {prof.distance} km</span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {prof.bio && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">
-                          {prof.bio}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                {cat.name}
+              </button>
             ))}
           </div>
         </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-lg mx-auto px-6 py-6 space-y-8">
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-muted/30 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : filteredProfessionals.length === 0 ? (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground text-[15px]">{t.noProfessionals}</p>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredProfessionals.map((prof) => (
+              <Card
+                key={prof.id}
+                onClick={() => navigate(`/professional/${prof.id}`)}
+                className="p-5 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-[0.98] border-border/50"
+              >
+                <div className="flex gap-4">
+                  {/* Avatar */}
+                  <div className="relative flex-shrink-0">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-muted border border-border/50">
+                      {prof.profiles?.avatar ? (
+                        <img
+                          src={prof.profiles.avatar}
+                          alt={prof.profiles.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="h-8 w-8 text-muted-foreground stroke-[1.5]" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-[16px] text-foreground mb-1 truncate">
+                      {prof.profiles?.name}
+                    </h3>
+                    
+                    {/* Rating */}
+                    {prof.rating && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Star className="h-4 w-4 fill-foreground stroke-foreground" />
+                        <span className="text-[15px] font-semibold text-foreground">
+                          {prof.rating.toFixed(1)}
+                        </span>
+                        <span className="text-[13px] text-muted-foreground">
+                          ({prof.total_reviews || 0})
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Category */}
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Briefcase className="h-3.5 w-3.5 text-muted-foreground stroke-[1.5]" />
+                      <span className="text-[13px] text-muted-foreground">{prof.category}</span>
+                    </div>
+
+                    {/* Location */}
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground stroke-[1.5]" />
+                      <span className="text-[13px] text-muted-foreground truncate">
+                        {prof.address || prof.city}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex items-center">
+                    <ChevronRight className="h-5 w-5 text-muted-foreground stroke-[1.5]" />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Map Button */}
+        <button
+          onClick={() => navigate('/map')}
+          className="fixed bottom-24 right-6 h-14 px-6 bg-foreground text-background rounded-full shadow-lg hover:opacity-90 transition-all duration-200 active:scale-95 flex items-center gap-2 font-medium text-[15px] z-40"
+        >
+          <Map className="h-5 w-5 stroke-[2]" />
+          {t.viewOnMap}
+        </button>
       </main>
     </div>
   );
 };
   
-  export default ClientDashboard;
+export default ClientDashboard;

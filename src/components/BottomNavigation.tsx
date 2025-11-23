@@ -146,7 +146,7 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border/30">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
         {tabs.map((tab, index) => {
           const Icon = tab.icon;
@@ -160,12 +160,15 @@ const BottomNavigation = () => {
                 }
               }}
               className={`
-                flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-150 min-w-[60px] active:scale-95
-                ${tab.isActive ? 'text-foreground bg-primary/10' : 'text-muted-foreground hover:text-foreground'}
+                flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl transition-all duration-200 min-w-[60px] active:scale-95
+                ${tab.isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}
               `}
             >
-              <Icon className={`h-6 w-6 transition-all duration-150 ${tab.isActive ? 'text-primary' : ''}`} />
-              <span className={`text-[11px] font-medium transition-all duration-150 ${tab.isActive ? 'font-semibold text-foreground' : ''}`}>
+              <Icon 
+                className={`h-[22px] w-[22px] transition-all duration-200 ${tab.isActive ? 'stroke-[2.5]' : 'stroke-[1.5]'}`} 
+                strokeWidth={tab.isActive ? 2.5 : 1.5}
+              />
+              <span className={`text-[10px] font-medium transition-all duration-200 ${tab.isActive ? 'font-semibold' : ''}`}>
                 {tab.label}
               </span>
             </button>
