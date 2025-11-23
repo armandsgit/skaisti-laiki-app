@@ -10,9 +10,10 @@ interface LocationMapProps {
   address?: string;
   className?: string;
   showOpenButton?: boolean;
+  professionalName?: string;
 }
 
-const LocationMap = ({ latitude, longitude, address, className = '', showOpenButton = true }: LocationMapProps) => {
+const LocationMap = ({ latitude, longitude, address, className = '', showOpenButton = true, professionalName }: LocationMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
 
@@ -28,14 +29,16 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
       zoom: 15,
     });
 
-    // Create custom marker - same style as AllMastersMap
+    // Create custom marker - same style as AllMastersMap with professional's initial
     const markerEl = document.createElement('div');
     markerEl.className = 'custom-map-marker';
+    
+    const initial = professionalName?.charAt(0).toUpperCase() || '?';
     
     markerEl.innerHTML = `
       <div class="marker-container">
         <div class="marker-badge">
-          <span class="marker-rating">📍</span>
+          <span class="marker-rating">${initial}</span>
         </div>
         <div class="marker-pointer"></div>
       </div>
