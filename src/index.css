@@ -666,10 +666,12 @@
      CUSTOM MAP MARKERS - Modern Bolt/Wolt/Fresha Style
      ======================================== */
   .custom-map-marker {
-    position: relative;
+    position: relative !important;
     cursor: pointer;
     pointer-events: auto;
     transition: transform 0.15s ease-out;
+    width: auto !important;
+    height: auto !important;
   }
 
   .marker-container {
@@ -677,6 +679,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: auto;
+    height: auto;
   }
 
   .marker-badge {
@@ -742,12 +746,6 @@
       border-left: 7px solid transparent;
       border-right: 7px solid transparent;
       border-top: 9px solid #1a1a1a;
-    }
-    
-    /* Force Mapbox marker container size on mobile */
-    .mapboxgl-marker {
-      width: 28px !important;
-      height: 28px !important;
     }
   }
   
