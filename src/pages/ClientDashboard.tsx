@@ -204,33 +204,35 @@ const ClientDashboard = () => {
                           </div>
 
                           {/* Content */}
-                          <div className="p-4 space-y-2">
-                            <h3 className="font-bold text-[18px] text-foreground truncate">
+                          <div className="p-4 space-y-2.5">
+                            <h3 className="font-bold text-[20px] text-foreground truncate">
                               {prof.profiles?.name}
                             </h3>
                             
                             {/* Rating */}
                             <div className="flex items-center gap-1.5">
-                              <Star className="h-4 w-4 fill-foreground stroke-foreground" />
-                              <span className="text-[15px] font-semibold text-foreground">
+                              <Star className="h-[18px] w-[18px] fill-foreground stroke-foreground" />
+                              <span className="text-[16px] font-semibold text-foreground">
                                 {prof.rating ? prof.rating.toFixed(1) : '5.0'}
                               </span>
-                              <span className="text-[14px] text-muted-foreground">
+                              <span className="text-[15px] text-muted-foreground">
                                 ({prof.total_reviews || 0})
                               </span>
                             </div>
 
-                            {/* Location */}
-                            <div className="flex items-start gap-1.5 pt-1">
-                              <MapPin className="h-4 w-4 text-muted-foreground stroke-[1.5] mt-0.5 flex-shrink-0" />
-                              <span className="text-[14px] text-muted-foreground line-clamp-2">
-                                {prof.address || prof.city}
-                              </span>
-                            </div>
+                            {/* Location - Address */}
+                            {prof.address && (
+                              <div className="flex items-start gap-2 pt-0.5">
+                                <MapPin className="h-4 w-4 text-muted-foreground stroke-[1.5] mt-0.5 flex-shrink-0" />
+                                <span className="text-[14px] text-muted-foreground line-clamp-2 leading-relaxed">
+                                  {prof.address}
+                                </span>
+                              </div>
+                            )}
 
                             {/* Category */}
-                            <div className="pt-2">
-                              <span className="text-[13px] text-muted-foreground">
+                            <div className="pt-1">
+                              <span className="text-[14px] text-muted-foreground">
                                 {prof.category}
                               </span>
                             </div>
@@ -284,33 +286,35 @@ const ClientDashboard = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="p-4 space-y-2">
-                          <h3 className="font-bold text-[18px] text-foreground truncate">
+                        <div className="p-4 space-y-2.5">
+                          <h3 className="font-bold text-[20px] text-foreground truncate">
                             {prof.profiles?.name}
                           </h3>
                           
                           {/* Rating */}
                           <div className="flex items-center gap-1.5">
-                            <Star className="h-4 w-4 fill-foreground stroke-foreground" />
-                            <span className="text-[15px] font-semibold text-foreground">
+                            <Star className="h-[18px] w-[18px] fill-foreground stroke-foreground" />
+                            <span className="text-[16px] font-semibold text-foreground">
                               {prof.rating ? prof.rating.toFixed(1) : '5.0'}
                             </span>
-                            <span className="text-[14px] text-muted-foreground">
+                            <span className="text-[15px] text-muted-foreground">
                               ({prof.total_reviews || 0})
                             </span>
                           </div>
 
-                          {/* Location */}
-                          <div className="flex items-start gap-1.5 pt-1">
-                            <MapPin className="h-4 w-4 text-muted-foreground stroke-[1.5] mt-0.5 flex-shrink-0" />
-                            <span className="text-[14px] text-muted-foreground line-clamp-2">
-                              {prof.address || prof.city}
-                            </span>
-                          </div>
+                          {/* Location - Address */}
+                          {prof.address && (
+                            <div className="flex items-start gap-2 pt-0.5">
+                              <MapPin className="h-4 w-4 text-muted-foreground stroke-[1.5] mt-0.5 flex-shrink-0" />
+                              <span className="text-[14px] text-muted-foreground line-clamp-2 leading-relaxed">
+                                {prof.address}
+                              </span>
+                            </div>
+                          )}
 
                           {/* Category */}
-                          <div className="pt-2">
-                            <span className="text-[13px] text-muted-foreground">
+                          <div className="pt-1">
+                            <span className="text-[14px] text-muted-foreground">
                               {prof.category}
                             </span>
                           </div>
