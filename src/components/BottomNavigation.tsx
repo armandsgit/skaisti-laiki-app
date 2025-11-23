@@ -35,18 +35,17 @@ const BottomNavigation = () => {
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get('tab');
   
-  // Determine which navigation to show based on user role
-  // Admin role takes highest priority
+  // CRITICAL: Admin role ALWAYS gets admin navigation, no matter what page they're on
   const isAdminPanel = userRole === 'ADMIN';
   
-  // Check if viewing someone else's professional profile (only for non-admins)
+  // Only check these if NOT an admin
   const isViewingOthersProfile = !isAdminPanel && 
                                  location.pathname.startsWith('/professional/') && 
                                  location.pathname !== '/professional' && 
                                  location.pathname !== '/professional/settings';
   
-  const isProfessionalUser = userRole === 'PROFESSIONAL' && !isViewingOthersProfile && !isAdminPanel;
-  const isClientUser = (userRole === 'CLIENT' || isViewingOthersProfile) && !isAdminPanel;
+  const isProfessionalUser = !isAdminPanel && userRole === 'PROFESSIONAL' && !isViewingOthersProfile;
+  const isClientUser = !isAdminPanel && (userRole === 'CLIENT' || isViewingOthersProfile);
   
   const tabs = isAdminPanel ? [
     { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab && location.pathname === '/admin', scrollToTop: true },
