@@ -312,16 +312,16 @@ export default function ProfessionalSettings() {
         <div className="space-y-6">
           {/* User Profile Card */}
           <Card className="border-0 shadow-card">
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <CardTitle className="text-base sm:text-lg">Lietotāja profils</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Lietotāja profils</CardTitle>
               <Dialog open={editProfileDialogOpen} onOpenChange={setEditProfileDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                  <Button size="sm" variant="outline">
                     <Edit className="w-4 h-4 mr-2" />
                     Labot
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-[95vw] max-w-md max-h-[85vh] overflow-y-auto">
+                <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Labot profilu</DialogTitle>
                   </DialogHeader>
@@ -364,17 +364,17 @@ export default function ProfessionalSettings() {
               </Dialog>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3 sm:gap-4">
-                <Avatar className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16">
                   <AvatarImage src={userProfile?.avatar} alt={userProfile?.name} />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
                     {userProfile?.name?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-base sm:text-lg truncate">{userProfile?.name}</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{userProfile?.email}</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">{userProfile?.phone || 'Nav telefona'}</p>
+                <div>
+                  <p className="font-semibold text-lg">{userProfile?.name}</p>
+                  <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
+                  <p className="text-sm text-muted-foreground">{userProfile?.phone || 'Nav telefona'}</p>
                 </div>
               </div>
             </CardContent>
@@ -383,16 +383,16 @@ export default function ProfessionalSettings() {
           {/* Professional Info Card */}
           {profile && (
             <Card className="border-0 shadow-card">
-              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <CardTitle className="text-base sm:text-lg">Profesionālā informācija</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Profesionālā informācija</CardTitle>
                 <Dialog open={editProfessionalInfoOpen} onOpenChange={setEditProfessionalInfoOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                    <Button size="sm" variant="outline">
                       <Edit className="w-4 h-4 mr-2" />
                       Labot
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-y-auto">
+                  <DialogContent className="max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Labot profesionālo informāciju</DialogTitle>
                     </DialogHeader>
@@ -464,30 +464,30 @@ export default function ProfessionalSettings() {
                   </DialogContent>
                 </Dialog>
               </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4">
+              <CardContent className="space-y-4">
                 <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Kategorija</p>
-                  <p className="font-semibold text-sm sm:text-base">{profile.category}</p>
+                  <p className="text-sm text-muted-foreground">Kategorija</p>
+                  <p className="font-semibold">{profile.category}</p>
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Pilsēta</p>
-                  <p className="font-semibold text-sm sm:text-base">{profile.city}</p>
+                  <p className="text-sm text-muted-foreground">Pilsēta</p>
+                  <p className="font-semibold">{profile.city}</p>
                 </div>
                 {profile.address && (
                   <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Adrese</p>
-                    <p className="font-semibold text-sm sm:text-base break-words">{profile.address}</p>
+                    <p className="text-sm text-muted-foreground">Adrese</p>
+                    <p className="font-semibold">{profile.address}</p>
                   </div>
                 )}
                 {profile.bio && (
                   <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Bio</p>
-                    <p className="text-xs sm:text-sm break-words">{profile.bio}</p>
+                    <p className="text-sm text-muted-foreground">Bio</p>
+                    <p className="text-sm">{profile.bio}</p>
                   </div>
                 )}
                 {profile.latitude && profile.longitude && (
                   <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">Atrašanās vieta</p>
+                    <p className="text-sm text-muted-foreground mb-2">Atrašanās vieta</p>
                     <LocationMap latitude={profile.latitude} longitude={profile.longitude} />
                   </div>
                 )}
@@ -499,11 +499,11 @@ export default function ProfessionalSettings() {
           {profile && (
             <Card className="border-0 shadow-card">
               <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Foto galerija</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Pievienojiet bildes savai galerijai</CardDescription>
+                <CardTitle>Foto galerija</CardTitle>
+                <CardDescription>Pievienojiet bildes savai galerijai</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
+                <div className="grid grid-cols-3 gap-3 mb-4">
                   {profile.gallery?.map((imageUrl: string, index: number) => (
                     <div key={index} className="relative aspect-square group">
                       <img
@@ -514,10 +514,10 @@ export default function ProfessionalSettings() {
                       <Button
                         size="icon"
                         variant="destructive"
-                        className="absolute top-1 right-1 sm:top-2 sm:right-2 h-8 w-8 sm:h-10 sm:w-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => handleDeleteImage(imageUrl)}
                       >
-                        <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <XCircle className="w-4 h-4" />
                       </Button>
                     </div>
                   ))}
@@ -527,9 +527,8 @@ export default function ProfessionalSettings() {
                   accept="image/*"
                   onChange={handleImageUpload}
                   disabled={uploadingImage}
-                  className="text-xs sm:text-sm"
                 />
-                {uploadingImage && <p className="text-xs sm:text-sm text-muted-foreground mt-2">Augšupielādē...</p>}
+                {uploadingImage && <p className="text-sm text-muted-foreground mt-2">Augšupielādē...</p>}
               </CardContent>
             </Card>
           )}
