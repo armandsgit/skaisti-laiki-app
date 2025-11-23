@@ -140,9 +140,20 @@ const ClientBookings = () => {
                           )}
                           
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-base">
-                              {booking.staff_members?.name || booking.professional_profiles?.profiles?.name}
-                            </h4>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-base">
+                                {booking.staff_members?.name || booking.professional_profiles?.profiles?.name}
+                              </h4>
+                              <Badge 
+                                variant={
+                                  booking.status === 'confirmed' ? 'default' :
+                                  booking.status === 'canceled' ? 'destructive' : 'outline'
+                                }
+                                className="text-xs px-2 py-0.5"
+                              >
+                                {t[booking.status as keyof typeof t] || booking.status}
+                              </Badge>
+                            </div>
                             <p className="text-xs text-muted-foreground">
                               {booking.professional_profiles?.profiles?.name}
                             </p>
@@ -150,16 +161,6 @@ const ClientBookings = () => {
                               {booking.services?.name}
                             </p>
                           </div>
-                          
-                          <Badge 
-                            variant={
-                              booking.status === 'confirmed' ? 'default' :
-                              booking.status === 'canceled' ? 'destructive' : 'outline'
-                            }
-                            className="text-xs px-2.5 py-1 whitespace-nowrap flex-shrink-0 self-start"
-                          >
-                            {t[booking.status as keyof typeof t] || booking.status}
-                          </Badge>
                         </div>
                         
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -216,9 +217,17 @@ const ClientBookings = () => {
                               )}
                               
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-base text-muted-foreground">
-                                  {booking.staff_members?.name || booking.professional_profiles?.profiles?.name}
-                                </h4>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-semibold text-base text-muted-foreground">
+                                    {booking.staff_members?.name || booking.professional_profiles?.profiles?.name}
+                                  </h4>
+                                  <Badge 
+                                    variant="secondary"
+                                    className="text-xs px-2 py-0.5"
+                                  >
+                                    {t[booking.status as keyof typeof t] || booking.status}
+                                  </Badge>
+                                </div>
                                 <p className="text-xs text-muted-foreground">
                                   {booking.professional_profiles?.profiles?.name}
                                 </p>
@@ -226,13 +235,6 @@ const ClientBookings = () => {
                                   {booking.services?.name}
                                 </p>
                               </div>
-                              
-                              <Badge 
-                                variant="secondary"
-                                className="text-xs px-2.5 py-1 whitespace-nowrap flex-shrink-0 self-start"
-                              >
-                                {t[booking.status as keyof typeof t] || booking.status}
-                              </Badge>
                             </div>
                             
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
