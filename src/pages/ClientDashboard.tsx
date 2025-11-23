@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Calendar, Search, Star, MapPin, Sparkles, User } from 'lucide-react';
+import { Calendar, Search, Star, MapPin, Sparkles, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -143,7 +143,7 @@ const ClientDashboard = () => {
         <div className="max-w-screen-sm mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold">BeautyOn</h1>
           <Button variant="ghost" size="icon" onClick={signOut}>
-            <User className="w-5 h-5" />
+            <LogOut className="w-5 h-5" />
           </Button>
         </div>
       </header>
