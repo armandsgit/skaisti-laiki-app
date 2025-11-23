@@ -165,6 +165,85 @@ export type Database = {
         }
         Relationships: []
       }
+      email_credits: {
+        Row: {
+          credits: number
+          master_id: string
+          updated_at: string
+        }
+        Insert: {
+          credits?: number
+          master_id: string
+          updated_at?: string
+        }
+        Update: {
+          credits?: number
+          master_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_credits_master_id_fkey"
+            columns: ["master_id"]
+            isOneToOne: true
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_packages: {
+        Row: {
+          credits: number
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          credits: number
+          id: string
+          name: string
+          price: number
+        }
+        Update: {
+          credits?: number
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      email_usage: {
+        Row: {
+          created_at: string
+          id: string
+          master_id: string
+          recipient: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          master_id: string
+          recipient: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          master_id?: string
+          recipient?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_usage_master_id_fkey"
+            columns: ["master_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       master_services: {
         Row: {
           created_at: string | null
