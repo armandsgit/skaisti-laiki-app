@@ -154,61 +154,6 @@ const ClientDashboard = () => {
               </div>
             </div>
           </div> : <>
-            {/* Recently Viewed */}
-            {recentlyViewed.length > 0 && <div className="space-y-5">
-                <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
-                  Nesen skatītie
-                </h2>
-                <Carousel opts={{
-            align: "start",
-            loop: false
-          }} className="w-full">
-                  <CarouselContent className="-ml-4 px-5 sm:px-6">
-                    {recentlyViewed.map(prof => <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
-                        <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-[24px] shadow-sm">
-                          {/* Image */}
-                          <div className="relative w-full h-[200px] bg-muted overflow-hidden">
-                            {/* Category Badge in Top-Right Corner */}
-                            <div className="absolute top-3 right-3 z-10">
-                              <span className="px-3 py-1 text-xs font-medium bg-black text-white rounded-full shadow-lg backdrop-blur-sm">
-                                {prof.category}
-                              </span>
-                            </div>
-                            {(prof as any).gallery && (prof as any).gallery.length > 0 ? <img src={(prof as any).gallery[0]} alt={prof.profiles?.name || ''} className="w-full h-full object-cover" /> : prof.profiles?.avatar ? <img src={prof.profiles.avatar} alt={prof.profiles.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-muted">
-                                <User className="h-16 w-16 text-muted-foreground stroke-[1.5]" />
-                              </div>}
-                          </div>
-
-                          {/* Content */}
-                          <div className="p-4 space-y-2.5">
-                            <h3 className="font-bold text-[20px] text-foreground truncate">
-                              {prof.profiles?.name}
-                            </h3>
-                            
-                            {/* Rating */}
-                            <div className="flex items-center gap-1.5">
-                              <Star className="h-[18px] w-[18px] fill-foreground stroke-foreground" />
-                              <span className="text-[16px] font-semibold text-foreground">
-                                {prof.rating ? prof.rating.toFixed(1) : '5.0'}
-                              </span>
-                              <span className="text-[15px] text-muted-foreground">
-                                ({prof.total_reviews || 0})
-                              </span>
-                            </div>
-
-                          {/* Location with Distance */}
-                          <div className="pt-0.5">
-                            <span className="text-[13px] text-[#6A6A6A] leading-tight block">
-                              {prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
-                            </span>
-                          </div>
-                          </div>
-                        </Card>
-                      </CarouselItem>)}
-                  </CarouselContent>
-                </Carousel>
-              </div>}
-
             {/* Recommended / Nearby */}
             <div className="space-y-5">
               <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
@@ -263,6 +208,61 @@ const ClientDashboard = () => {
                 </CarouselContent>
               </Carousel>
             </div>
+
+            {/* Recently Viewed */}
+            {recentlyViewed.length > 0 && <div className="space-y-5">
+                <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
+                  Nesen skatītie
+                </h2>
+                <Carousel opts={{
+            align: "start",
+            loop: false
+          }} className="w-full">
+                  <CarouselContent className="-ml-4 px-5 sm:px-6">
+                    {recentlyViewed.map(prof => <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
+                        <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-[24px] shadow-sm">
+                          {/* Image */}
+                          <div className="relative w-full h-[200px] bg-muted overflow-hidden">
+                            {/* Category Badge in Top-Right Corner */}
+                            <div className="absolute top-3 right-3 z-10">
+                              <span className="px-3 py-1 text-xs font-medium bg-black text-white rounded-full shadow-lg backdrop-blur-sm">
+                                {prof.category}
+                              </span>
+                            </div>
+                            {(prof as any).gallery && (prof as any).gallery.length > 0 ? <img src={(prof as any).gallery[0]} alt={prof.profiles?.name || ''} className="w-full h-full object-cover" /> : prof.profiles?.avatar ? <img src={prof.profiles.avatar} alt={prof.profiles.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-muted">
+                                <User className="h-16 w-16 text-muted-foreground stroke-[1.5]" />
+                              </div>}
+                          </div>
+
+                          {/* Content */}
+                          <div className="p-4 space-y-2.5">
+                            <h3 className="font-bold text-[20px] text-foreground truncate">
+                              {prof.profiles?.name}
+                            </h3>
+                            
+                            {/* Rating */}
+                            <div className="flex items-center gap-1.5">
+                              <Star className="h-[18px] w-[18px] fill-foreground stroke-foreground" />
+                              <span className="text-[16px] font-semibold text-foreground">
+                                {prof.rating ? prof.rating.toFixed(1) : '5.0'}
+                              </span>
+                              <span className="text-[15px] text-muted-foreground">
+                                ({prof.total_reviews || 0})
+                              </span>
+                            </div>
+
+                          {/* Location with Distance */}
+                          <div className="pt-0.5">
+                            <span className="text-[13px] text-[#6A6A6A] leading-tight block">
+                              {prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                            </span>
+                          </div>
+                          </div>
+                        </Card>
+                      </CarouselItem>)}
+                  </CarouselContent>
+                </Carousel>
+              </div>}
           </>}
 
       </main>
