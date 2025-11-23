@@ -184,7 +184,7 @@ export default function ClientSettings() {
                 <Button
                   onClick={handleSaveProfile}
                   disabled={saving}
-                  className="w-full bg-gradient-to-r from-primary to-secondary"
+                  className="w-full"
                 >
                   {saving ? 'Saglabā...' : 'Saglabāt izmaiņas'}
                 </Button>
