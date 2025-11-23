@@ -173,20 +173,20 @@ const ClientDashboard = () => {
                               </span>
                             </div>
 
-                            {/* Location with Distance */}
-                            <div className="flex items-center gap-2 pt-0.5">
-                              <MapPin className="h-4 w-4 text-[#7D7D7D] stroke-[1.5] flex-shrink-0" />
-                              <span className="text-[14px] text-[#7D7D7D] truncate">
-                                {prof.city} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
-                              </span>
-                            </div>
+                          {/* Location with Distance */}
+                          <div className="flex items-center gap-1.5 pt-0.5">
+                            <MapPin className="h-[14px] w-[14px] text-[#7D7D7D] stroke-[1.5] flex-shrink-0" />
+                            <span className="text-[13px] text-[#7D7D7D] leading-tight">
+                              {prof.city} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                            </span>
+                          </div>
 
-                            {/* Category */}
-                            <div className="pt-1">
-                              <span className="text-[14px] text-muted-foreground">
-                                {prof.category}
-                              </span>
-                            </div>
+                          {/* Category */}
+                          <div className="pt-1">
+                            <span className="text-[13px] text-muted-foreground">
+                              {prof.category}
+                            </span>
+                          </div>
                           </div>
                         </Card>
                       </CarouselItem>)}
@@ -230,20 +230,20 @@ const ClientDashboard = () => {
                             </span>
                           </div>
 
-                          {/* Location with Distance */}
-                          <div className="flex items-center gap-2 pt-0.5">
-                            <MapPin className="h-4 w-4 text-[#7D7D7D] stroke-[1.5] flex-shrink-0" />
-                            <span className="text-[14px] text-[#7D7D7D] truncate">
-                              {prof.city} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
-                            </span>
-                          </div>
+                        {/* Location with Distance */}
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <MapPin className="h-[14px] w-[14px] text-[#7D7D7D] stroke-[1.5] flex-shrink-0" />
+                          <span className="text-[13px] text-[#7D7D7D] leading-tight">
+                            {prof.city} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                          </span>
+                        </div>
 
-                          {/* Category */}
-                          <div className="pt-1">
-                            <span className="text-[14px] text-muted-foreground">
-                              {prof.category}
-                            </span>
-                          </div>
+                        {/* Category */}
+                        <div className="pt-1">
+                          <span className="text-[13px] text-muted-foreground">
+                            {prof.category}
+                          </span>
+                        </div>
                         </div>
                       </Card>
                     </CarouselItem>)}
