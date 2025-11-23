@@ -122,7 +122,7 @@ const ClientDashboard = () => {
                 Tieši tev
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
-                Sveiks, {profile?.name || 'Viesis'}
+                Sveiki, {profile?.name || 'Viesis'}
               </p>
             </div>
             <button onClick={() => navigate('/map')} className="p-3 rounded-full border border-border/30 hover:border-border transition-all duration-200 active:scale-95">
