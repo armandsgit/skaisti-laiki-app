@@ -135,18 +135,41 @@ const ClientDashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto space-y-8 pb-6">
-        {/* Search Bar */}
+        {/* Search Bar - Completely New Component */}
         <div className="px-4 sm:px-6 pt-2">
-          <div className="relative">
-            <div className="absolute left-[28px] top-1/2 -translate-y-1/2 pointer-events-none z-10">
-              <Search className="h-5 w-5 text-muted-foreground" />
+          <div className="relative w-full">
+            {/* Icon - Absolute positioned */}
+            <div 
+              className="absolute pointer-events-none"
+              style={{
+                left: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 10
+              }}
+            >
+              <Search className="h-5 w-5 text-[#6B6B6B]" />
             </div>
+            
+            {/* Input Field */}
             <input
               type="text"
               placeholder="Meklēt..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-[44px] pr-4 py-6 text-base rounded-2xl border border-border/30 bg-white focus:border-foreground focus:outline-none transition-all"
+              style={{
+                width: '100%',
+                height: '44px',
+                paddingLeft: '48px',
+                paddingRight: '16px',
+                borderRadius: '9999px',
+                backgroundColor: '#F7F7F7',
+                border: '1px solid #E5E5E5',
+                fontSize: '15px',
+                outline: 'none',
+                transition: 'all 0.2s ease'
+              }}
+              className="focus:bg-white focus:border-[#000000]"
             />
           </div>
         </div>
