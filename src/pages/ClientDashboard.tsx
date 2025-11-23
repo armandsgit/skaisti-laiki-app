@@ -26,24 +26,89 @@ const ClientDashboard = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<SortedMaster[]>([]);
+  const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
+  
   useEffect(() => {
     if (user) {
       initializeData();
       loadCategories();
       loadProfile();
-      loadRecentlyViewed();
+      loadRecentlyViewedIds();
     }
   }, [user]);
-  const loadRecentlyViewed = () => {
-    const viewed = localStorage.getItem('recentlyViewed');
+
+  useEffect(() => {
+    if (recentlyViewedIds.length > 0 && userLocation) {
+      loadRecentlyViewedData();
+    }
+  }, [recentlyViewedIds, userLocation]);
+
+  // Real-time subscription for professional profile updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('professional-profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'professional_profiles'
+        },
+        (payload) => {
+          // Reload data when any professional profile changes
+          if (userLocation) {
+            loadProfessionals(userLocation);
+            if (recentlyViewedIds.length > 0) {
+              loadRecentlyViewedData();
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userLocation, recentlyViewedIds]);
+
+  const loadRecentlyViewedIds = () => {
+    const viewed = localStorage.getItem('recentlyViewedIds');
     if (viewed) {
       try {
         const parsedViewed = JSON.parse(viewed);
-        setRecentlyViewed(parsedViewed.slice(0, 10)); // Keep last 10
+        setRecentlyViewedIds(parsedViewed.slice(0, 10)); // Keep last 10
       } catch (e) {
         console.error('Error parsing recently viewed:', e);
       }
     }
+  };
+
+  const loadRecentlyViewedData = async () => {
+    if (!userLocation || recentlyViewedIds.length === 0) return;
+
+    const { data, error } = await supabase
+      .from('professional_profiles')
+      .select(`
+        *,
+        profiles!professional_profiles_user_id_fkey(name, avatar)
+      `)
+      .in('id', recentlyViewedIds)
+      .eq('approved', true)
+      .eq('active', true)
+      .eq('is_blocked', false);
+
+    if (error) {
+      console.error('Error loading recently viewed:', error);
+      return;
+    }
+
+    // Sort by the order in recentlyViewedIds
+    const sortedData = recentlyViewedIds
+      .map(id => data?.find(prof => prof.id === id))
+      .filter(Boolean) as any[];
+
+    const sortedMasters = getSortedMasters(sortedData, userLocation.lat, userLocation.lon);
+    setRecentlyViewed(sortedMasters);
   };
   const loadProfile = async () => {
     const {
@@ -92,9 +157,10 @@ const ClientDashboard = () => {
     return matchesCategory;
   });
   const handleMasterClick = (master: SortedMaster) => {
-    // Save to recently viewed
-    const viewed = localStorage.getItem('recentlyViewed');
-    let viewedList: SortedMaster[] = [];
+    // Save only ID to recently viewed
+    const viewed = localStorage.getItem('recentlyViewedIds');
+    let viewedList: string[] = [];
+    
     if (viewed) {
       try {
         viewedList = JSON.parse(viewed);
@@ -104,11 +170,13 @@ const ClientDashboard = () => {
     }
 
     // Remove if already exists and add to beginning
-    viewedList = viewedList.filter(v => v.id !== master.id);
-    viewedList.unshift(master);
+    viewedList = viewedList.filter(id => id !== master.id);
+    viewedList.unshift(master.id);
     viewedList = viewedList.slice(0, 10); // Keep only last 10
 
-    localStorage.setItem('recentlyViewed', JSON.stringify(viewedList));
+    localStorage.setItem('recentlyViewedIds', JSON.stringify(viewedList));
+    setRecentlyViewedIds(viewedList);
+    
     navigate(`/professional/${master.id}`);
   };
   return <div className="min-h-screen bg-[#FAFAFA] pb-20">
