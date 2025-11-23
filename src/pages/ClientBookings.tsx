@@ -40,6 +40,7 @@ const ClientBookings = () => {
         services(name, price),
         professional_profiles(
           id,
+          category,
           profiles!professional_profiles_user_id_fkey(name, avatar)
         ),
         staff_members(id, name, avatar, position)
@@ -113,10 +114,16 @@ const ClientBookings = () => {
                 .map((booking) => (
                   <Card 
                     key={booking.id} 
-                    className="border shadow-card overflow-hidden tap-feedback cursor-pointer hover:shadow-elegant transition-shadow"
+                    className="border shadow-card overflow-hidden tap-feedback cursor-pointer hover:shadow-elegant transition-shadow relative"
                     onClick={() => navigate(`/professional/${booking.professional_profiles?.id}`)}
                   >
                     <CardContent className="p-4">
+                      {/* Category Badge in Top-Right Corner */}
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className="px-3 py-1 text-xs font-medium bg-black text-white rounded-full shadow-sm">
+                          {booking.professional_profiles?.category}
+                        </span>
+                      </div>
                       <div className="flex flex-col gap-2">
                         <div className="flex items-start gap-3">
                           {/* Staff Member Avatar */}
@@ -183,10 +190,16 @@ const ClientBookings = () => {
                     .map((booking) => (
                       <Card 
                         key={booking.id} 
-                        className="border shadow-card overflow-hidden tap-feedback cursor-pointer hover:shadow-elegant transition-shadow opacity-60"
+                        className="border shadow-card overflow-hidden tap-feedback cursor-pointer hover:shadow-elegant transition-shadow opacity-60 relative"
                         onClick={() => navigate(`/professional/${booking.professional_profiles?.id}`)}
                       >
                         <CardContent className="p-4">
+                          {/* Category Badge in Top-Right Corner */}
+                          <div className="absolute top-3 right-3 z-10">
+                            <span className="px-3 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-full shadow-sm">
+                              {booking.professional_profiles?.category}
+                            </span>
+                          </div>
                           <div className="flex flex-col gap-2">
                             <div className="flex items-start gap-3">
                               {/* Staff Member Avatar */}
