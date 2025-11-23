@@ -35,6 +35,7 @@ import SuspendUserModal from "@/components/SuspendUserModal";
 import RestoreUserModal from "@/components/RestoreUserModal";
 import StatusBadge from "@/components/StatusBadge";
 import CategoryManager from "@/components/CategoryManager";
+import LoadingAnimation from '@/components/LoadingAnimation';
 
 const AdminDashboard = () => {
   const t = useTranslation("lv");
@@ -402,10 +403,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary animate-pulse" />
-          <p className="text-muted-foreground">{t.loading}</p>
-        </div>
+        <LoadingAnimation size={100} text={t.loading} />
       </div>
     );
   }
