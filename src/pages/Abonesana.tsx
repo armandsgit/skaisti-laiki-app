@@ -79,6 +79,7 @@ export default function Abonesana() {
           description: 'Lūdzu piesakieties, lai turpinātu',
           variant: 'destructive',
         });
+        setLoading(null);
         navigate('/auth');
         return;
       }
@@ -95,6 +96,7 @@ export default function Abonesana() {
           description: 'Profesionāla profila nav atrasts',
           variant: 'destructive',
         });
+        setLoading(null);
         return;
       }
 
@@ -114,11 +116,15 @@ export default function Abonesana() {
           description: 'Neizdevās izveidot maksājumu sesiju',
           variant: 'destructive',
         });
+        setLoading(null);
         return;
       }
 
       if (data?.url) {
+        // Don't reset loading here - page will redirect
         window.location.href = data.url;
+      } else {
+        setLoading(null);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -127,7 +133,6 @@ export default function Abonesana() {
         description: 'Radās neparedzēta kļūda',
         variant: 'destructive',
       });
-    } finally {
       setLoading(null);
     }
   };
