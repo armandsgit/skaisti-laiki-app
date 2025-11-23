@@ -685,10 +685,10 @@
 
   .marker-badge {
     background: #000000;
-    border: none;
-    border-radius: 50px;
-    padding: 6px 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 2px solid #FFFFFF;
+    border-radius: 100px;
+    padding: 5px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -699,11 +699,11 @@
 
   .marker-rating {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     color: #FFFFFF;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 
   .marker-pointer {
@@ -734,14 +734,15 @@
   /* Mobile Responsive Markers - 320px to 430px */
   @media (max-width: 430px) {
     .marker-badge {
-      padding: 5px 8px;
+      padding: 4px 10px;
       min-width: 40px;
-      border-radius: 50px;
+      border-radius: 100px;
+      border: 2px solid #FFFFFF;
     }
     
     .marker-rating {
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
     }
     
     .marker-pointer {
@@ -754,12 +755,14 @@
   
   @media (min-width: 320px) and (max-width: 360px) {
     .marker-badge {
-      padding: 4px 8px;
-      min-width: 36px;
+      padding: 4px 10px;
+      min-width: 38px;
+      border: 2px solid #FFFFFF;
     }
     
     .marker-rating {
       font-size: 11px;
+      font-weight: 600;
     }
   }
   
