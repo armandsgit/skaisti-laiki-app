@@ -330,7 +330,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                       w-14 h-7 rounded-full relative flex-shrink-0 cursor-pointer ml-3
                       transition-all duration-300 ease-out
                       ${formData.showOnProfile
-                        ? 'bg-gradient-to-r from-primary to-secondary'
+                        ? 'bg-black'
                         : 'bg-gray-300'
                       }
                     `}
@@ -369,8 +369,8 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                               flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer
                               transition-all duration-200 active:scale-[0.98]
                               ${isSelected
-                                ? 'border-primary bg-gradient-to-r from-primary/10 to-secondary/10 shadow-sm'
-                                : 'border-gray-200 bg-white hover:border-primary/40 hover:bg-gray-50'
+                                ? 'border-black bg-black/5 shadow-sm'
+                                : 'border-gray-200 bg-white hover:border-black/40 hover:bg-gray-50'
                               }
                             `}
                           >

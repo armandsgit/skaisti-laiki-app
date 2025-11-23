@@ -244,7 +244,7 @@ const Auth = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-white font-semibold rounded-2xl shadow-soft mt-6 text-base"
+                  className="w-full h-12 bg-black text-white hover:opacity-90 transition-opacity font-semibold rounded-2xl shadow-soft mt-6 text-base"
                   disabled={loading}
                 >
                   {loading ? t.loading : t.login}
@@ -301,7 +301,7 @@ const Auth = () => {
                       type="button"
                       variant={registerRole === 'CLIENT' ? 'default' : 'outline'}
                       onClick={() => setRegisterRole('CLIENT')}
-                      className={`h-12 rounded-2xl text-base ${registerRole === 'CLIENT' ? 'bg-primary text-white' : ''}`}
+                      className={`h-12 rounded-2xl text-base ${registerRole === 'CLIENT' ? 'bg-black text-white' : ''}`}
                     >
                       {t.client}
                     </Button>
@@ -309,7 +309,7 @@ const Auth = () => {
                       type="button"
                       variant={registerRole === 'PROFESSIONAL' ? 'default' : 'outline'}
                       onClick={() => setRegisterRole('PROFESSIONAL')}
-                      className={`h-12 rounded-2xl text-base ${registerRole === 'PROFESSIONAL' ? 'bg-primary text-white' : ''}`}
+                      className={`h-12 rounded-2xl text-base ${registerRole === 'PROFESSIONAL' ? 'bg-black text-white' : ''}`}
                     >
                       {t.professional}
                     </Button>
@@ -378,7 +378,7 @@ const Auth = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-white font-semibold rounded-2xl shadow-soft mt-6 text-base"
+                  className="w-full h-12 bg-black text-white hover:opacity-90 transition-opacity font-semibold rounded-2xl shadow-soft mt-6 text-base"
                   disabled={loading || geocoding}
                 >
                   {loading || geocoding ? t.loading : t.createAccount}
