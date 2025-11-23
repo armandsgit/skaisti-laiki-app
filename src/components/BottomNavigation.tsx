@@ -9,20 +9,35 @@ const BottomNavigation = () => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Load user role from profiles table
+  // Load user role from both user_roles (for ADMIN) and profiles (for other roles)
   useEffect(() => {
     const loadUserRole = async () => {
       if (!user?.id) return;
       
       const { supabase } = await import('@/integrations/supabase/client');
-      const { data } = await supabase
+      
+      // First check if user has ADMIN role in user_roles table
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'ADMIN')
+        .maybeSingle();
+      
+      if (adminRole) {
+        setUserRole('ADMIN');
+        return;
+      }
+      
+      // If not admin, check profiles table for other roles
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
       
-      if (data) {
-        setUserRole(data.role);
+      if (profileData) {
+        setUserRole(profileData.role);
       }
     };
     
