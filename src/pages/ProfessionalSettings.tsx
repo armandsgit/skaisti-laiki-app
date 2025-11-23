@@ -16,7 +16,7 @@ import EditableLocationMap from '@/components/EditableLocationMap';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import { toast } from 'sonner';
-import { ArrowLeft, Edit, XCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, Edit, XCircle, Sparkles, LogOut } from 'lucide-react';
 
 export default function ProfessionalSettings() {
   const { user, signOut } = useAuth();
@@ -288,27 +288,23 @@ export default function ProfessionalSettings() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="bg-card/80 backdrop-blur-sm border-b sticky top-0 z-10 shadow-soft">
+      <header className="bg-white border-b border-border/30 sticky top-0 z-10 shadow-soft">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/professional')}
-              size="sm"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Atpakaļ
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-card">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-black rounded-2xl flex items-center justify-center shadow-[0_2px_12px_rgba(0,0,0,0.12)]">
+              <span className="text-white text-lg font-bold tracking-tight">B</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold">Profila iestatījumi</h1>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">
+                BeautyOn
+              </h1>
+              <p className="text-xs text-muted-foreground">Meistara panelis</p>
             </div>
           </div>
+          
+          <Button variant="ghost" size="icon" onClick={signOut}>
+            <LogOut className="w-5 h-5 stroke-[1.5]" />
+          </Button>
         </div>
       </header>
 
