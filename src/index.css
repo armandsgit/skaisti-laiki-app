@@ -668,7 +668,7 @@
   .custom-map-marker {
     position: relative !important;
     cursor: pointer;
-    pointer-events: auto;
+    pointer-events: auto !important;
     transition: transform 0.15s ease-out;
     width: auto !important;
     height: auto !important;
@@ -695,6 +695,19 @@
     min-width: 48px;
     position: relative;
     z-index: 2;
+  }
+
+  .marker-badge-empty {
+    min-width: 36px;
+    padding: 8px;
+  }
+
+  .marker-dot {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    display: block;
   }
 
   .marker-rating {
@@ -727,8 +740,8 @@
   }
   
   .clickable-marker {
-    cursor: pointer;
-    pointer-events: auto;
+    cursor: pointer !important;
+    pointer-events: auto !important;
   }
   
   @media (max-width: 639px) {
@@ -736,6 +749,16 @@
       padding: 5px 10px;
       min-width: 42px;
       border-width: 2px;
+    }
+
+    .marker-badge-empty {
+      min-width: 32px;
+      padding: 7px;
+    }
+
+    .marker-dot {
+      width: 6px;
+      height: 6px;
     }
     
     .marker-rating {
