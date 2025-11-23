@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_TOKEN } from '@/lib/mapbox-config';
@@ -19,6 +19,7 @@ const EditableLocationMap = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -34,10 +35,18 @@ const EditableLocationMap = ({
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [initialLng, initialLat],
       zoom: 13,
+      attributionControl: false,
     });
 
     // Add navigation controls
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    
+    // Wait for map to load
+    map.current.on('load', () => {
+      setIsMapReady(true);
+      // Resize map after load
+      map.current?.resize();
+    });
 
     // Reverse geocode function
     const reverseGeocode = async (lat: number, lng: number) => {
@@ -129,13 +138,24 @@ const EditableLocationMap = ({
       onLocationChange(lat, lng, address, city);
     });
 
+    // Handle window resize
+    const handleResize = () => {
+      map.current?.resize();
+    };
+    
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
+      marker.current?.remove();
       map.current?.remove();
+      map.current = null;
     };
   }, []);
 
   // Update marker position when coordinates change externally
   useEffect(() => {
+    if (!map.current || !isMapReady) return;
     const reverseGeocode = async (lat: number, lng: number) => {
       try {
         const response = await fetch(
@@ -199,10 +219,13 @@ const EditableLocationMap = ({
   }, [latitude, longitude]);
 
   return (
-    <div 
-      ref={mapContainer} 
-      className={`w-full h-full ${className}`}
-    />
+    <div className={`relative w-full h-full min-h-[300px] ${className}`}>
+      <div 
+        ref={mapContainer} 
+        className="absolute inset-0 w-full h-full"
+        style={{ touchAction: 'pan-x pan-y' }}
+      />
+    </div>
   );
 };
 

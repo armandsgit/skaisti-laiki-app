@@ -469,23 +469,20 @@ export default function ProfessionalSettings() {
                         {/* Map Container - Fully Contained and Responsive */}
                         <div>
                           <Label>Atzīmējiet atrašanās vietu kartē</Label>
-                          <div className="w-full mt-2 rounded-2xl overflow-hidden border border-input">
-                            <div className="w-full aspect-[4/3]">
-                              <EditableLocationMap
-                                latitude={editedProfInfo.latitude}
-                                longitude={editedProfInfo.longitude}
-                                onLocationChange={(lat, lng, address, city) => {
-                                  setEditedProfInfo({
-                                    ...editedProfInfo,
-                                    latitude: lat,
-                                    longitude: lng,
-                                    address: address,
-                                    city: city
-                                  });
-                                }}
-                                className="w-full h-full"
-                              />
-                            </div>
+                          <div className="w-full h-[300px] sm:h-[400px] mt-2 rounded-2xl overflow-hidden border border-input">
+                            <EditableLocationMap
+                              latitude={editedProfInfo.latitude}
+                              longitude={editedProfInfo.longitude}
+                              onLocationChange={(lat, lng, address, city) => {
+                                setEditedProfInfo({
+                                  ...editedProfInfo,
+                                  latitude: lat,
+                                  longitude: lng,
+                                  address: address,
+                                  city: city
+                                });
+                              }}
+                            />
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
                             Noklikšķiniet uz kartes, lai atzīmētu savu atrašanās vietu
