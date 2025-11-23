@@ -63,7 +63,7 @@ const BookingSuccessModal = ({ open, onClose, bookingDetails }: BookingSuccessMo
           <div className="flex justify-center mb-6">
             <div className="relative w-24 h-24">
               {/* Outer circle with scale animation */}
-              <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-green-600 rounded-full animate-[scale-in_0.4s_ease-out]" />
+              <div className="absolute inset-0 bg-success rounded-full animate-[scale-in_0.4s_ease-out]" />
               
               {/* Inner white circle */}
               <div className="absolute inset-2 bg-white rounded-full animate-[scale-in_0.5s_ease-out_0.1s_both]" />
@@ -77,7 +77,7 @@ const BookingSuccessModal = ({ open, onClose, bookingDetails }: BookingSuccessMo
               >
                 <path
                   d="M5 13l4 4L19 7"
-                  stroke="url(#gradient)"
+                  stroke="#22c55e"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -87,12 +87,6 @@ const BookingSuccessModal = ({ open, onClose, bookingDetails }: BookingSuccessMo
                     strokeDashoffset: '20',
                   }}
                 />
-                <defs>
-                  <linearGradient id="gradient" x1="5" y1="7" x2="19" y2="17">
-                    <stop offset="0%" stopColor="#22c55e" />
-                    <stop offset="100%" stopColor="#16a34a" />
-                  </linearGradient>
-                </defs>
               </svg>
             </div>
           </div>
@@ -109,7 +103,7 @@ const BookingSuccessModal = ({ open, onClose, bookingDetails }: BookingSuccessMo
 
           {/* Info */}
           {bookingDetails && (
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-4 space-y-2 mt-4 animate-[fade-in_0.4s_ease-out_0.6s_both]">
+            <div className="bg-secondary rounded-2xl p-4 space-y-2 mt-4 animate-[fade-in_0.4s_ease-out_0.6s_both]">
               {bookingDetails.service && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-gray-600">Pakalpojums:</span>

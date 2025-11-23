@@ -245,7 +245,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
     return (
       <div className="w-full h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary animate-pulse" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary animate-pulse" />
           <p className="text-base font-semibold text-foreground">Ielādē kartes datus...</p>
         </div>
       </div>
