@@ -139,7 +139,7 @@ const BottomNavigation = () => {
     },
     { 
       icon: User, 
-      label: 'Konts', 
+      label: 'Profils', 
       path: '/client/settings', 
       isActive: location.pathname === '/client/settings' 
     },
