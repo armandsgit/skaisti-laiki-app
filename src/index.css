@@ -663,26 +663,58 @@
   }
   
   /* ========================================
-     CUSTOM MAP MARKERS - Pin with Rating
+     CUSTOM MAP MARKERS - Modern Bolt/Wolt/Fresha Style
      ======================================== */
   .custom-map-marker {
-    width: 48px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
     cursor: pointer;
     pointer-events: auto;
     transition: transform 0.15s ease-out;
-    margin-top: -60px; /* Offset for pin point */
-    margin-left: -24px;
   }
 
-  .custom-map-marker svg {
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+  .marker-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .custom-map-marker:active {
+  .marker-badge {
+    background: #1a1a1a;
+    border: 2.5px solid white;
+    border-radius: 20px;
+    padding: 6px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .marker-rating {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .marker-pointer {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid #1a1a1a;
+    position: relative;
+    margin-top: -3px;
+    z-index: 1;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
+  }
+
+  .custom-map-marker:active .marker-badge {
     transform: scale(0.95);
   }
   
@@ -696,20 +728,20 @@
   }
   
   @media (max-width: 639px) {
-    .custom-map-marker {
-      width: 40px;
-      height: 50px;
-      margin-top: -50px;
-      margin-left: -20px;
+    .marker-badge {
+      padding: 5px 10px;
+      min-width: 42px;
+      border-width: 2px;
     }
     
-    .custom-map-marker svg {
-      width: 40px;
-      height: 50px;
+    .marker-rating {
+      font-size: 12px;
     }
     
-    .custom-map-marker text {
-      font-size: 10px !important;
+    .marker-pointer {
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 9px solid #1a1a1a;
     }
     
     /* Force Mapbox marker container size on mobile */

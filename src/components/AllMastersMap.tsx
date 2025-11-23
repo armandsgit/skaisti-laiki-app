@@ -154,31 +154,20 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       // Add markers for filtered masters
       filteredMasters.forEach((master) => {
 
-        // Create custom marker - pin shape with rating
+        // Create custom marker - modern Bolt/Wolt/Fresha style
         const markerEl = document.createElement('div');
         markerEl.className = 'custom-map-marker clickable-marker';
         
         const rating = master.rating || 0;
-        const displayRating = rating > 0 ? rating.toFixed(1) : 'N/A';
+        const displayRating = rating > 0 ? rating.toFixed(1) : 'NEW';
         
         markerEl.innerHTML = `
-          <svg width="48" height="60" viewBox="0 0 48 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Pin shadow -->
-            <ellipse cx="24" cy="56" rx="8" ry="3" fill="rgba(0,0,0,0.15)"/>
-            
-            <!-- Pin body -->
-            <path d="M24 0C13.5 0 5 8.5 5 19C5 32 24 56 24 56C24 56 43 32 43 19C43 8.5 34.5 0 24 0Z" 
-                  fill="#1a1a1a" stroke="white" stroke-width="2"/>
-            
-            <!-- Rating text -->
-            <text x="24" y="22" 
-                  font-family="Inter, -apple-system, system-ui, sans-serif" 
-                  font-size="12" 
-                  font-weight="700" 
-                  fill="white" 
-                  text-anchor="middle" 
-                  dominant-baseline="middle">${displayRating}</text>
-          </svg>
+          <div class="marker-container">
+            <div class="marker-badge">
+              <span class="marker-rating">${displayRating}</span>
+            </div>
+            <div class="marker-pointer"></div>
+          </div>
         `;
         markerEl.dataset.masterId = master.id;
 
