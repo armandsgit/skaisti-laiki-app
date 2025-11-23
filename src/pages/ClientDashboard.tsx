@@ -118,7 +118,7 @@ const ClientDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex items-center justify-between">
             <h1 className="text-[42px] font-bold text-foreground leading-tight tracking-tight">
-              Tev
+              Tieši tev 
             </h1>
             <button onClick={() => navigate('/client/settings')} className="p-3 rounded-full border border-border/30 hover:border-border transition-all duration-200 active:scale-95">
               <Search className="h-6 w-6 stroke-[1.5]" />
@@ -140,7 +140,7 @@ const ClientDashboard = () => {
             {/* Recently Viewed */}
             {recentlyViewed.length > 0 && <div className="space-y-4">
                 <h2 className="text-[28px] font-bold text-foreground px-4 sm:px-6 tracking-tight">
-                  Recently viewed
+                  Nesen skatītie
                 </h2>
                 <Carousel opts={{
             align: "start",
@@ -196,7 +196,7 @@ const ClientDashboard = () => {
             {/* Recommended / Nearby */}
             <div className="space-y-4">
               <h2 className="text-[28px] font-bold text-foreground px-4 sm:px-6 tracking-tight">
-                Recommended
+                Rekomendētie
               </h2>
               <Carousel opts={{
             align: "start",
