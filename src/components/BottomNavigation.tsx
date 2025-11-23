@@ -51,8 +51,8 @@ const BottomNavigation = () => {
     { icon: Home, label: 'Sākums', path: '/admin', isActive: location.pathname === '/admin' && !currentTab, scrollToTop: true },
     { icon: CheckCircle, label: 'Gaida', path: '/admin?tab=pending', isActive: location.pathname === '/admin' && currentTab === 'pending' },
     { icon: MessageSquare, label: 'Atsauksmes', path: '/admin/reviews', isActive: location.pathname === '/admin/reviews' },
-    { icon: Map, label: 'Karte', path: '/map', isActive: location.pathname === '/map' },
     { icon: User, label: 'Meistari', path: '/admin?tab=professionals', isActive: location.pathname === '/admin' && currentTab === 'professionals' },
+    { icon: Calendar, label: 'Rezervācijas', path: '/admin?tab=bookings', isActive: location.pathname === '/admin' && currentTab === 'bookings' },
   ] : isProfessionalUser ? [
     { 
       icon: Home, 
@@ -124,15 +124,10 @@ const BottomNavigation = () => {
             <button
               key={index}
               onClick={() => {
-                if (tab.scrollToTop) {
-                  navigate(tab.path);
+                navigate(tab.path);
+                // Scroll to top for all admin tabs and tabs with scrollToTop flag
+                if (isAdminPanel || tab.scrollToTop) {
                   setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-                } else {
-                  navigate(tab.path);
-                  // If navigating to professional dashboard with tab param, scroll to top
-                  if (tab.path.includes('/professional?tab=')) {
-                    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-                  }
                 }
               }}
               className={`
