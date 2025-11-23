@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Check, Mail, Zap, Award } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// TODO: Replace these placeholder Price IDs with real ones from your Stripe Dashboard
+// Go to: https://dashboard.stripe.com/products
+// Create 3 recurring subscription products and copy their Price IDs here
 const plans = [
   {
     id: 'starteris',
@@ -22,7 +25,7 @@ const plans = [
     ],
     icon: Mail,
     recommended: false,
-    stripePrice: 'price_starter_monthly',
+    stripePrice: 'price_XXXXXXXXXXXXXX', // ← Paste your Starteris Price ID here
   },
   {
     id: 'pro',
@@ -39,7 +42,7 @@ const plans = [
     ],
     icon: Zap,
     recommended: true,
-    stripePrice: 'price_pro_monthly',
+    stripePrice: 'price_XXXXXXXXXXXXXX', // ← Paste your Pro Price ID here
   },
   {
     id: 'bizness',
@@ -57,7 +60,7 @@ const plans = [
     ],
     icon: Award,
     recommended: false,
-    stripePrice: 'price_bizness_monthly',
+    stripePrice: 'price_XXXXXXXXXXXXXX', // ← Paste your Bizness Price ID here
   },
 ];
 
