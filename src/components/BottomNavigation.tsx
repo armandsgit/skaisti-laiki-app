@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Map, Calendar, User, Search, CheckCircle, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -145,13 +146,37 @@ const BottomNavigation = () => {
     },
   ];
 
+  // Find active tab index for indicator animation
+  const activeIndex = tabs.findIndex(tab => tab.isActive);
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border/30">
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white">
+      <div className="relative flex items-center justify-around h-20 max-w-lg mx-auto px-4">
+        {/* Animated indicator pill */}
+        <motion.div
+          className="absolute bottom-6 h-8 bg-black/5 rounded-full"
+          initial={false}
+          animate={{
+            x: activeIndex * (100 / tabs.length) + '%',
+            width: `${60 / tabs.length}%`,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 30,
+          }}
+          style={{
+            left: `${(100 / tabs.length) * 0.2}%`,
+          }}
+        />
+
+        {/* Navigation buttons */}
         {tabs.map((tab, index) => {
           const Icon = tab.icon;
+          const isActive = tab.isActive;
+          
           return (
-            <button
+            <motion.button
               key={index}
               onClick={() => {
                 navigate(tab.path);
@@ -159,19 +184,29 @@ const BottomNavigation = () => {
                   setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
                 }
               }}
-              className={`
-                flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl transition-all duration-200 min-w-[60px] active:scale-95
-                ${tab.isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}
-              `}
+              className="relative flex flex-col items-center justify-center flex-1 h-full"
+              whileTap={{ scale: 0.92 }}
+              transition={{ duration: 0.15 }}
             >
-              <Icon 
-                className={`h-[22px] w-[22px] transition-all duration-200 ${tab.isActive ? 'stroke-[2.5]' : 'stroke-[1.5]'}`} 
-                strokeWidth={tab.isActive ? 2.5 : 1.5}
-              />
-              <span className={`text-[10px] font-medium transition-all duration-200 ${tab.isActive ? 'font-semibold' : ''}`}>
-                {tab.label}
-              </span>
-            </button>
+              <motion.div
+                animate={{
+                  scale: isActive ? 1.15 : 1,
+                  opacity: isActive ? 1 : 0.5,
+                }}
+                transition={{
+                  duration: 0.18,
+                  ease: "easeOut",
+                }}
+              >
+                <Icon 
+                  className="h-6 w-6"
+                  strokeWidth={isActive ? 2 : 1.5}
+                  style={{
+                    color: isActive ? '#000000' : '#A7A7A7',
+                  }}
+                />
+              </motion.div>
+            </motion.button>
           );
         })}
       </div>
