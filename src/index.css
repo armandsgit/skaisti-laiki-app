@@ -663,21 +663,23 @@
   }
   
   /* ========================================
-     CUSTOM MAP MARKERS - Modern Dark Style
+     CUSTOM MAP MARKERS - Pin with Rating
      ======================================== */
   .custom-map-marker {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     pointer-events: auto;
     transition: transform 0.15s ease-out;
+    margin-top: -60px; /* Offset for pin point */
+    margin-left: -24px;
   }
 
   .custom-map-marker svg {
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
   }
 
   .custom-map-marker:active {
@@ -695,13 +697,19 @@
   
   @media (max-width: 639px) {
     .custom-map-marker {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 50px;
+      margin-top: -50px;
+      margin-left: -20px;
     }
     
     .custom-map-marker svg {
-      width: 20px;
-      height: 20px;
+      width: 40px;
+      height: 50px;
+    }
+    
+    .custom-map-marker text {
+      font-size: 10px !important;
     }
     
     /* Force Mapbox marker container size on mobile */
