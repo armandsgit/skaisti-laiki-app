@@ -321,42 +321,56 @@ export default function ProfessionalSettings() {
                     Labot
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Labot profilu</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Vārds</Label>
-                      <Input
-                        id="name"
-                        value={editedProfile.name}
-                        onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                      />
+                <DialogContent className="sm:max-w-[500px] max-sm:flex max-sm:flex-col max-sm:h-screen">
+                  {/* Header - Fixed on mobile */}
+                  <div className="max-sm:flex-none max-sm:px-6 max-sm:pt-6 max-sm:pb-4">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl">Rediģēt profilu</DialogTitle>
+                    </DialogHeader>
+                  </div>
+                  
+                  {/* Scrollable Content */}
+                  <div className="max-sm:flex-1 max-sm:overflow-y-auto max-sm:px-6 sm:max-h-[60vh] sm:overflow-y-auto">
+                    <div className="space-y-6 py-4">
+                      <div>
+                        <Label htmlFor="name">Vārds</Label>
+                        <Input
+                          id="name"
+                          value={editedProfile.name}
+                          onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
+                          className="mt-2"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Telefons</Label>
+                        <Input
+                          id="phone"
+                          value={editedProfile.phone}
+                          onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
+                          className="mt-2"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="avatar">Profila attēls</Label>
+                        <Input
+                          id="avatar"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          className="mt-2"
+                        />
+                        {editedProfile.avatar && (
+                          <div className="mt-4">
+                            <img src={editedProfile.avatar} alt="Avatar preview" className="w-24 h-24 rounded-full object-cover" />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="phone">Telefons</Label>
-                      <Input
-                        id="phone"
-                        value={editedProfile.phone}
-                        onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="avatar">Profila attēls</Label>
-                      <Input
-                        id="avatar"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarUpload}
-                      />
-                      {editedProfile.avatar && (
-                        <div className="mt-2">
-                          <img src={editedProfile.avatar} alt="Avatar preview" className="w-24 h-24 rounded-full object-cover" />
-                        </div>
-                      )}
-                    </div>
-                    <Button onClick={handleUpdateProfile} className="w-full" disabled={uploadingImage}>
+                  </div>
+
+                  {/* Footer - Fixed on mobile */}
+                  <div className="max-sm:flex-none max-sm:px-6 max-sm:pb-6 max-sm:pt-4 max-sm:border-t sm:mt-6">
+                    <Button onClick={handleUpdateProfile} className="w-full h-12" disabled={uploadingImage}>
                       {uploadingImage ? 'Augšupielādē...' : 'Saglabāt izmaiņas'}
                     </Button>
                   </div>
@@ -392,19 +406,24 @@ export default function ProfessionalSettings() {
                       Labot
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="h-full max-h-screen sm:max-h-[90vh] w-full max-w-full sm:max-w-lg p-0 gap-0 flex flex-col sm:rounded-lg rounded-none">
-                    <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-                      <DialogTitle>Labot profesionālo informāciju</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-y-auto px-6 py-4">
-                      <div className="space-y-4">
+                  <DialogContent className="sm:max-w-[800px] max-sm:flex max-sm:flex-col max-sm:h-screen">
+                    {/* Header - Fixed on mobile */}
+                    <div className="max-sm:flex-none max-sm:px-6 max-sm:pt-6 max-sm:pb-4">
+                      <DialogHeader>
+                        <DialogTitle className="text-xl">Labot profesionālo informāciju</DialogTitle>
+                      </DialogHeader>
+                    </div>
+                    
+                    {/* Scrollable Content */}
+                    <div className="max-sm:flex-1 max-sm:overflow-y-auto max-sm:px-6 sm:max-h-[60vh] sm:overflow-y-auto">
+                      <div className="space-y-6 py-4">
                         <div>
                           <Label htmlFor="category">Kategorija</Label>
                           <Select
                             value={editedProfInfo.category}
                             onValueChange={(value) => setEditedProfInfo({ ...editedProfInfo, category: value })}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="mt-2">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -418,11 +437,13 @@ export default function ProfessionalSettings() {
                         </div>
                         <div>
                           <Label htmlFor="city">Pilsēta</Label>
-                          <CityAutocomplete
-                            value={editedProfInfo.city}
-                            onChange={(value) => setEditedProfInfo({ ...editedProfInfo, city: value })}
-                            placeholder="Sāciet rakstīt pilsētas nosaukumu..."
-                          />
+                          <div className="mt-2">
+                            <CityAutocomplete
+                              value={editedProfInfo.city}
+                              onChange={(value) => setEditedProfInfo({ ...editedProfInfo, city: value })}
+                              placeholder="Sāciet rakstīt pilsētas nosaukumu..."
+                            />
+                          </div>
                         </div>
                         <div>
                           <Label htmlFor="address">Pilna adrese</Label>
@@ -431,6 +452,7 @@ export default function ProfessionalSettings() {
                             value={editedProfInfo.address}
                             onChange={(e) => setEditedProfInfo({ ...editedProfInfo, address: e.target.value })}
                             placeholder="Piemēram: Latgales iela 245"
+                            className="mt-2"
                           />
                         </div>
                         <div>
@@ -440,30 +462,41 @@ export default function ProfessionalSettings() {
                             value={editedProfInfo.bio}
                             onChange={(e) => setEditedProfInfo({ ...editedProfInfo, bio: e.target.value })}
                             rows={4}
+                            className="mt-2"
                           />
                         </div>
+                        
+                        {/* Map Container - Fully Contained and Responsive */}
                         <div>
                           <Label>Atzīmējiet atrašanās vietu kartē</Label>
-                          <div className="w-full max-w-full overflow-hidden">
-                            <EditableLocationMap
-                              latitude={editedProfInfo.latitude}
-                              longitude={editedProfInfo.longitude}
-                              onLocationChange={(lat, lng, address, city) => {
-                                setEditedProfInfo({
-                                  ...editedProfInfo,
-                                  latitude: lat,
-                                  longitude: lng,
-                                  address: address,
-                                  city: city
-                                });
-                              }}
-                            />
+                          <div className="w-full mt-2 rounded-2xl overflow-hidden border border-input">
+                            <div className="w-full aspect-[4/3]">
+                              <EditableLocationMap
+                                latitude={editedProfInfo.latitude}
+                                longitude={editedProfInfo.longitude}
+                                onLocationChange={(lat, lng, address, city) => {
+                                  setEditedProfInfo({
+                                    ...editedProfInfo,
+                                    latitude: lat,
+                                    longitude: lng,
+                                    address: address,
+                                    city: city
+                                  });
+                                }}
+                                className="w-full h-full"
+                              />
+                            </div>
                           </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Noklikšķiniet uz kartes, lai atzīmētu savu atrašanās vietu
+                          </p>
                         </div>
                       </div>
                     </div>
-                    <div className="px-6 py-4 border-t shrink-0">
-                      <Button onClick={handleUpdateProfessionalInfo} className="w-full">
+                    
+                    {/* Footer - Fixed on mobile */}
+                    <div className="max-sm:flex-none max-sm:px-6 max-sm:pb-6 max-sm:pt-4 max-sm:border-t sm:mt-6">
+                      <Button onClick={handleUpdateProfessionalInfo} className="w-full h-12">
                         Saglabāt izmaiņas
                       </Button>
                     </div>

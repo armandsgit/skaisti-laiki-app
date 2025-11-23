@@ -199,22 +199,10 @@ const EditableLocationMap = ({
   }, [latitude, longitude]);
 
   return (
-    <div className="space-y-2 w-full">
-      <div 
-        ref={mapContainer} 
-        className={`map-container rounded-2xl overflow-hidden border shadow-sm w-full ${className}`}
-        style={{ 
-          height: '320px',
-          maxHeight: '320px',
-          minHeight: '320px',
-          maxWidth: '100%',
-          width: '100%'
-        }}
-      />
-      <p className="text-xs text-muted-foreground">
-        Noklikšķiniet uz kartes, lai atzīmētu savu atrašanās vietu. Marķieri var arī vilkt.
-      </p>
-    </div>
+    <div 
+      ref={mapContainer} 
+      className={`w-full h-full ${className}`}
+    />
   );
 };
 
