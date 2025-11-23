@@ -117,8 +117,8 @@ const ClientDashboard = () => {
       <header className="bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-[42px] font-bold text-foreground leading-tight tracking-tight">
-              Tieši tev 
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
+              Tieši tev / Sveiks, {profile?.name || 'Viesis'}
             </h1>
             <button onClick={() => navigate('/map')} className="p-3 rounded-full border border-border/30 hover:border-border transition-all duration-200 active:scale-95">
               <Map className="h-6 w-6 stroke-[1.5]" />
