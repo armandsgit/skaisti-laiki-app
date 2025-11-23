@@ -663,23 +663,43 @@
   }
   
   /* ========================================
-     CUSTOM MAP MARKERS - Simple Design
+     CUSTOM MAP MARKERS - Modern Dark Fresha Style
      ======================================== */
   .custom-map-marker {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
-    max-width: 36px;
-    max-height: 36px;
-    background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
-    border-radius: 50%;
-    border: 3px solid white;
+    position: relative;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: none !important;
+  }
+
+  .custom-map-marker .marker-pin {
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+    background: #1a1a1a;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+    transition: transform 0.15s ease-out;
+  }
+
+  .custom-map-marker:active .marker-pin {
+    transform: scale(0.95);
+  }
+
+  .custom-map-marker .marker-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .custom-map-marker .marker-icon svg {
+    width: 100%;
+    height: 100%;
   }
   
   .mapboxgl-map:active .custom-map-marker {
@@ -692,15 +712,14 @@
   }
   
   @media (max-width: 639px) {
-    .custom-map-marker {
-      width: 28px !important;
-      height: 28px !important;
-      min-width: 28px !important;
-      min-height: 28px !important;
-      max-width: 28px !important;
-      max-height: 28px !important;
-      font-size: 16px !important;
-      border-width: 2.5px !important;
+    .custom-map-marker .marker-pin {
+      width: 36px;
+      height: 36px;
+    }
+    
+    .custom-map-marker .marker-icon {
+      width: 16px;
+      height: 16px;
     }
     
     /* Force Mapbox marker container size on mobile */
