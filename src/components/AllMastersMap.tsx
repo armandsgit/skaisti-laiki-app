@@ -154,18 +154,18 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       // Add markers for filtered masters
       filteredMasters.forEach((master) => {
 
-        // Create custom marker - modern Bolt/Wolt/Fresha style
+        // Create custom marker - minimalist black circle
         const markerEl = document.createElement('div');
         markerEl.className = 'custom-map-marker clickable-marker';
         
         const rating = master.rating || 0;
         const hasRating = rating > 0;
-        const displayRating = hasRating ? rating.toFixed(1) : '';
+        const displayRating = hasRating ? rating.toFixed(1) : '—';
         
         markerEl.innerHTML = `
           <div class="marker-container">
-            <div class="marker-badge ${!hasRating ? 'marker-badge-empty' : ''}">
-              ${hasRating ? `<span class="marker-rating">${displayRating}</span>` : '<span class="marker-dot"></span>'}
+            <div class="marker-badge">
+              <span class="marker-rating">${displayRating}</span>
             </div>
             <div class="marker-pointer"></div>
           </div>
