@@ -392,71 +392,77 @@ export default function ProfessionalSettings() {
                       Labot
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
+                  <DialogContent className="h-full max-h-screen sm:max-h-[90vh] w-full max-w-full sm:max-w-lg p-0 gap-0 flex flex-col sm:rounded-lg rounded-none">
+                    <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
                       <DialogTitle>Labot profesionālo informāciju</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="category">Kategorija</Label>
-                        <Select
-                          value={editedProfInfo.category}
-                          onValueChange={(value) => setEditedProfInfo({ ...editedProfInfo, category: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.name}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    <div className="flex-1 overflow-y-auto px-6 py-4">
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="category">Kategorija</Label>
+                          <Select
+                            value={editedProfInfo.category}
+                            onValueChange={(value) => setEditedProfInfo({ ...editedProfInfo, category: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.name}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="city">Pilsēta</Label>
+                          <CityAutocomplete
+                            value={editedProfInfo.city}
+                            onChange={(value) => setEditedProfInfo({ ...editedProfInfo, city: value })}
+                            placeholder="Sāciet rakstīt pilsētas nosaukumu..."
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="address">Pilna adrese</Label>
+                          <Input
+                            id="address"
+                            value={editedProfInfo.address}
+                            onChange={(e) => setEditedProfInfo({ ...editedProfInfo, address: e.target.value })}
+                            placeholder="Piemēram: Latgales iela 245"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="bio">Bio</Label>
+                          <Textarea
+                            id="bio"
+                            value={editedProfInfo.bio}
+                            onChange={(e) => setEditedProfInfo({ ...editedProfInfo, bio: e.target.value })}
+                            rows={4}
+                          />
+                        </div>
+                        <div>
+                          <Label>Atzīmējiet atrašanās vietu kartē</Label>
+                          <div className="w-full max-w-full overflow-hidden">
+                            <EditableLocationMap
+                              latitude={editedProfInfo.latitude}
+                              longitude={editedProfInfo.longitude}
+                              onLocationChange={(lat, lng, address, city) => {
+                                setEditedProfInfo({
+                                  ...editedProfInfo,
+                                  latitude: lat,
+                                  longitude: lng,
+                                  address: address,
+                                  city: city
+                                });
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="city">Pilsēta</Label>
-                        <CityAutocomplete
-                          value={editedProfInfo.city}
-                          onChange={(value) => setEditedProfInfo({ ...editedProfInfo, city: value })}
-                          placeholder="Sāciet rakstīt pilsētas nosaukumu..."
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="address">Pilna adrese</Label>
-                        <Input
-                          id="address"
-                          value={editedProfInfo.address}
-                          onChange={(e) => setEditedProfInfo({ ...editedProfInfo, address: e.target.value })}
-                          placeholder="Piemēram: Latgales iela 245"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="bio">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          value={editedProfInfo.bio}
-                          onChange={(e) => setEditedProfInfo({ ...editedProfInfo, bio: e.target.value })}
-                          rows={4}
-                        />
-                      </div>
-                      <div>
-                        <Label>Atzīmējiet atrašanās vietu kartē</Label>
-                        <EditableLocationMap
-                          latitude={editedProfInfo.latitude}
-                          longitude={editedProfInfo.longitude}
-                          onLocationChange={(lat, lng, address, city) => {
-                            setEditedProfInfo({
-                              ...editedProfInfo,
-                              latitude: lat,
-                              longitude: lng,
-                              address: address,
-                              city: city
-                            });
-                          }}
-                        />
-                      </div>
+                    </div>
+                    <div className="px-6 py-4 border-t shrink-0">
                       <Button onClick={handleUpdateProfessionalInfo} className="w-full">
                         Saglabāt izmaiņas
                       </Button>
