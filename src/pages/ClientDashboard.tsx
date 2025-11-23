@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Search, Star, Briefcase, Map, User } from 'lucide-react';
+import { Star, Briefcase, Map, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -120,8 +120,8 @@ const ClientDashboard = () => {
             <h1 className="text-[42px] font-bold text-foreground leading-tight tracking-tight">
               Tieši tev 
             </h1>
-            <button onClick={() => navigate('/client/settings')} className="p-3 rounded-full border border-border/30 hover:border-border transition-all duration-200 active:scale-95">
-              <Search className="h-6 w-6 stroke-[1.5]" />
+            <button onClick={() => navigate('/map')} className="p-3 rounded-full border border-border/30 hover:border-border transition-all duration-200 active:scale-95">
+              <Map className="h-6 w-6 stroke-[1.5]" />
             </button>
           </div>
         </div>
@@ -262,11 +262,6 @@ const ClientDashboard = () => {
             </div>
           </>}
 
-        {/* Map Button */}
-        <button onClick={() => navigate('/map')} className="fixed bottom-24 right-6 h-14 px-6 bg-foreground text-background rounded-full shadow-lg hover:opacity-90 transition-all duration-200 active:scale-95 flex items-center gap-2 font-medium text-[15px] z-40">
-          <Map className="h-5 w-5 stroke-[2]" />
-          {t.viewOnMap}
-        </button>
       </main>
     </div>;
 };
