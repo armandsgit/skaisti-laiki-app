@@ -197,7 +197,7 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
                 navigate(`/professional/${master.id}`);
               }, 150);
             }}
-            className="w-full py-4 bg-gradient-to-r from-primary via-primary to-secondary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2"
+            className="w-full py-4 bg-black text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2"
           >
             <span>Skatīt profilu</span>
             <span className="text-lg">→</span>

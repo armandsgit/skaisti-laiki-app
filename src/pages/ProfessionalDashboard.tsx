@@ -1008,7 +1008,7 @@ const ProfessionalDashboard = () => {
       setEditingService(null);
       setNewService({ name: '', price: '', duration: '60', description: '' });
     }}
-                    className="bg-gradient-to-r from-primary to-secondary border-0"
+                    className="bg-black text-white border-0"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Pievienot pakalpojumu
@@ -1079,7 +1079,7 @@ const ProfessionalDashboard = () => {
                         rows={3}
                       />
                     </div>
-                    <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary border-0">
+                    <Button type="submit" className="w-full bg-black text-white border-0">
                       {editingService ? 'Saglabāt izmaiņas' : 'Pievienot pakalpojumu'}
                     </Button>
                   </form>
