@@ -173,7 +173,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
 
         const marker = new mapboxgl.Marker({ 
           element: markerEl,
-          anchor: 'center'
+          anchor: 'bottom'
         })
           .setLngLat([master.longitude, master.latitude])
           .addTo(map.current);
