@@ -136,11 +136,9 @@ const ClientBookings = () => {
                             <h4 className="font-semibold text-base">
                               {booking.staff_members?.name || booking.professional_profiles?.profiles?.name}
                             </h4>
-                            {booking.staff_members?.position && (
-                              <p className="text-xs text-muted-foreground">
-                                {booking.staff_members.position}
-                              </p>
-                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {booking.professional_profiles?.profiles?.name}
+                            </p>
                             <p className="text-sm text-muted-foreground mt-0.5">
                               {booking.services?.name}
                             </p>
@@ -208,11 +206,9 @@ const ClientBookings = () => {
                                 <h4 className="font-semibold text-base text-muted-foreground">
                                   {booking.staff_members?.name || booking.professional_profiles?.profiles?.name}
                                 </h4>
-                                {booking.staff_members?.position && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {booking.staff_members.position}
-                                  </p>
-                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  {booking.professional_profiles?.profiles?.name}
+                                </p>
                                 <p className="text-sm text-muted-foreground mt-0.5">
                                   {booking.services?.name}
                                 </p>
