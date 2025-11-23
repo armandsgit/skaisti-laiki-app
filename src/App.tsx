@@ -17,6 +17,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminReviews from "./pages/AdminReviews";
 import MapView from "./pages/MapView";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
+import Abonesana from "./pages/Abonesana";
+import MaksaIzdevusies from "./pages/MaksaIzdevusies";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
@@ -131,6 +133,22 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="PROFESSIONAL">
                   <Billing />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/abonesana" 
+              element={
+                <ProtectedRoute requiredRole="PROFESSIONAL">
+                  <Abonesana />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/maksa-izdevusies" 
+              element={
+                <ProtectedRoute requiredRole="PROFESSIONAL">
+                  <MaksaIzdevusies />
                 </ProtectedRoute>
               } 
             />
