@@ -53,7 +53,7 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">
         <LoadingAnimation size={100} />
         <h1 className="text-3xl font-bold text-foreground mt-4 mb-2">

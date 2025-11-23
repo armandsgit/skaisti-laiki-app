@@ -266,17 +266,13 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           zIndex: 9997
         }}
       >
-        <div className="bg-white/95 backdrop-blur-md rounded-[24px] shadow-lg border border-gray-200 p-2.5 pointer-events-auto">
+        <div className="bg-background backdrop-blur-md rounded-2xl shadow-card border border-border p-2 pointer-events-auto">
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1" style={{ WebkitOverflowScrolling: 'touch' }}>
             <Button
               size="sm"
-              variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+              variant={selectedCategory === 'all' ? 'default' : 'secondary'}
               onClick={() => setSelectedCategory('all')}
-              className={`whitespace-nowrap text-xs font-semibold flex-shrink-0 rounded-full px-4 h-9 transition-all ${
-                selectedCategory === 'all' 
-                  ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-card' 
-                  : 'text-foreground/70 hover:text-foreground hover:bg-muted'
-              }`}
+              className="whitespace-nowrap text-xs font-semibold flex-shrink-0 rounded-full px-4 h-9"
             >
               Visas
             </Button>
@@ -284,16 +280,9 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
               <Button
                 key={category.id}
                 size="sm"
-                variant={selectedCategory === category.name ? 'default' : 'ghost'}
+                variant={selectedCategory === category.name ? 'default' : 'secondary'}
                 onClick={() => setSelectedCategory(category.name)}
-                className={`whitespace-nowrap text-xs font-semibold flex-shrink-0 rounded-full px-4 h-9 transition-all ${
-                  selectedCategory === category.name
-                    ? 'shadow-card text-white'
-                    : 'text-foreground/70 hover:text-foreground hover:bg-muted'
-                }`}
-                style={{
-                  backgroundColor: selectedCategory === category.name ? category.color : undefined,
-                }}
+                className="whitespace-nowrap text-xs font-semibold flex-shrink-0 rounded-full px-4 h-9"
               >
                 <span className="mr-1.5">{category.icon}</span>
                 {category.name}
@@ -306,7 +295,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       {/* Empty state */}
       {filteredMasters.length === 0 && !loading && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
-          <div className="bg-white/98 backdrop-blur-md p-5 rounded-3xl shadow-elegant border border-border/20 max-w-[280px] text-center">
+          <div className="bg-background p-6 rounded-2xl shadow-card border border-border max-w-[280px] text-center">
             <p className="text-base font-bold mb-2 text-foreground">Nav pieejamu meistaru</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {selectedCategory === 'all' 
