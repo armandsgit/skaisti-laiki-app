@@ -1014,74 +1014,86 @@ const ProfessionalDashboard = () => {
                     Pievienot pakalpojumu
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
+                <DialogContent className="flex flex-col max-sm:p-0">
+                  {/* Header - Fixed on mobile */}
+                  <DialogHeader className="max-sm:sticky max-sm:top-0 max-sm:z-10 max-sm:bg-background max-sm:p-6 max-sm:pb-4 max-sm:border-b">
+                    <DialogTitle className="text-xl">
                       {editingService ? 'Labot pakalpojumu' : 'Pievienot pakalpojumu'}
                     </DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleAddService} className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Pakalpojuma nosaukums</Label>
-                      <Input
-                        id="name"
-                        value={newService.name}
-                        onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-                        placeholder="Piemēram: Manikīrs"
-                        required
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="price">Cena (€)</Label>
+                  
+                  {/* Scrollable Content */}
+                  <form onSubmit={handleAddService} className="flex flex-col flex-1 max-sm:h-full">
+                    <div className="flex-1 overflow-y-auto max-sm:px-6 max-sm:py-4 space-y-5">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Pakalpojuma nosaukums</Label>
                         <Input
-                          id="price"
-                          type="number"
-                          step="0.01"
-                          value={newService.price}
-                          onChange={(e) => setNewService({ ...newService, price: e.target.value })}
-                          placeholder="25.00"
+                          id="name"
+                          value={newService.name}
+                          onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                          placeholder="Piemēram: Manikīrs"
                           required
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="duration">Ilgums (min)</Label>
-                        <Select
-                          value={newService.duration}
-                          onValueChange={(value) => setNewService({ ...newService, duration: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Izvēlieties ilgumu" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="20">20 min</SelectItem>
-                            <SelectItem value="30">30 min</SelectItem>
-                            <SelectItem value="40">40 min</SelectItem>
-                            <SelectItem value="50">50 min</SelectItem>
-                            <SelectItem value="60">60 min</SelectItem>
-                            <SelectItem value="90">90 min</SelectItem>
-                            <SelectItem value="120">120 min</SelectItem>
-                            <SelectItem value="150">150 min</SelectItem>
-                            <SelectItem value="180">180 min</SelectItem>
-                            <SelectItem value="240">240 min (4h)</SelectItem>
-                            <SelectItem value="300">300 min (5h)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="price">Cena (€)</Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            step="0.01"
+                            value={newService.price}
+                            onChange={(e) => setNewService({ ...newService, price: e.target.value })}
+                            placeholder="25.00"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="duration">Ilgums (min)</Label>
+                          <Select
+                            value={newService.duration}
+                            onValueChange={(value) => setNewService({ ...newService, duration: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Izvēlieties ilgumu" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="20">20 min</SelectItem>
+                              <SelectItem value="30">30 min</SelectItem>
+                              <SelectItem value="40">40 min</SelectItem>
+                              <SelectItem value="50">50 min</SelectItem>
+                              <SelectItem value="60">60 min</SelectItem>
+                              <SelectItem value="90">90 min</SelectItem>
+                              <SelectItem value="120">120 min</SelectItem>
+                              <SelectItem value="150">150 min</SelectItem>
+                              <SelectItem value="180">180 min</SelectItem>
+                              <SelectItem value="240">240 min (4h)</SelectItem>
+                              <SelectItem value="300">300 min (5h)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Apraksts</Label>
+                        <Textarea
+                          id="description"
+                          value={newService.description}
+                          onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                          placeholder="Pakalpojuma apraksts..."
+                          rows={4}
+                          className="resize-none"
+                        />
                       </div>
                     </div>
-                    <div>
-                      <Label htmlFor="description">Apraksts</Label>
-                      <Textarea
-                        id="description"
-                        value={newService.description}
-                        onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-                        placeholder="Pakalpojuma apraksts..."
-                        rows={3}
-                      />
+                    
+                    {/* Submit Button - Sticky on mobile */}
+                    <div className="max-sm:sticky max-sm:bottom-0 max-sm:bg-background max-sm:p-6 max-sm:pt-4 max-sm:border-t sm:mt-6">
+                      <Button type="submit" className="w-full bg-black text-white border-0 h-12">
+                        {editingService ? 'Saglabāt izmaiņas' : 'Pievienot pakalpojumu'}
+                      </Button>
                     </div>
-                    <Button type="submit" className="w-full bg-black text-white border-0">
-                      {editingService ? 'Saglabāt izmaiņas' : 'Pievienot pakalpojumu'}
-                    </Button>
                   </form>
                 </DialogContent>
               </Dialog>
