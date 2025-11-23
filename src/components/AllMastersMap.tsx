@@ -8,6 +8,7 @@ import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 import { Button } from '@/components/ui/button';
 import MasterBottomSheet from '@/components/MasterBottomSheet';
+import LoadingAnimation from '@/components/LoadingAnimation';
 
 // Izmanto SortedMaster no master-sorting.ts
 
@@ -244,10 +245,7 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
   if (loading) {
     return (
       <div className="w-full h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary animate-pulse" />
-          <p className="text-base font-semibold text-foreground">Ielādē kartes datus...</p>
-        </div>
+        <LoadingAnimation size={100} text="Ielāde" />
       </div>
     );
   }
