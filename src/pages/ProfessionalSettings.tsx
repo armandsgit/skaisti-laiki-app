@@ -280,7 +280,7 @@ export default function ProfessionalSettings() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingAnimation />
+        <LoadingAnimation size={100} text="Ielāde" />
       </div>
     );
   }

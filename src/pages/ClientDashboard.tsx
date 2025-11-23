@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import LoadingAnimation from '@/components/LoadingAnimation';
 const ClientDashboard = () => {
   const t = useTranslation('lv');
   const {
@@ -136,14 +137,12 @@ const ClientDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto space-y-8 pb-6 pt-6">
 
-        {loading ? <div className="px-5 sm:px-6 space-y-8">
-            <div className="space-y-4">
-              <div className="h-8 w-48 bg-muted/30 rounded-xl animate-pulse" />
-              <div className="flex gap-4 overflow-hidden">
-                {[1, 2, 3].map(i => <div key={i} className="w-[280px] h-[380px] bg-white rounded-3xl animate-pulse flex-shrink-0 shadow-sm" />)}
-              </div>
-            </div>
-          </div> : <>
+        {loading ? (
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <LoadingAnimation size={100} text={t.loading} />
+          </div>
+        ) : (
+          <>
             {/* Recently Viewed */}
             {recentlyViewed.length > 0 && <div className="space-y-5">
                 <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
@@ -253,7 +252,8 @@ const ClientDashboard = () => {
                 </CarouselContent>
               </Carousel>
             </div>
-          </>}
+          </>
+        )}
 
       </main>
     </div>;

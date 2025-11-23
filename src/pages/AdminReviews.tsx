@@ -315,7 +315,11 @@ export default function AdminReviews() {
     </div>
   );
 
-  if (loading) return <LoadingAnimation />;
+  if (loading) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <LoadingAnimation size={100} text="Ielāde" />
+    </div>
+  );
 
   const pendingReviews = reviews.filter((r) => r.status === 'pending');
   const approvedReviews = reviews.filter((r) => r.status === 'approved');
