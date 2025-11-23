@@ -20,29 +20,21 @@ export const DashboardStats = ({
       label: 'Šodien nopelnīts',
       value: `€${todayEarnings.toFixed(2)}`,
       icon: Euro,
-      gradient: 'from-primary to-secondary',
-      bgGradient: 'from-primary/10 to-secondary/10',
     },
     {
       label: 'Mēnesī kopā',
       value: `€${monthlyEarnings.toFixed(2)}`,
       icon: TrendingUp,
-      gradient: 'from-secondary to-primary',
-      bgGradient: 'from-secondary/10 to-primary/10',
     },
     {
       label: 'Šodienas rezerv.',
       value: todayBookings.toString(),
       icon: Calendar,
-      gradient: 'from-primary to-secondary',
-      bgGradient: 'from-primary/10 to-secondary/10',
     },
     {
       label: 'Pabeigti pakalpoj.',
       value: completedServices.toString(),
       icon: CheckCircle,
-      gradient: 'from-secondary to-primary',
-      bgGradient: 'from-secondary/10 to-primary/10',
     },
   ];
 
@@ -55,15 +47,15 @@ export const DashboardStats = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
         >
-          <Card className="border-0 shadow-soft overflow-hidden">
-            <CardContent className={`p-4 bg-gradient-to-br ${stat.bgGradient}`}>
-              <div className="flex items-start justify-between mb-2">
-                <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.gradient}`}>
-                  <stat.icon className="w-4 h-4 text-white" />
+          <Card className="border-border/50 shadow-soft overflow-hidden">
+            <CardContent className="p-5 bg-muted/20">
+              <div className="flex items-start justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-foreground">
+                  <stat.icon className="w-4 h-4 text-background stroke-[2]" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground mb-1">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="text-[28px] font-bold text-foreground mb-1 leading-none">{stat.value}</p>
+              <p className="text-[12px] text-muted-foreground font-medium">{stat.label}</p>
             </CardContent>
           </Card>
         </motion.div>
