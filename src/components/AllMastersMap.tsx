@@ -161,14 +161,15 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         markerEl.className = 'custom-map-marker clickable-marker';
         
         const rating = master.rating || 0;
-        const displayRating = rating > 0 ? rating.toFixed(1) : 'NEW';
+        const hasRating = rating > 0;
+        const displayRating = hasRating ? rating.toFixed(1) : '';
         
         console.log('Creating marker for master:', master.profiles?.name, 'at', master.latitude, master.longitude, 'rating:', displayRating);
         
         markerEl.innerHTML = `
           <div class="marker-container">
-            <div class="marker-badge">
-              <span class="marker-rating">${displayRating}</span>
+            <div class="marker-badge ${!hasRating ? 'marker-badge-empty' : ''}">
+              ${hasRating ? `<span class="marker-rating">${displayRating}</span>` : '<span class="marker-dot"></span>'}
             </div>
             <div class="marker-pointer"></div>
           </div>
