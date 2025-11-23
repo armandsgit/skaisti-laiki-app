@@ -64,14 +64,14 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
   };
 
   return (
-    <div className="space-y-2 sm:space-y-3 w-full">
+    <div className="space-y-2 w-full">
       <div 
         ref={mapContainer} 
         className={`map-container rounded-2xl overflow-hidden border shadow-sm w-full ${className}`}
         style={{ 
-          height: '320px',
-          maxHeight: '320px',
-          minHeight: '320px',
+          height: '280px',
+          maxHeight: '280px',
+          minHeight: '280px',
           maxWidth: '100%',
           width: '100%',
           touchAction: 'pan-x pan-y'
@@ -80,7 +80,7 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
       {showOpenButton && (
         <button
           onClick={openInGoogleMaps}
-          className="hidden sm:flex items-center gap-2 text-xs sm:text-sm text-primary tap-feedback whitespace-nowrap"
+          className="hidden sm:flex items-center gap-2 text-xs text-primary tap-feedback whitespace-nowrap px-1"
         >
           <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
           Skatīt kartē →
