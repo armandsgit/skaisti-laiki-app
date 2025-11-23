@@ -151,6 +151,12 @@ const ClientDashboard = () => {
                         <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-xl transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-3xl">
                           {/* Image */}
                           <div className="relative w-full h-[200px] bg-muted overflow-hidden">
+                            {/* Category Badge in Top-Right Corner */}
+                            <div className="absolute top-3 right-3 z-10">
+                              <span className="px-3 py-1 text-xs font-medium bg-black text-white rounded-full shadow-lg backdrop-blur-sm">
+                                {prof.category}
+                              </span>
+                            </div>
                             {(prof as any).gallery && (prof as any).gallery.length > 0 ? <img src={(prof as any).gallery[0]} alt={prof.profiles?.name || ''} className="w-full h-full object-cover" /> : prof.profiles?.avatar ? <img src={prof.profiles.avatar} alt={prof.profiles.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-muted">
                                 <User className="h-16 w-16 text-muted-foreground stroke-[1.5]" />
                               </div>}
@@ -179,13 +185,6 @@ const ClientDashboard = () => {
                               {prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
                             </span>
                           </div>
-
-                          {/* Category */}
-                          <div className="pt-1">
-                            <span className="text-[13px] text-muted-foreground">
-                              {prof.category}
-                            </span>
-                          </div>
                           </div>
                         </Card>
                       </CarouselItem>)}
@@ -207,6 +206,12 @@ const ClientDashboard = () => {
                       <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-xl transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-3xl">
                         {/* Image */}
                         <div className="relative w-full h-[200px] bg-muted overflow-hidden">
+                          {/* Category Badge in Top-Right Corner */}
+                          <div className="absolute top-3 right-3 z-10">
+                            <span className="px-3 py-1 text-xs font-medium bg-black text-white rounded-full shadow-lg backdrop-blur-sm">
+                              {prof.category}
+                            </span>
+                          </div>
                           {(prof as any).gallery && (prof as any).gallery.length > 0 ? <img src={(prof as any).gallery[0]} alt={prof.profiles?.name || ''} className="w-full h-full object-cover" /> : prof.profiles?.avatar ? <img src={prof.profiles.avatar} alt={prof.profiles.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-muted">
                               <User className="h-16 w-16 text-muted-foreground stroke-[1.5]" />
                             </div>}
@@ -233,13 +238,6 @@ const ClientDashboard = () => {
                         <div className="pt-0.5">
                           <span className="text-[13px] text-[#6A6A6A] leading-tight block">
                             {prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
-                          </span>
-                        </div>
-
-                        {/* Category */}
-                        <div className="pt-1">
-                          <span className="text-[13px] text-muted-foreground">
-                            {prof.category}
                           </span>
                         </div>
                         </div>
