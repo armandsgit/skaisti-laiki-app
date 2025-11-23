@@ -137,14 +137,16 @@ const ClientDashboard = () => {
       <main className="max-w-7xl mx-auto space-y-8 pb-6">
         {/* Search Bar */}
         <div className="px-4 sm:px-6 pt-2">
-          <div className="relative flex items-center">
-            <Search className="absolute left-4 h-5 w-5 text-muted-foreground pointer-events-none z-10" />
-            <Input
+          <div className="relative">
+            <div className="absolute left-[28px] top-1/2 -translate-y-1/2 pointer-events-none z-10">
+              <Search className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <input
               type="text"
               placeholder="Meklēt..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-[48px] sm:pl-12 pr-4 py-6 text-base rounded-2xl border-border/30 bg-white focus:border-foreground transition-all"
+              className="w-full pl-[44px] pr-4 py-6 text-base rounded-2xl border border-border/30 bg-white focus:border-foreground focus:outline-none transition-all"
             />
           </div>
         </div>
