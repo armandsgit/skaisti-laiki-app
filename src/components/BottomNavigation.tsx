@@ -32,18 +32,21 @@ const BottomNavigation = () => {
   // Don't show on auth page or when not logged in
   if (location.pathname === '/auth' || !user) return null;
 
-  // Check if viewing someone else's professional profile
-  const isViewingOthersProfile = location.pathname.startsWith('/professional/') && 
-                                 location.pathname !== '/professional' && 
-                                 location.pathname !== '/professional/settings';
-  
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get('tab');
   
   // Determine which navigation to show based on user role
+  // Admin role takes highest priority
   const isAdminPanel = userRole === 'ADMIN';
-  const isProfessionalUser = userRole === 'PROFESSIONAL' && !isViewingOthersProfile;
-  const isClientUser = userRole === 'CLIENT' || isViewingOthersProfile;
+  
+  // Check if viewing someone else's professional profile (only for non-admins)
+  const isViewingOthersProfile = !isAdminPanel && 
+                                 location.pathname.startsWith('/professional/') && 
+                                 location.pathname !== '/professional' && 
+                                 location.pathname !== '/professional/settings';
+  
+  const isProfessionalUser = userRole === 'PROFESSIONAL' && !isViewingOthersProfile && !isAdminPanel;
+  const isClientUser = (userRole === 'CLIENT' || isViewingOthersProfile) && !isAdminPanel;
   
   const tabs = isAdminPanel ? [
     { icon: Home, label: 'Sākums', path: '/admin', isActive: !currentTab && location.pathname === '/admin', scrollToTop: true },
