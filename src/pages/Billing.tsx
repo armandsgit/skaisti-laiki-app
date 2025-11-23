@@ -139,9 +139,32 @@ export default function Billing() {
               </div>
             )}
 
-            <Button onClick={() => navigate('/subscription-plans')} className="w-full">
-              Mainīt plānu
-            </Button>
+            <div className="space-y-2 pt-2">
+              <Button onClick={() => navigate('/abonesana')} className="w-full">
+                Mainīt abonēšanas plānu
+              </Button>
+              
+              <Button 
+                onClick={async () => {
+                  try {
+                    const { data, error } = await supabase.functions.invoke('create-portal-session');
+                    if (error) throw error;
+                    if (data?.url) window.location.href = data.url;
+                  } catch (error) {
+                    console.error('Portal error:', error);
+                    toast({
+                      title: 'Kļūda',
+                      description: 'Neizdevās atvērt klienta portālu',
+                      variant: 'destructive'
+                    });
+                  }
+                }}
+                variant="outline" 
+                className="w-full"
+              >
+                Pārvaldīt rēķinus
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -197,8 +220,17 @@ export default function Billing() {
               </Card>
             </div>
 
-            <Button onClick={() => navigate('/professional')} variant="outline" className="w-full">
-              Iegādāties kredītus
+            <Button 
+              onClick={async () => {
+                // Open modal to select email credit package
+                toast({
+                  title: 'Drīzumā',
+                  description: 'E-pasta kredītu pirkšana būs pieejama drīzumā',
+                });
+              }}
+              className="w-full"
+            >
+              Pirkt papildus kredītus
             </Button>
           </CardContent>
         </Card>
