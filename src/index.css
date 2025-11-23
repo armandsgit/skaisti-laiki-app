@@ -526,13 +526,17 @@
      ======================================== */
   @media (max-width: 640px) {
     /* Map Container - Universal height */
-    .map-container, 
     .mapboxgl-map, 
-    [class*="map"],
-    div[class*="Map"] {
+    [class*="map"]:not(.map-container),
+    div[class*="Map"]:not(.map-container) {
       width: 100% !important;
       border-radius: 16px !important;
       overflow: hidden !important;
+    }
+    
+    /* Map container must allow markers to overflow */
+    .map-container {
+      overflow: visible !important;
     }
     
     /* Hide Mapbox Controls, Logo & Attribution on Mobile */

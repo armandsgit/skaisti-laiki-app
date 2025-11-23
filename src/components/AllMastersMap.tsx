@@ -152,8 +152,6 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
       // Add markers for filtered masters
-      console.log('Adding markers for', filteredMasters.length, 'masters');
-      
       filteredMasters.forEach((master) => {
 
         // Create custom marker - modern Bolt/Wolt/Fresha style
@@ -163,8 +161,6 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         const rating = master.rating || 0;
         const hasRating = rating > 0;
         const displayRating = hasRating ? rating.toFixed(1) : '';
-        
-        console.log('Creating marker for master:', master.profiles?.name, 'at', master.latitude, master.longitude, 'rating:', displayRating);
         
         markerEl.innerHTML = `
           <div class="marker-container">
@@ -182,8 +178,6 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         })
           .setLngLat([master.longitude, master.latitude])
           .addTo(map.current);
-        
-        console.log('Marker added to map:', marker);
 
         // Store marker reference for selected master handling
         (marker as any).masterData = master;
