@@ -25,7 +25,7 @@ const plans = [
     ],
     icon: Mail,
     recommended: false,
-    stripePrice: 'price_XXXXXXXXXXXXXX', // ← Paste your Starteris Price ID here
+    stripePrice: 'price_1SWmMTRtOhWJgeVeCxB9RCxm', // ← Paste your Starteris Price ID here
   },
   {
     id: 'pro',
@@ -42,7 +42,7 @@ const plans = [
     ],
     icon: Zap,
     recommended: true,
-    stripePrice: 'price_XXXXXXXXXXXXXX', // ← Paste your Pro Price ID here
+    stripePrice: 'price_1SWmMtRtOhWJgeVeiKK0m0YL', // ← Paste your Pro Price ID here
   },
   {
     id: 'bizness',
@@ -60,7 +60,7 @@ const plans = [
     ],
     icon: Award,
     recommended: false,
-    stripePrice: 'price_XXXXXXXXXXXXXX', // ← Paste your Bizness Price ID here
+    stripePrice: 'price_1SWmNCRtOhWJgeVekHZDvwzP', // ← Paste your Bizness Price ID here
   },
 ];
 
