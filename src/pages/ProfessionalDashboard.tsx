@@ -714,28 +714,6 @@ const ProfessionalDashboard = () => {
                 </div>
               </div>
             )}
-
-            {/* Quick Services Overview */}
-            {services.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Mani pakalpojumi</h2>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedTab('services')}>
-                    Pārvaldīt
-                  </Button>
-                </div>
-                <div className="grid gap-3">
-                  {services.slice(0, 3).map((service) => (
-                    <ServiceCard
-                      key={service.id}
-                      service={service}
-                      onEdit={handleEditService}
-                      onDelete={handleDeleteService}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
           </TabsContent>
 
           {/* Bookings Tab */}
