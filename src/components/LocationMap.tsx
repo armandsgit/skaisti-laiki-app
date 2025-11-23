@@ -28,12 +28,23 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
       zoom: 15,
     });
 
-    // Create custom marker
+    // Create custom marker - same style as AllMastersMap
     const markerEl = document.createElement('div');
     markerEl.className = 'custom-map-marker';
-    markerEl.innerHTML = '📍';
+    
+    markerEl.innerHTML = `
+      <div class="marker-container">
+        <div class="marker-badge">
+          <span class="marker-rating">📍</span>
+        </div>
+        <div class="marker-pointer"></div>
+      </div>
+    `;
 
-    new mapboxgl.Marker({ element: markerEl })
+    new mapboxgl.Marker({ 
+      element: markerEl,
+      anchor: 'bottom'
+    })
       .setLngLat([longitude, latitude])
       .addTo(map.current);
 
