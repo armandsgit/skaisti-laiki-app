@@ -551,11 +551,11 @@ const ProfessionalDashboard = () => {
 
   if (profile && profile.subscription_status !== 'active') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-2xl w-full shadow-card border-0">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full shadow-card border-border/50">
           <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 bg-foreground rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-background stroke-[2]" />
             </div>
             <CardTitle className="text-3xl mb-2">
               Lai turpinātu un kļūtu redzams klientiem
@@ -568,7 +568,7 @@ const ProfessionalDashboard = () => {
             <Button 
               size="lg"
               onClick={() => window.location.href = '/subscription-plans'}
-              className="w-full max-w-md mx-auto bg-gradient-to-r from-primary to-secondary border-0"
+              className="w-full max-w-md mx-auto"
             >
               Izvēlēties plānu
             </Button>
@@ -584,16 +584,16 @@ const ProfessionalDashboard = () => {
   const upcomingBookings = getUpcomingBookings();
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-white pb-20">
       {/* Header */}
-      <header className="bg-card/80 backdrop-blur-sm border-b sticky top-0 z-10 shadow-soft">
+      <header className="bg-white border-b border-border/30 sticky top-0 z-10 shadow-soft">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-card">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-foreground rounded-2xl flex items-center justify-center shadow-card">
+              <Sparkles className="w-5 h-5 text-background stroke-[2]" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold text-foreground">
                 BeautyOn
               </h1>
               <p className="text-xs text-muted-foreground">Meistara panelis</p>
@@ -601,7 +601,7 @@ const ProfessionalDashboard = () => {
           </div>
           
           <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-5 h-5 stroke-[1.5]" />
           </Button>
         </div>
       </header>
@@ -684,13 +684,13 @@ const ProfessionalDashboard = () => {
                 icon={CalendarDays}
                 label="Rediģēt grafiku"
                 onClick={() => setSelectedTab('schedule')}
-                gradient="from-secondary to-primary"
+                variant="secondary"
               />
               <QuickActionButton
                 icon={Calendar}
                 label="Rezervācijas"
                 onClick={() => setSelectedTab('bookings')}
-                gradient="from-primary via-secondary to-primary"
+                variant="secondary"
               />
             </div>
 
@@ -763,7 +763,7 @@ const ProfessionalDashboard = () => {
                     bookings.filter(b => b.status !== 'completed').map((booking) => (
                       <Card 
                         key={booking.id}
-                        className="hover:shadow-lg transition-all duration-300 border-l-4 bg-gradient-to-r from-background to-muted/20 border-0 shadow-card"
+                        className="hover:shadow-lg transition-all duration-300 border-l-4 bg-white border-border/50 shadow-card"
                         style={{
                           borderLeftColor: 
                             booking.status === 'pending' ? '#f59e0b' :
@@ -835,18 +835,18 @@ const ProfessionalDashboard = () => {
                           <Button
                             size="sm"
                             onClick={() => handleBookingAction(booking.id, 'confirmed')}
-                            className="flex-1 bg-gradient-to-r from-primary to-secondary border-0"
+                            className="flex-1"
                           >
-                            <CheckCircle className="w-4 h-4 mr-1" />
+                            <CheckCircle className="w-4 h-4 mr-1 stroke-[2]" />
                             Apstiprināt
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleBookingAction(booking.id, 'canceled')}
-                            className="flex-1 border-destructive/20 text-destructive"
+                            className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10"
                           >
-                            <XCircle className="w-4 h-4 mr-1" />
+                            <XCircle className="w-4 h-4 mr-1 stroke-[2]" />
                             Atcelt
                           </Button>
                         </div>
@@ -857,18 +857,18 @@ const ProfessionalDashboard = () => {
                           <Button
                             size="sm"
                             onClick={() => handleBookingAction(booking.id, 'completed')}
-                            className="flex-1 bg-gradient-to-r from-primary to-secondary border-0"
+                            className="flex-1"
                           >
-                            <CheckCircle className="w-4 h-4 mr-1" />
+                            <CheckCircle className="w-4 h-4 mr-1 stroke-[2]" />
                             Atzīmēt kā pabeigtu
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleBookingAction(booking.id, 'canceled')}
-                            className="border-destructive/20 text-destructive"
+                            className="border-destructive/30 text-destructive hover:bg-destructive/10"
                           >
-                            <XCircle className="w-4 h-4 mr-1" />
+                            <XCircle className="w-4 h-4 mr-1 stroke-[2]" />
                             Atcelt
                           </Button>
                         </div>

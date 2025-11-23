@@ -6,26 +6,25 @@ interface QuickActionButtonProps {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
-  gradient?: string;
+  variant?: 'default' | 'secondary';
 }
 
 export const QuickActionButton = ({
   icon: Icon,
   label,
   onClick,
-  gradient = 'from-primary to-secondary',
+  variant = 'default',
 }: QuickActionButtonProps) => {
   return (
-    <motion.div whileTap={{ scale: 0.95 }}>
+    <motion.div whileTap={{ scale: 0.96 }}>
       <Button
         onClick={onClick}
-        className={`w-full h-auto p-4 bg-gradient-to-br ${gradient} text-white shadow-card border-0 tap-feedback`}
+        variant={variant === 'default' ? 'default' : 'outline'}
+        className="w-full h-auto p-5 shadow-soft"
       >
         <div className="flex flex-col items-center gap-2">
-          <div className="p-2 rounded-full bg-white/20">
-            <Icon className="w-5 h-5" />
-          </div>
-          <span className="text-sm font-medium">{label}</span>
+          <Icon className="w-5 h-5 stroke-[1.5]" />
+          <span className="text-[13px] font-medium leading-tight text-center">{label}</span>
         </div>
       </Button>
     </motion.div>
