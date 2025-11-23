@@ -30,7 +30,7 @@ const BottomNavigation = () => {
     };
     
     loadUserRole();
-  }, [user]);
+  }, [user?.id]);
 
   // Check if viewing someone else's professional profile
   const isViewingOthersProfile = location.pathname.startsWith('/professional/') && 
