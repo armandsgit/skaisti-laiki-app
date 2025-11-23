@@ -95,13 +95,6 @@ export default {
         'glow': 'var(--shadow-glow)',
         'lg-custom': 'var(--shadow-lg)',
       },
-      backgroundImage: {
-        'gradient-primary': 'var(--gradient-primary)',
-        'gradient-secondary': 'var(--gradient-secondary)',
-        'gradient-soft': 'var(--gradient-soft)',
-        'gradient-header': 'var(--gradient-header)',
-        'gradient-card': 'var(--gradient-card)',
-      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

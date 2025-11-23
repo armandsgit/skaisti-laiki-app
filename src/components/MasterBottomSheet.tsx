@@ -182,7 +182,7 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
           </div>
 
           {/* Address */}
-          <div className="flex items-start gap-2.5 mb-5 p-3.5 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-200/50">
+          <div className="flex items-start gap-2.5 mb-5 p-3.5 bg-secondary rounded-2xl border border-border">
             <span className="text-xl mt-0.5">📍</span>
             <span className="text-sm text-gray-700 font-medium leading-relaxed">
               {master.address && master.city ? `${master.address}, ${master.city}` : master.address || master.city}
@@ -197,7 +197,7 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
                 navigate(`/professional/${master.id}`);
               }, 150);
             }}
-            className="w-full py-4 bg-gradient-to-r from-primary via-primary to-secondary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2"
+            className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2"
           >
             <span>Skatīt profilu</span>
             <span className="text-lg">→</span>
