@@ -8,37 +8,37 @@
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
   
-  /* Light mode colors */
-  --background: 0 0% 98%; /* #FAFAFA */
-  --foreground: 0 0% 13%; /* #222 dark gray text */
+  /* Light mode colors - Fresha inspired */
+  --background: 0 0% 99%; /* #FCFCFC - Very light background */
+  --foreground: 0 0% 9%; /* #171717 - Dark text */
 
-  --card: 0 0% 100%; /* White cards */
-  --card-foreground: 0 0% 13%;
+  --card: 0 0% 100%; /* #FFFFFF - Pure white cards */
+  --card-foreground: 0 0% 9%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 13%;
+  --popover-foreground: 0 0% 9%;
 
-  --primary: 330 81% 60%; /* Pink #EC4899 */
+  --primary: 225 73% 57%; /* Blue #4C6FFF - Fresha accent */
   --primary-foreground: 0 0% 100%;
-  --primary-soft: 330 81% 95%;
+  --primary-soft: 225 73% 97%;
   
-  --secondary: 280 87% 65%; /* Purple accent */
-  --secondary-foreground: 0 0% 100%;
+  --secondary: 225 20% 95%; /* Light gray */
+  --secondary-foreground: 0 0% 9%;
 
   --muted: 0 0% 96%;
   --muted-foreground: 0 0% 45%;
 
   --accent: 47 96% 53%; /* Gold/amber for stars */
-  --accent-foreground: 0 0% 13%;
+  --accent-foreground: 0 0% 9%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 0 0% 90%;
-  --input: 0 0% 96%;
-  --ring: 330 81% 60%;
+  --border: 0 0% 93%; /* #EDEDED */
+  --input: 0 0% 98%;
+  --ring: 225 73% 57%;
 
-  --radius: 1rem; /* 16px */
+  --radius: 0.75rem; /* 12px - Fresha uses softer corners */
 
   /* Sidebar Colors */
   --sidebar-background: 0 0% 100%;
@@ -50,14 +50,14 @@
   --sidebar-border: 0 0% 90%;
   --sidebar-ring: 330 81% 60%;
   
-  /* Shadows */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-elegant: 0 8px 24px rgba(0, 0, 0, 0.12);
+  /* Shadows - Softer, more subtle */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-elegant: 0 4px 16px rgba(0, 0, 0, 0.08);
   
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
-  --gradient-card: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), #6B8AFF);
+  --gradient-card: linear-gradient(180deg, #ffffff 0%, #fefefe 100%);
 }
 
 @layer base {

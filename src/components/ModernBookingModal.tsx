@@ -460,56 +460,47 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
         onClick={handleClose}
       />
 
-      {/* Bottom Sheet */}
+      {/* Bottom Sheet - Fresha style */}
       <div
-        className={`fixed left-0 right-0 bottom-0 bg-white rounded-t-[32px] shadow-2xl transition-all duration-500 ease-out ${
+        className={`fixed left-0 right-0 bottom-0 bg-white rounded-t-[24px] shadow-2xl transition-all duration-500 ease-out ${
           isVisible ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{
           zIndex: 10001,
           maxHeight: '90vh',
-          paddingBottom: 'max(env(safe-area-inset-bottom), 20px)',
+          paddingBottom: 'max(env(safe-area-inset-bottom), 24px)',
         }}
       >
         {/* Grabber */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        <div className="flex justify-center pt-4 pb-2">
+          <div className="w-10 h-1 bg-border rounded-full" />
         </div>
 
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-all z-10"
+          className="absolute top-5 right-5 p-2 rounded-full bg-muted hover:bg-muted/80 active:bg-muted transition-all z-10"
           aria-label="Aizvērt"
         >
-          <X className="w-5 h-5 text-gray-600" />
+          <X className="w-5 h-5 text-foreground" />
         </button>
 
-        {/* Lottie Animation */}
-        <div className="flex justify-center mb-2">
-          <div className="w-20 h-20">
-            <Lottie animationData={calendarAnimation} loop={false} />
-          </div>
-        </div>
-
         {/* Content */}
-        <div className="px-6 pb-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+        <div className="px-6 pb-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
           {/* Header */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Pieteikt vizīti</h2>
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-              <span className="font-semibold">{professionalName}</span>
-            </div>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-foreground mb-2">Pieteikt vizīti</h2>
+            <p className="text-base text-muted-foreground">{professionalName}</p>
           </div>
 
           {/* Form */}
-          <div className="space-y-5">
+          <div className="space-y-6">
             {/* Date Picker */}
             <div>
-              <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                Izvēlies datumu <span className="text-red-500">*</span>
+              <Label className="text-base font-semibold text-foreground mb-3 block">
+                Izvēlies datumu <span className="text-destructive">*</span>
               </Label>
-              <div className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50 flex items-center justify-center overflow-hidden">
+              <div className="border border-border rounded-2xl p-5 bg-background flex items-center justify-center overflow-hidden">
                 <div className="w-full max-w-full flex justify-center">
                   <Calendar
                     mode="single"
@@ -521,56 +512,56 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                 </div>
               </div>
               {errors.date && (
-                <p className="text-xs text-red-500 mt-1">{errors.date}</p>
+                <p className="text-sm text-destructive mt-2">{errors.date}</p>
               )}
             </div>
 
             {/* Staff Members and Time Slots */}
             {formData.date && (
               <div>
-                <Label className="text-sm font-semibold text-gray-700 mb-3 block">
+                <Label className="text-base font-semibold text-foreground mb-3 block">
                   Pieejamie meistari un laiki
                 </Label>
                 {loadingSlots ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-12 text-muted-foreground text-base">
                     Ielādē pieejamos laikus...
                   </div>
                 ) : availableStaff.length === 0 ? (
-                  <div className="text-sm text-amber-600 text-center py-4 bg-amber-50 rounded-xl">
+                  <div className="text-base text-amber-700 text-center py-6 bg-amber-50 rounded-2xl border border-amber-200">
                     Šajā datumā visi laiki ir aizņemti
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {availableStaff.map((staff) => {
                       const slots = staffTimeSlots[staff.id] || [];
                       const selectedService = services.find(s => s.id === formData.serviceId);
                       const serviceDuration = selectedService?.duration || 60;
 
                       return (
-                        <div key={staff.id} className="border-2 border-gray-200 rounded-2xl p-4 bg-gray-50">
-                          <div className="flex items-center gap-3 mb-2">
+                        <div key={staff.id} className="border border-border rounded-2xl p-5 bg-background">
+                          <div className="flex items-center gap-4 mb-4">
                             {staff.avatar ? (
                               <img 
                                 src={staff.avatar} 
                                 alt={staff.name}
-                                className="w-12 h-12 rounded-full object-cover"
+                                className="w-14 h-14 rounded-2xl object-cover"
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg">
+                              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
                                 {staff.name.charAt(0)}
                               </div>
                             )}
                             <div>
-                              <div className="font-semibold text-gray-900">{staff.name}</div>
+                              <div className="font-bold text-base text-foreground">{staff.name}</div>
                               {staff.position && (
-                                <div className="text-sm text-gray-500">{staff.position}</div>
+                                <div className="text-sm text-muted-foreground">{staff.position}</div>
                               )}
-                              <div className="text-xs text-primary font-medium mt-0.5">
+                              <div className="text-xs text-primary font-semibold mt-1">
                                 Ilgums: {serviceDuration} min
                               </div>
                             </div>
                           </div>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-3 gap-3">
                             {slots.map((slot) => (
                               <button
                                 key={`${staff.id}-${slot.time}`}
@@ -588,12 +579,12 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                                 }}
                                 disabled={slot.isBooked}
                                 className={cn(
-                                  "p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200",
+                                  "p-3.5 rounded-2xl border text-sm font-semibold transition-all duration-200",
                                   slot.isBooked
-                                    ? "bg-gray-100 border-gray-300 text-gray-400 line-through pointer-events-none"
+                                    ? "bg-muted border-border text-muted-foreground line-through pointer-events-none"
                                     : formData.time === slot.time && formData.staffMemberId === staff.id
                                       ? "border-primary bg-primary text-white shadow-md"
-                                      : "border-gray-200 bg-white hover:border-primary/50 hover:scale-105 active:scale-95"
+                                      : "border-border bg-card hover:border-primary hover:shadow-sm active:scale-95"
                                 )}
                               >
                                 {slot.time}
@@ -609,49 +600,49 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
             )}
 
             {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                  Vārds <span className="text-red-500">*</span>
+                <Label htmlFor="firstName" className="text-base font-semibold text-foreground mb-2 block">
+                  Vārds <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="firstName"
                   value={formData.firstName || ''}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   className={cn(
-                    "h-12 rounded-xl border-2",
-                    errors.firstName ? "border-red-500" : "border-gray-200"
+                    "h-14 rounded-2xl border text-base",
+                    errors.firstName ? "border-destructive" : "border-border"
                   )}
                   placeholder="Jānis"
                 />
                 {errors.firstName && (
-                  <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
+                  <p className="text-sm text-destructive mt-2">{errors.firstName}</p>
                 )}
               </div>
               <div>
-                <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                  Uzvārds <span className="text-red-500">*</span>
+                <Label htmlFor="lastName" className="text-base font-semibold text-foreground mb-2 block">
+                  Uzvārds <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="lastName"
                   value={formData.lastName || ''}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   className={cn(
-                    "h-12 rounded-xl border-2",
-                    errors.lastName ? "border-red-500" : "border-gray-200"
+                    "h-14 rounded-2xl border text-base",
+                    errors.lastName ? "border-destructive" : "border-border"
                   )}
                   placeholder="Bērziņš"
                 />
                 {errors.lastName && (
-                  <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
+                  <p className="text-sm text-destructive mt-2">{errors.lastName}</p>
                 )}
               </div>
             </div>
 
             {/* Phone */}
             <div>
-              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                Telefona numurs <span className="text-red-500">*</span>
+              <Label htmlFor="phone" className="text-base font-semibold text-foreground mb-2 block">
+                Telefona numurs <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="phone"
@@ -659,27 +650,27 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                 value={formData.phone || ''}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className={cn(
-                  "h-12 rounded-xl border-2",
-                  errors.phone ? "border-red-500" : "border-gray-200"
+                  "h-14 rounded-2xl border text-base",
+                  errors.phone ? "border-destructive" : "border-border"
                 )}
                 placeholder="+371 20 000 000"
               />
               {errors.phone && (
-                <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+                <p className="text-sm text-destructive mt-2">{errors.phone}</p>
               )}
             </div>
 
 
             {/* Notes */}
             <div>
-              <Label htmlFor="notes" className="text-sm font-semibold text-gray-700 mb-1.5 block">
+              <Label htmlFor="notes" className="text-base font-semibold text-foreground mb-2 block">
                 Piezīmes (neobligāti)
               </Label>
               <Textarea
                 id="notes"
                 value={formData.notes || ''}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="rounded-xl border-2 border-gray-200 resize-none"
+                className="rounded-2xl border border-border resize-none text-base"
                 placeholder="Jutīga āda, alerģijas u.c."
                 rows={3}
               />
@@ -689,7 +680,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
             <Button
               onClick={handleSubmit}
               disabled={!formData.date || !formData.time}
-              className="w-full h-14 rounded-2xl text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.98] bg-gradient-to-r from-primary via-primary to-secondary"
+              className="w-full h-16 rounded-2xl text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.98]"
             >
               Apstiprināt rezervāciju
             </Button>

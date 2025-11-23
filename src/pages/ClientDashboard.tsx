@@ -139,109 +139,116 @@ const ClientDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="bg-card/95 backdrop-blur-sm border-b sticky top-0 z-10 shadow-soft">
-        <div className="max-w-screen-sm mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold">BeautyOn</h1>
-          <Button variant="ghost" size="icon" onClick={signOut}>
+      {/* Header - Fresha style */}
+      <header className="bg-card border-b sticky top-0 z-10">
+        <div className="max-w-screen-lg mx-auto px-5 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">BeautyOn</h1>
+          <Button variant="ghost" size="icon" onClick={signOut} className="rounded-full">
             <LogOut className="w-5 h-5" />
           </Button>
         </div>
       </header>
 
-      <main className="max-w-screen-sm mx-auto px-4 py-6 overflow-x-hidden">
-        <div className="w-full space-y-6">
-          <Card className="shadow-card border">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">{t.searchProfessionals}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <div className="flex-1 w-full">
-                  <Input
-                    placeholder={t.search}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder={t.filterByCategory} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t.allCategories}</SelectItem>
-                    {categories.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      <main className="max-w-screen-lg mx-auto px-5 py-8 overflow-x-hidden">
+        <div className="w-full space-y-8">
+          {/* Search Section - Fresha style */}
+          <div className="space-y-4">
+            <h2 className="text-3xl font-bold">Atrodi savu meistaru</h2>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  placeholder="Meklēt pēc nosaukuma vai apraksta..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-12 h-14 text-base rounded-2xl border-border/50"
+                />
               </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 gap-4">
-            {filteredProfessionals.map((prof) => (
-                <Card 
-                  key={prof.id} 
-                  className={`touch-ripple tap-feedback cursor-pointer border shadow-card overflow-hidden hover:shadow-elegant transition-shadow ${
-                    prof.plan === 'premium' ? 'ring-2 ring-amber-400' : ''
-                  }`}
-                  onClick={() => navigate(`/professional/${prof.id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3 mb-3">
-                      <Avatar className="w-16 h-16 border-2 border-primary/20 flex-shrink-0">
-                        <AvatarImage src={prof.profiles?.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                          {prof.profiles?.name?.charAt(0) || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg truncate">
-                          {prof.profiles?.name}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          <Badge variant="secondary" className="text-sm px-2.5 py-0.5 whitespace-nowrap">
-                            {prof.category}
-                          </Badge>
-                          <PlanBadge 
-                            plan={prof.plan} 
-                            isVerified={prof.is_verified || false}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 flex-shrink-0" />
-                        <span className="truncate">{prof.city}</span>
-                        {prof.distance < 9999 && (
-                          <span className="text-sm whitespace-nowrap flex-shrink-0">• {prof.distance} km</span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 fill-accent text-accent flex-shrink-0" />
-                        <span className="truncate text-sm">{prof.rating || 0} ({prof.total_reviews || 0} {t.reviews})</span>
-                      </div>
-                    </div>
-                    
-                    {prof.bio && (
-                      <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
-                        {prof.bio}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+              
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-full sm:w-[220px] h-14 rounded-2xl border-border/50">
+                  <SelectValue placeholder="Visi pakalpojumi" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Visi pakalpojumi</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </main>
-      </div>
-    );
-  };
+
+          {/* Professional Cards - Fresha style */}
+          <div className="grid grid-cols-1 gap-5">
+            {filteredProfessionals.map((prof) => (
+              <Card 
+                key={prof.id} 
+                className="cursor-pointer border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-200 overflow-hidden rounded-2xl"
+                onClick={() => navigate(`/professional/${prof.id}`)}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-4">
+                    {/* Avatar */}
+                    <Avatar className="w-20 h-20 border-2 border-border flex-shrink-0 rounded-2xl">
+                      <AvatarImage src={prof.profiles?.avatar} className="object-cover" />
+                      <AvatarFallback className="bg-primary/5 text-primary text-xl font-semibold rounded-2xl">
+                        {prof.profiles?.name?.charAt(0) || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div>
+                        <h3 className="font-bold text-xl text-foreground mb-1 truncate">
+                          {prof.profiles?.name}
+                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full font-medium">
+                            {prof.category}
+                          </Badge>
+                          {prof.is_verified && (
+                            <Badge className="bg-primary/10 text-primary hover:bg-primary/10 text-xs px-2 py-0.5 rounded-full">
+                              Verificēts
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1.5 text-sm">
+                        {(prof.rating > 0 || prof.total_reviews > 0) && (
+                          <div className="flex items-center gap-1.5">
+                            <Star className="w-4 h-4 fill-accent text-accent" />
+                            <span className="font-semibold text-foreground">{prof.rating?.toFixed(1) || '0.0'}</span>
+                            <span className="text-muted-foreground">({prof.total_reviews || 0} atsauksmes)</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <MapPin className="w-4 h-4" />
+                          <span>{prof.city}</span>
+                          {prof.distance < 9999 && (
+                            <span>• {prof.distance} km</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {prof.bio && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">
+                          {prof.bio}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
   
   export default ClientDashboard;

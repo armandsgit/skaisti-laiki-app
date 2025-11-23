@@ -158,75 +158,78 @@ const ProfessionalProfile = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-b from-primary/5 to-background pt-6 pb-8 px-4">
-        <div className="max-w-2xl mx-auto text-center animate-fade-in">
-          {/* Avatar */}
-          <div className="relative inline-block mb-4">
-            <Avatar className="w-28 h-28 border-4 border-background shadow-lg">
-              <AvatarImage src={professional.profiles?.avatar} />
-              <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
-                {professional.profiles?.name?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            {professional.is_verified && (
-              <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1.5 shadow-lg">
-                <CheckCircle className="w-5 h-5 text-primary-foreground" />
-              </div>
-            )}
-          </div>
-
-          {/* Name & Category */}
-          <h1 className="text-2xl font-bold mb-2">{professional.profiles?.name}</h1>
-          <Badge variant="secondary" className="mb-4 text-sm px-3 py-1">
-            {professional.category}
-          </Badge>
-
-          {/* Rating & Location */}
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium text-foreground">{professional.rating || 0}</span>
-              <span>({professional.total_reviews || 0})</span>
-            </div>
-            {professional.city && (
-              <>
-                <span className="text-muted-foreground/40">•</span>
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4" />
-                  <span>{professional.city}</span>
+      {/* Hero Section - Fresha style */}
+      <div className="relative bg-card border-b">
+        <div className="max-w-screen-lg mx-auto px-5 py-8">
+          <div className="text-center space-y-4">
+            {/* Avatar */}
+            <div className="relative inline-block">
+              <Avatar className="w-32 h-32 border-4 border-background shadow-sm rounded-3xl">
+                <AvatarImage src={professional.profiles?.avatar} className="object-cover" />
+                <AvatarFallback className="bg-primary/5 text-primary text-4xl font-bold rounded-3xl">
+                  {professional.profiles?.name?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              {professional.is_verified && (
+                <div className="absolute -bottom-2 -right-2 bg-primary rounded-full p-2 shadow-md">
+                  <CheckCircle className="w-6 h-6 text-white" />
                 </div>
-              </>
-            )}
+              )}
+            </div>
+
+            {/* Name */}
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{professional.profiles?.name}</h1>
+              <Badge variant="secondary" className="text-base px-4 py-1.5 rounded-full font-medium">
+                {professional.category}
+              </Badge>
+            </div>
+
+            {/* Rating & Location */}
+            <div className="flex items-center justify-center gap-8 text-base">
+              {(professional.rating > 0 || professional.total_reviews > 0) && (
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 fill-accent text-accent" />
+                  <span className="font-semibold text-foreground">{professional.rating?.toFixed(1) || '0.0'}</span>
+                  <span className="text-muted-foreground">({professional.total_reviews || 0})</span>
+                </div>
+              )}
+              {professional.city && (
+                <>
+                  <span className="text-muted-foreground/30">•</span>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-5 h-5" />
+                    <span>{professional.city}</span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 -mt-2 space-y-4">
+      <div className="max-w-screen-lg mx-auto px-5 py-8 space-y-6">
         {/* Bio Section */}
         {professional.bio && (
-          <Card className="border-0 shadow-sm animate-fade-in">
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Award className="w-4 h-4 text-primary" />
-                Par mani
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{professional.bio}</p>
+          <Card className="border border-border/50 rounded-2xl">
+            <CardContent className="p-6">
+              <h3 className="font-bold text-lg mb-3">Par mani</h3>
+              <p className="text-base text-muted-foreground leading-relaxed">{professional.bio}</p>
             </CardContent>
           </Card>
         )}
 
-        {/* Gallery Carousel */}
+        {/* Gallery Carousel - Fresha style */}
         {professional.gallery && professional.gallery.length > 0 && (
-          <Card className="border-0 shadow-sm overflow-hidden animate-fade-in">
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-3">Galerija</h3>
-              <div className="overflow-hidden rounded-xl" ref={emblaRef}>
-                <div className="flex gap-3">
+          <Card className="border border-border/50 rounded-2xl overflow-hidden">
+            <CardContent className="p-6">
+              <h3 className="font-bold text-lg mb-4">Galerija</h3>
+              <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
+                <div className="flex gap-4">
                   {professional.gallery.map((imageUrl: string, index: number) => (
                     <div
                       key={index}
-                      className="flex-[0_0_80%] min-w-0 relative aspect-[4/3] rounded-xl overflow-hidden"
+                      className="flex-[0_0_85%] min-w-0 relative aspect-[4/3] rounded-2xl overflow-hidden"
                     >
                       <img
                         src={imageUrl}
@@ -244,29 +247,29 @@ const ProfessionalProfile = () => {
 
         {/* Staff Members / Team */}
         {staffMembers.length > 0 && (
-          <Card className="border-0 shadow-sm animate-fade-in">
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-3">Mūsu komanda</h3>
-              <div className="grid grid-cols-2 gap-3">
+          <Card className="border border-border/50 rounded-2xl">
+            <CardContent className="p-6">
+              <h3 className="font-bold text-lg mb-4">Mūsu komanda</h3>
+              <div className="grid grid-cols-2 gap-4">
                 {staffMembers.map((member) => (
                   <div
                     key={member.id}
-                    className="flex flex-col items-center p-3 bg-muted/30 rounded-2xl border border-border/40"
+                    className="flex flex-col items-center p-4 bg-background rounded-2xl border border-border/50"
                   >
                     {member.avatar ? (
                       <img
                         src={member.avatar}
                         alt={member.name}
-                        className="w-16 h-16 rounded-full object-cover mb-2"
+                        className="w-20 h-20 rounded-2xl object-cover mb-3"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl mb-2">
+                      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl mb-3">
                         {member.name.charAt(0)}
                       </div>
                     )}
-                    <p className="font-semibold text-sm text-center">{member.name}</p>
+                    <p className="font-semibold text-base text-center">{member.name}</p>
                     {member.position && (
-                      <p className="text-xs text-muted-foreground text-center mt-0.5">
+                      <p className="text-sm text-muted-foreground text-center mt-1">
                         {member.position}
                       </p>
                     )}
@@ -277,45 +280,43 @@ const ProfessionalProfile = () => {
           </Card>
         )}
 
-        {/* Services Section */}
-        <Card className="border-0 shadow-sm animate-fade-in">
-          <CardContent className="p-4">
-            <h3 className="font-semibold mb-3">{t.services}</h3>
+        {/* Services Section - Fresha style */}
+        <Card className="border border-border/50 rounded-2xl">
+          <CardContent className="p-6">
+            <h3 className="font-bold text-lg mb-5">Pakalpojumi</h3>
             {services.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Euro className="w-8 h-8 text-muted-foreground" />
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Euro className="w-10 h-10 text-muted-foreground" />
                 </div>
-                <p className="text-sm text-muted-foreground">Nav pieejamu pakalpojumu</p>
+                <p className="text-base text-muted-foreground">Nav pieejamu pakalpojumu</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {services.map((service) => (
                   <div
                     key={service.id}
-                    className="bg-muted/30 rounded-2xl p-4 space-y-3 border border-border/40"
+                    className="bg-background rounded-2xl p-5 border border-border/50 space-y-4"
                   >
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-base mb-1">{service.name}</h4>
-                        {service.description && (
-                          <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
-                        )}
-                        <div className="flex gap-4 text-sm">
-                          <span className="flex items-center gap-1.5 font-semibold text-primary">
-                            <Euro className="w-4 h-4" />
-                            €{service.price}
-                          </span>
-                          <span className="flex items-center gap-1.5 text-muted-foreground">
-                            <Clock className="w-4 h-4" />
-                            {service.duration} min
-                          </span>
-                        </div>
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-lg">{service.name}</h4>
+                      {service.description && (
+                        <p className="text-sm text-muted-foreground leading-relaxed">{service.description}</p>
+                      )}
+                      <div className="flex items-center gap-6 pt-1">
+                        <span className="flex items-center gap-2 font-bold text-lg text-primary">
+                          <Euro className="w-5 h-5" />
+                          {service.price}€
+                        </span>
+                        <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="w-4 h-4" />
+                          {service.duration} min
+                        </span>
                       </div>
                     </div>
                     <Button
                       size="lg"
-                      className="w-full rounded-xl font-semibold shadow-sm button-press"
+                      className="w-full h-14 rounded-2xl text-base font-semibold shadow-sm hover:shadow-md transition-all"
                       onClick={() => {
                         triggerHaptic('medium');
                         setSelectedServiceId(service.id);
@@ -331,41 +332,33 @@ const ProfessionalProfile = () => {
           </CardContent>
         </Card>
 
-        {/* Location Map */}
+        {/* Location Map - Fresha style */}
         {professional.latitude && professional.longitude && (
-          <Card className="border-0 shadow-sm overflow-hidden animate-fade-in">
-            <CardContent className="p-4">
-              {/* Header Row: Icon left, Button right */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-4 h-4 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-sm">Atrašanās vieta</h3>
-                </div>
+          <Card className="border border-border/50 rounded-2xl overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg">Atrašanās vieta</h3>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-[18px] border-2 border-primary bg-background hover:bg-primary/5 px-3 py-1.5 h-auto flex-shrink-0"
+                  className="rounded-full border-2 border-primary/20 bg-background hover:bg-primary/5 h-10 w-10 p-0"
                   onClick={() => {
                     triggerHaptic('light');
                     setShowNavigationPicker(true);
                   }}
                 >
-                  <Navigation className="w-4 h-4 text-foreground" />
+                  <Navigation className="w-5 h-5 text-foreground" />
                 </Button>
               </div>
               
-              {/* Address */}
               {professional.address && (
-                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                <p className="text-base text-muted-foreground mb-5 leading-relaxed">
                   {professional.address}, {professional.city}
                 </p>
               )}
               
-              {/* Map */}
-              <div className="w-full overflow-hidden rounded-[24px] border">
-                <div className="relative w-full h-48">
+              <div className="w-full overflow-hidden rounded-2xl border border-border/50">
+                <div className="relative w-full h-64">
                   <LocationMap
                     latitude={professional.latitude}
                     longitude={professional.longitude}
