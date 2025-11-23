@@ -196,10 +196,10 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-soft via-background to-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-elegant border">
         <CardHeader className="text-center space-y-3 pb-4">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center mb-2 shadow-elegant">
-            <Sparkles className="w-10 h-10 text-white" />
+          <div className="mx-auto w-20 h-20 bg-black rounded-3xl flex items-center justify-center mb-2 shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+            <span className="text-white text-4xl font-bold tracking-tight">B</span>
           </div>
-          <CardTitle className="text-3xl font-bold">
+          <CardTitle className="text-3xl font-bold tracking-tight">
             BeautyOn
           </CardTitle>
           <CardDescription className="text-muted-foreground text-base">
