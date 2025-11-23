@@ -16,7 +16,7 @@ import EditableLocationMap from '@/components/EditableLocationMap';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import { toast } from 'sonner';
-import { ArrowLeft, Edit, XCircle, Sparkles, LogOut } from 'lucide-react';
+import { ArrowLeft, Edit, XCircle, Sparkles, LogOut, CreditCard } from 'lucide-react';
 
 export default function ProfessionalSettings() {
   const { user, signOut } = useAuth();
@@ -574,6 +574,24 @@ export default function ProfessionalSettings() {
               </CardContent>
             </Card>
           )}
+
+          {/* Subscription / Payments Card */}
+          <Card 
+            className="border-0 shadow-card cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => navigate('/abonesana')}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-background" />
+                </div>
+                <div>
+                  <CardTitle>Abonements / Maksājumi</CardTitle>
+                  <CardDescription>Pārvaldiet savu abonementu un maksājumus</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
 
           {/* Delete Account Card */}
           <Card className="overflow-hidden border-destructive/20">
