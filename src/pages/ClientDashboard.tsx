@@ -188,7 +188,7 @@ const ClientDashboard = () => {
                           {/* Location with Distance */}
                           <div className="pt-0.5">
                             <span className="text-[13px] text-[#6A6A6A] leading-tight block">
-                              {prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                              {prof.address || prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
                             </span>
                           </div>
                           </div>
@@ -243,7 +243,7 @@ const ClientDashboard = () => {
                         {/* Location with Distance */}
                         <div className="pt-0.5">
                           <span className="text-[13px] text-[#6A6A6A] leading-tight block">
-                            {prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
+                            {prof.address || prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
                           </span>
                         </div>
                         </div>
