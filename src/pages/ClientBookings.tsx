@@ -112,18 +112,14 @@ const ClientBookings = () => {
         })
       );
       
-      // Sort bookings: pending first, then by date and time
+      // Sort bookings: pending first, then newest first (by created_at)
       const sortedBookings = bookingsWithReviewStatus.sort((a, b) => {
         // Priority 1: pending status always on top
         if (a.status === 'pending' && b.status !== 'pending') return -1;
         if (a.status !== 'pending' && b.status === 'pending') return 1;
         
-        // Priority 2: sort by date
-        const dateCompare = new Date(a.booking_date).getTime() - new Date(b.booking_date).getTime();
-        if (dateCompare !== 0) return dateCompare;
-        
-        // Priority 3: sort by time
-        return a.booking_time.localeCompare(b.booking_time);
+        // Priority 2: newest first (by creation time)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       
       setBookings(sortedBookings);
