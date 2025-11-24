@@ -3,17 +3,12 @@ import { Home, Map, Calendar, User, Search, CheckCircle, MessageSquare } from 'l
 import { useAuth } from '@/lib/auth';
 import { useEffect, useState } from 'react';
 
-interface BottomNavigationProps {
-  pendingBookingsCount?: number;
-}
-
-const BottomNavigation = ({ pendingBookingsCount = 0 }: BottomNavigationProps) => {
+const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
-  
-  console.log('🔔 BottomNavigation received pendingBookingsCount:', pendingBookingsCount);
+  const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
 
   // Load user role from both user_roles (for ADMIN) and profiles (for other roles)
   useEffect(() => {
@@ -49,6 +44,53 @@ const BottomNavigation = ({ pendingBookingsCount = 0 }: BottomNavigationProps) =
     
     loadUserRole();
   }, [user?.id]);
+
+  // Load pending bookings count for clients
+  useEffect(() => {
+    const loadPendingBookingsCount = async () => {
+      if (!user?.id || userRole !== 'CLIENT') return;
+      
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { count } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('client_id', user.id)
+        .eq('status', 'pending');
+      
+      setPendingBookingsCount(count || 0);
+
+      // Subscribe to realtime changes
+      const channel = supabase
+        .channel('client-bookings-count')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bookings',
+            filter: `client_id=eq.${user.id}`
+          },
+          async () => {
+            // Reload count when bookings change
+            const { count: newCount } = await supabase
+              .from('bookings')
+              .select('*', { count: 'exact', head: true })
+              .eq('client_id', user.id)
+              .eq('status', 'pending');
+            
+            setPendingBookingsCount(newCount || 0);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+    
+    loadPendingBookingsCount();
+  }, [user?.id, userRole]);
 
   // Don't show on auth page or when not logged in
   if (location.pathname === '/auth' || !user) return null;

@@ -28,7 +28,6 @@ const ClientDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<SortedMaster[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
-  const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   
   useEffect(() => {
     if (user) {
@@ -36,7 +35,6 @@ const ClientDashboard = () => {
       loadCategories();
       loadProfile();
       loadRecentlyViewedIds();
-      loadPendingBookingsCount();
     }
   }, [user]);
 
@@ -90,7 +88,6 @@ const ClientDashboard = () => {
         },
         (payload) => {
           console.log('Client booking changed:', payload);
-          loadPendingBookingsCount();
           
           // Show toast when booking status changes
           if (payload.eventType === 'UPDATE' && payload.new) {
@@ -111,22 +108,6 @@ const ClientDashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
-
-  const loadPendingBookingsCount = async () => {
-    if (!user) return;
-    
-    console.log('🔔 Loading pending bookings count for user:', user.id);
-    
-    const { count, error } = await supabase
-      .from('bookings')
-      .select('*', { count: 'exact', head: true })
-      .eq('client_id', user.id)
-      .eq('status', 'pending');
-    
-    console.log('🔔 Pending bookings count result:', { count, error });
-    
-    setPendingBookingsCount(count || 0);
-  };
 
   const loadRecentlyViewedIds = () => {
     const viewed = localStorage.getItem('recentlyViewedIds');
@@ -382,8 +363,8 @@ const ClientDashboard = () => {
 
       </main>
 
-      {/* Bottom Navigation with Badge */}
-      <BottomNavigation pendingBookingsCount={pendingBookingsCount} />
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>;
 };
 export default ClientDashboard;
