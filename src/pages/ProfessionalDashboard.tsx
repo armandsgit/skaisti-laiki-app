@@ -1274,7 +1274,14 @@ const ProfessionalDashboard = () => {
           {/* Services Tab */}
           <TabsContent value="services" className="space-y-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Mani pakalpojumi</h2>
+              <div>
+                <h2 className="text-xl font-bold">Mani pakalpojumi</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {services.length} {getPlanFeatures(profile.plan).maxServices > 0 
+                    ? `/ ${getPlanFeatures(profile.plan).maxServices}` 
+                    : '/ ∞'} pakalpojumi
+                </p>
+              </div>
               <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
@@ -1283,6 +1290,7 @@ const ProfessionalDashboard = () => {
       setNewService({ name: '', price: '', duration: '60', description: '' });
     }}
                     className="bg-black text-white border-0"
+                    disabled={!editingService && getPlanFeatures(profile.plan).maxServices > 0 && services.length >= getPlanFeatures(profile.plan).maxServices}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Pievienot pakalpojumu
