@@ -114,7 +114,13 @@ const ClientBookings = () => {
                 .map((booking) => (
                   <Card 
                     key={booking.id} 
-                    className="border shadow-card overflow-hidden tap-feedback cursor-pointer hover:shadow-elegant transition-shadow relative"
+                    className={`border shadow-card overflow-hidden tap-feedback cursor-pointer hover:shadow-elegant transition-shadow relative ${
+                      booking.status === 'pending' 
+                        ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-200' 
+                        : booking.status === 'confirmed'
+                        ? 'bg-green-50 border-green-400 ring-2 ring-green-200'
+                        : ''
+                    }`}
                     onClick={() => navigate(`/professional/${booking.professional_profiles?.id}`)}
                   >
                     <CardContent className="p-4">
