@@ -115,11 +115,15 @@ const ClientDashboard = () => {
   const loadPendingBookingsCount = async () => {
     if (!user) return;
     
-    const { count } = await supabase
+    console.log('🔔 Loading pending bookings count for user:', user.id);
+    
+    const { count, error } = await supabase
       .from('bookings')
       .select('*', { count: 'exact', head: true })
       .eq('client_id', user.id)
       .eq('status', 'pending');
+    
+    console.log('🔔 Pending bookings count result:', { count, error });
     
     setPendingBookingsCount(count || 0);
   };

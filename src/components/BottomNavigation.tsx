@@ -12,6 +12,8 @@ const BottomNavigation = ({ pendingBookingsCount = 0 }: BottomNavigationProps) =
   const location = useLocation();
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
+  
+  console.log('🔔 BottomNavigation received pendingBookingsCount:', pendingBookingsCount);
 
   // Load user role from both user_roles (for ADMIN) and profiles (for other roles)
   useEffect(() => {
