@@ -23,7 +23,7 @@ const plans = [
     isFree: true,
   },
   {
-    id: 'starter',
+    id: 'starteris',
     name: 'Starteris',
     price: '9.99',
     description: 'Sāc savu biznesu',
