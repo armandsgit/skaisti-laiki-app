@@ -208,7 +208,20 @@ const BottomNavigation = () => {
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
         {tabs.map((tab, index) => {
           const Icon = tab.icon;
-          const showBadge = 'badge' in tab && tab.badge && tab.badge > 0;
+          const showBadge = 'badge' in tab && typeof tab.badge === 'number' && tab.badge > 0;
+          
+          // Debug logging
+          if ('badge' in tab) {
+            console.log('🔔 Tab badge check:', {
+              path: tab.path,
+              badge: tab.badge,
+              showBadge,
+              condition1: 'badge' in tab,
+              condition2: typeof tab.badge === 'number',
+              condition3: tab.badge > 0
+            });
+          }
+          
           return (
             <button
               key={index}
