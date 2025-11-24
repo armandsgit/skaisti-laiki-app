@@ -28,6 +28,7 @@ import { DashboardStats } from '@/components/DashboardStats';
 import { UpcomingBookingCard } from '@/components/UpcomingBookingCard';
 import { ServiceCard } from '@/components/ServiceCard';
 import { QuickActionButton } from '@/components/QuickActionButton';
+import { SubscriptionBanner } from '@/components/SubscriptionBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday, startOfMonth, endOfMonth, addDays, startOfWeek } from 'date-fns';
 import { lv } from 'date-fns/locale';
@@ -50,6 +51,7 @@ const ProfessionalDashboard = () => {
     todayBookings: 0,
     monthlyEarnings: 0
   });
+  const [emailCredits, setEmailCredits] = useState(0);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
@@ -103,6 +105,7 @@ const ProfessionalDashboard = () => {
       loadServices();
       loadBookings();
       loadStaffMembers();
+      loadEmailCredits();
     }
   }, [profile]);
 
@@ -188,6 +191,18 @@ const ProfessionalDashboard = () => {
       .eq('professional_id', profile.id);
     
     setServices(data || []);
+  };
+
+  const loadEmailCredits = async () => {
+    if (!profile?.id) return;
+    
+    const { data } = await supabase
+      .from('email_credits')
+      .select('credits')
+      .eq('master_id', profile.id)
+      .maybeSingle();
+    
+    setEmailCredits(data?.credits || 0);
   };
 
   const loadStaffMembers = async () => {
@@ -661,6 +676,14 @@ const ProfessionalDashboard = () => {
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-6">
+            {/* Subscription Status Banner */}
+            <SubscriptionBanner
+              subscriptionStatus={profile.subscription_status}
+              plan={profile.plan}
+              subscriptionEndDate={profile.subscription_end_date}
+              emailCredits={emailCredits}
+            />
+
             {/* KPI Stats */}
             <DashboardStats
               todayEarnings={stats.todayEarnings}
