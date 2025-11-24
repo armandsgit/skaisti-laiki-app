@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Edit2, Trash2, User } from 'lucide-react';
+import { Plus, Edit2, Trash2, User, Lock } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptic';
+import { getUserSubscription, canAddStaffMemberByPlan, getStaffMemberLimit } from '@/lib/subscription';
 
 interface StaffMember {
   id: string;
@@ -38,6 +39,8 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string>('free');
+  const [staffLimit, setStaffLimit] = useState<number>(1);
   const [formData, setFormData] = useState({
     name: '',
     position: '',
@@ -46,9 +49,24 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
   });
 
   useEffect(() => {
+    loadSubscription();
     loadStaffMembers();
     loadServices();
   }, [professionalId]);
+
+  const loadSubscription = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const subscription = await getUserSubscription(user.id);
+      const plan = subscription?.plan || 'free';
+      setCurrentPlan(plan);
+      setStaffLimit(getStaffMemberLimit(plan));
+    } catch (error) {
+      console.error('Error loading subscription:', error);
+    }
+  };
 
   const loadServices = async () => {
     try {
@@ -118,6 +136,12 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
 
     if (!formData.name.trim()) {
       toast.error('Vārds ir obligāts');
+      return;
+    }
+
+    // Check limit when adding new staff
+    if (!editingStaff && !canAddStaffMemberByPlan(currentPlan, staffMembers.length)) {
+      toast.error(`Jūsu plāns atļauj tikai ${staffLimit} meistarus. Uzlabojiet abonementu, lai pievienotu vairāk.`);
       return;
     }
 
@@ -260,6 +284,8 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     );
   }
 
+  const canAddMore = canAddStaffMemberByPlan(currentPlan, staffMembers.length);
+
   return (
     <Card>
       <CardHeader>
@@ -267,10 +293,21 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
           <div className="flex items-center gap-2">
             <User className="w-5 h-5" />
             Meistari
+            <span className="text-xs text-muted-foreground font-normal">
+              ({staffMembers.length}/{staffLimit === 999 ? '∞' : staffLimit})
+            </span>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" onClick={openDialog} className="gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={openDialog} 
+                className="gap-2"
+                disabled={!canAddMore}
+                title={!canAddMore ? `Jūsu plāns atļauj tikai ${staffLimit} meistarus` : ''}
+              >
+                {!canAddMore && <Lock className="w-4 h-4" />}
                 <Plus className="w-4 h-4" />
                 Pievienot meistaru
               </Button>
@@ -431,17 +468,31 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
           </div>
         ) : (
           <div className="space-y-3">
-            {staffMembers.map((staff) => {
+            {!canAddMore && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                <Lock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-amber-800">
+                  Jūsu plāns atļauj tikai {staffLimit} {staffLimit === 1 ? 'meistaru' : 'meistarus'}. 
+                  <a href="/abonesana" className="underline ml-1 font-medium">Uzlabojiet abonementu</a>, lai pievienotu vairāk.
+                </p>
+              </div>
+            )}
+            {staffMembers.map((staff, index) => {
               const isSelected = selectedStaffMemberId === staff.id;
+              const isOverLimit = index >= staffLimit;
               return (
                 <div
                   key={staff.id}
-                  className={`flex items-center gap-3 p-3 border-2 rounded-lg transition-all cursor-pointer ${
-                    isSelected
-                      ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
-                      : 'border-border hover:bg-muted/50 hover:border-primary/30'
+                  className={`flex items-center gap-3 p-3 border-2 rounded-lg transition-all ${
+                    isOverLimit 
+                      ? 'opacity-40 pointer-events-none cursor-not-allowed bg-muted/20 border-border/30'
+                      : `cursor-pointer ${
+                          isSelected
+                            ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
+                            : 'border-border hover:bg-muted/50 hover:border-primary/30'
+                        }`
                   }`}
-                  onClick={() => onSelectStaffMember?.(staff.id)}
+                  onClick={() => !isOverLimit && onSelectStaffMember?.(staff.id)}
                 >
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={staff.avatar || undefined} />
