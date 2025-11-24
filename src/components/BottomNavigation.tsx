@@ -176,7 +176,7 @@ const BottomNavigation = ({ pendingBookingsCount = 0 }: BottomNavigationProps) =
                   strokeWidth={tab.isActive ? 2.5 : 1.5}
                 />
                 {showBadge && (
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                  <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg">
                     {tab.badge}
                   </span>
                 )}
