@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings, LayoutDashboard, CalendarDays, TrendingUp, Bell, Trash2, ChevronDown } from 'lucide-react';
+import { Calendar, LogOut, Plus, Euro, Clock, CheckCircle, XCircle, Sparkles, Edit, User, MapPin, Settings, LayoutDashboard, CalendarDays, TrendingUp, Bell, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import EmptyStateAnimation from '@/components/EmptyStateAnimation';
@@ -33,6 +33,7 @@ import { EmailStatsCard } from '@/components/EmailStatsCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday, startOfMonth, endOfMonth, addDays, startOfWeek } from 'date-fns';
 import { lv } from 'date-fns/locale';
+import { getPlanFeatures, isFreePlan } from '@/lib/plan-features';
 
 const ProfessionalDashboard = () => {
   const t = useTranslation('lv');
@@ -343,6 +344,13 @@ const ProfessionalDashboard = () => {
     
     if (!profile?.id) return;
 
+    // Check service limit for FREE plan
+    const planFeatures = getPlanFeatures(profile.plan);
+    if (!editingService && planFeatures.maxServices > 0 && services.length >= planFeatures.maxServices) {
+      toast.error(`Bezmaksas plāns atļauj tikai ${planFeatures.maxServices} pakalpojumus. Lūdzu, aktivizējiet augstāka līmeņa plānu.`);
+      return;
+    }
+
     try {
       const validatedData = serviceSchema.parse({
         name: newService.name,
@@ -548,6 +556,13 @@ const ProfessionalDashboard = () => {
 
   const sendBookingEmail = async (booking: any, type: 'confirmation' | 'reminder' | 'test') => {
     if (!profile?.id || !userProfile) return;
+
+    // Check if email automation is allowed for this plan
+    const planFeatures = getPlanFeatures(profile.plan);
+    if (!planFeatures.canUseEmailAutomation) {
+      toast.error('E-pasta automātiskā sūtīšana nav pieejama bezmaksas plānā. Lūdzu, aktivizējiet augstāka līmeņa plānu.');
+      return;
+    }
 
     if (emailCredits < 1) {
       toast.error('Nav pietiekami e-pasta kredīti');
@@ -864,6 +879,41 @@ const ProfessionalDashboard = () => {
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-6">
+            {/* FREE Plan Warning Banner */}
+            {isFreePlan(profile.plan) && (
+              <Card className="border-warning/50 bg-warning/5">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-warning/10">
+                      <AlertCircle className="w-5 h-5 text-warning stroke-[2]" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-foreground mb-1">
+                        Bezmaksas plāns - ierobežotas iespējas
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Jūsu abonements ir beidzies vai nav aktivizēts. Pieejamas tikai pamata funkcijas.
+                      </p>
+                      <ul className="text-sm text-muted-foreground space-y-1 mb-3">
+                        <li>• Nav e-pasta automātiskās sūtīšanas</li>
+                        <li>• Nav statistikas</li>
+                        <li>• Maksimums 3 pakalpojumi</li>
+                        <li>• Nav redzams kartē</li>
+                      </ul>
+                      <Button 
+                        onClick={() => navigate('/abonesana')}
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        Aktivizēt plānu
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Subscription Status Banner */}
             <SubscriptionBanner
               subscriptionStatus={profile.subscription_status}
@@ -872,22 +922,26 @@ const ProfessionalDashboard = () => {
               emailCredits={emailCredits}
             />
 
-            {/* KPI Stats */}
-            <DashboardStats
-              todayEarnings={stats.todayEarnings}
-              monthlyEarnings={stats.monthlyEarnings}
-              todayBookings={stats.todayBookings}
-              completedServices={stats.completedBookings}
-            />
+            {/* KPI Stats - Only for paid plans */}
+            {!isFreePlan(profile.plan) && getPlanFeatures(profile.plan).canViewStatistics && (
+              <DashboardStats
+                todayEarnings={stats.todayEarnings}
+                monthlyEarnings={stats.monthlyEarnings}
+                todayBookings={stats.todayBookings}
+                completedServices={stats.completedBookings}
+              />
+            )}
 
-            {/* Email Stats Card */}
-            <EmailStatsCard
-              emailCredits={emailCredits}
-              emailStats={emailStats}
-              onSendTest={handleSendTestEmail}
-              onNavigateToBilling={() => navigate('/billing')}
-              sendingEmail={sendingEmail}
-            />
+            {/* Email Stats Card - Only for paid plans with email automation */}
+            {!isFreePlan(profile.plan) && getPlanFeatures(profile.plan).canUseEmailAutomation && (
+              <EmailStatsCard
+                emailCredits={emailCredits}
+                emailStats={emailStats}
+                onSendTest={handleSendTestEmail}
+                onNavigateToBilling={() => navigate('/billing')}
+                sendingEmail={sendingEmail}
+              />
+            )}
 
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-3">
