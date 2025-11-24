@@ -97,11 +97,12 @@ serve(async (req) => {
 
         console.log('Subscription updated successfully:', updatedSubscription.id);
 
-        // Return success URL directly since no checkout needed
+        // The webhook will handle updating the database
+        // Return success URL with special parameter
         return new Response(
           JSON.stringify({ 
             sessionId: null, 
-            url: successUrl,
+            url: `${successUrl}?subscription_updated=true`,
             subscriptionUpdated: true 
           }),
           {
@@ -126,7 +127,7 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: successUrl,
+      success_url: `${successUrl}?session_success=true`,
       cancel_url: cancelUrl,
       metadata: {
         professionalId: professionalId,

@@ -15,6 +15,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 };
 
+// Price ID to Plan mapping - MUST match your Stripe Dashboard
+const PRICE_ID_TO_PLAN: Record<string, string> = {
+  'price_1SWmMTRtOhWJgeVeCxB9RCxm': 'starter',
+  'price_1SWmMtRtOhWJgeVeiKK0m0YL': 'pro',
+  'price_1SWmNCRtOhWJgeVekHZDvwzP': 'business',
+};
+
+// Plan to Credits mapping
+const PLAN_CREDITS: Record<string, number> = {
+  'free': 0,
+  'starter': 200,
+  'pro': 1000,
+  'business': 5000,
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -48,210 +63,236 @@ serve(async (req) => {
     console.log('Processing event:', event.type);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Handle email credits purchase
+    // Handle checkout.session.completed (initial subscription or one-time payment)
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      const masterId = session.metadata?.masterId;
-      const packageId = session.metadata?.packageId;
       
-      // If this is an email credits purchase
-      if (masterId && packageId) {
-        console.log('Processing email credits purchase for master:', masterId);
+      // Check if this is for email credits or subscription
+      if (session.mode === 'payment') {
+        // One-time email credit purchase
+        const masterId = session.metadata?.masterId;
+        const packageId = session.metadata?.packageId;
         
-        const { data: packageData, error: packageError } = await supabase
-          .from('email_packages')
-          .select('credits')
-          .eq('id', packageId)
-          .single();
-
-        if (!packageError && packageData) {
-          const { data: existingCredits } = await supabase
-            .from('email_credits')
+        if (masterId && packageId) {
+          console.log('Processing email credits purchase for master:', masterId);
+          
+          const { data: packageData, error: packageError } = await supabase
+            .from('email_packages')
             .select('credits')
-            .eq('master_id', masterId)
+            .eq('id', packageId)
             .single();
 
-          if (existingCredits) {
+          if (!packageError && packageData) {
+            const { data: existingCredits } = await supabase
+              .from('email_credits')
+              .select('credits')
+              .eq('master_id', masterId)
+              .maybeSingle();
+
             await supabase
               .from('email_credits')
-              .update({ 
-                credits: existingCredits.credits + packageData.credits,
-                updated_at: new Date().toISOString()
-              })
-              .eq('master_id', masterId);
-          } else {
-            await supabase
-              .from('email_credits')
-              .insert({
+              .upsert({
                 master_id: masterId,
-                credits: packageData.credits,
+                credits: (existingCredits?.credits || 0) + packageData.credits,
                 updated_at: new Date().toISOString()
               });
+
+            console.log(`Added ${packageData.credits} credits to master ${masterId}`);
           }
-          console.log('Email credits updated successfully');
         }
-      }
-    }
-
-    // Handle subscription events
-    if (event.type === 'customer.subscription.created' || 
-        event.type === 'customer.subscription.updated' ||
-        event.type === 'invoice.paid') {
-      
-      let subscription: Stripe.Subscription;
-      let customerId: string;
-
-      // Handle different event types
-      if (event.type === 'invoice.paid') {
-        const invoice = event.data.object as Stripe.Invoice;
-        if (!invoice.subscription) {
-          console.log('Invoice paid but no subscription attached, skipping');
-          return new Response(JSON.stringify({ received: true }), {
-            status: 200,
+      } else if (session.mode === 'subscription') {
+        // Subscription purchase
+        const professionalId = session.metadata?.professionalId;
+        if (!professionalId) {
+          console.error('Missing professionalId in session metadata');
+          return new Response(JSON.stringify({ error: 'Missing professionalId' }), {
+            status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
-        // Fetch the subscription details
-        subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
-        customerId = invoice.customer as string;
-      } else {
-        subscription = event.data.object as Stripe.Subscription;
-        customerId = subscription.customer as string;
-      }
 
-      console.log('Processing subscription event:', event.type, 'for customer:', customerId);
+        const subscriptionId = session.subscription as string;
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const priceId = subscription.items.data[0].price.id;
+        const plan = PRICE_ID_TO_PLAN[priceId] || 'free';
+        const credits = PLAN_CREDITS[plan] || 0;
 
-      // Find professional by stripe_customer_id
-      const { data: professional, error: findError } = await supabase
-        .from('professional_profiles')
-        .select('id, plan, subscription_status')
-        .eq('stripe_customer_id', customerId)
-        .single();
+        console.log(`Activating ${plan} plan for professional ${professionalId} (price: ${priceId})`);
 
-      if (findError || !professional) {
-        console.error('Professional not found for customer:', customerId);
-        return new Response('Professional not found', { status: 404, headers: corsHeaders });
-      }
+        // Update professional profile
+        await supabase
+          .from('professional_profiles')
+          .update({
+            plan: plan,
+            subscription_status: 'active',
+            subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+            stripe_subscription_id: subscriptionId,
+            stripe_customer_id: session.customer as string,
+            subscription_last_changed: new Date().toISOString(),
+          })
+          .eq('id', professionalId);
 
-      // Determine plan from price
-      const priceId = subscription.items.data[0]?.price.id;
-      let plan = 'free';
-      
-      // Map Stripe price IDs to plan names
-      // These should match your Stripe dashboard price IDs
-      if (priceId?.includes('starter') || priceId === 'price_starter_monthly') plan = 'starter';
-      else if (priceId?.includes('pro') || priceId === 'price_pro_monthly') plan = 'pro';
-      else if (priceId?.includes('premium') || priceId === 'price_premium_monthly') plan = 'premium';
-
-      const status = subscription.status === 'active' ? 'active' : 'inactive';
-      const endDate = new Date(subscription.current_period_end * 1000);
-
-      console.log('Updating professional to plan:', plan, 'status:', status, 'end date:', endDate);
-
-      // Update professional profile
-      const { error: updateError } = await supabase
-        .from('professional_profiles')
-        .update({
-          plan,
-          subscription_status: status,
-          stripe_subscription_id: subscription.id,
-          subscription_end_date: endDate.toISOString(),
-          subscription_last_changed: new Date().toISOString()
-        })
-        .eq('id', professional.id);
-
-      if (updateError) {
-        console.error('Error updating professional profile:', updateError);
-        return new Response('Failed to update profile', { status: 500, headers: corsHeaders });
-      }
-
-      // Set email credits based on plan (replace, not add)
-      const planCredits: Record<string, number> = {
-        starter: 200,
-        pro: 1000,
-        premium: 5000,
-        free: 0
-      };
-
-      const newCredits = planCredits[plan] || 0;
-      console.log('Setting credits for plan:', plan, 'credits:', newCredits);
-
-      if (newCredits > 0 || event.type === 'customer.subscription.created') {
-        // Check if email_credits record exists
-        const { data: existingCredits } = await supabase
+        // Set email credits for new subscription
+        await supabase
           .from('email_credits')
-          .select('credits')
-          .eq('master_id', professional.id)
-          .single();
+          .upsert({
+            master_id: professionalId,
+            credits: credits,
+            updated_at: new Date().toISOString()
+          });
 
-        if (existingCredits) {
-          // For new subscriptions or upgrades, ADD credits
-          // For renewals (invoice.paid), SET to plan credits
-          const finalCredits = event.type === 'invoice.paid' 
-            ? existingCredits.credits + newCredits  // Add on renewal
-            : newCredits;  // Set on new subscription or upgrade
-            
-          await supabase
-            .from('email_credits')
-            .update({ 
-              credits: finalCredits,
-              updated_at: new Date().toISOString()
-            })
-            .eq('master_id', professional.id);
-          console.log('Updated credits to:', finalCredits);
-        } else {
-          // Create new email_credits record
-          await supabase
-            .from('email_credits')
-            .insert({
-              master_id: professional.id,
-              credits: newCredits,
-              updated_at: new Date().toISOString()
-            });
-          console.log('Created new email_credits record with', newCredits, 'credits');
-        }
-      }
-
-      // Log subscription history only for new subscriptions
-      if (event.type === 'customer.subscription.created') {
+        // Create subscription history record
         await supabase
           .from('subscription_history')
           .insert({
-            professional_id: professional.id,
-            plan,
-            status,
-            stripe_subscription_id: subscription.id,
-            started_at: new Date().toISOString()
+            professional_id: professionalId,
+            plan: plan,
+            status: 'active',
+            stripe_subscription_id: subscriptionId,
+            started_at: new Date().toISOString(),
           });
-      }
 
-      console.log('Subscription updated successfully for professional:', professional.id);
+        console.log(`Successfully activated ${plan} plan with ${credits} credits`);
+      }
     }
 
-    // Handle subscription deletion/cancellation
-    if (event.type === 'customer.subscription.deleted') {
+    // Handle subscription.updated (plan changes, status changes)
+    if (event.type === 'customer.subscription.updated') {
       const subscription = event.data.object as Stripe.Subscription;
-      const customerId = subscription.customer as string;
+      const priceId = subscription.items.data[0].price.id;
+      const plan = PRICE_ID_TO_PLAN[priceId] || 'free';
+      const credits = PLAN_CREDITS[plan] || 0;
 
-      console.log('Processing subscription deletion for customer:', customerId);
+      console.log(`Subscription updated to ${plan} plan (price: ${priceId})`);
 
       const { data: professional } = await supabase
         .from('professional_profiles')
         .select('id')
-        .eq('stripe_customer_id', customerId)
+        .eq('stripe_subscription_id', subscription.id)
         .single();
 
       if (professional) {
         await supabase
           .from('professional_profiles')
           .update({
-            plan: 'free',
-            subscription_status: 'inactive',
-            stripe_subscription_id: null,
-            subscription_end_date: null,
-            subscription_last_changed: new Date().toISOString()
+            plan: plan,
+            subscription_status: subscription.status === 'active' ? 'active' : 'inactive',
+            subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+            subscription_last_changed: new Date().toISOString(),
           })
           .eq('id', professional.id);
+
+        // Replace email credits with new plan allocation
+        await supabase
+          .from('email_credits')
+          .upsert({
+            master_id: professional.id,
+            credits: credits,
+            updated_at: new Date().toISOString()
+          });
+
+        // Close old subscription history and create new one
+        await supabase
+          .from('subscription_history')
+          .update({ ended_at: new Date().toISOString() })
+          .eq('professional_id', professional.id)
+          .eq('stripe_subscription_id', subscription.id)
+          .is('ended_at', null);
+
+        await supabase
+          .from('subscription_history')
+          .insert({
+            professional_id: professional.id,
+            plan: plan,
+            status: subscription.status,
+            stripe_subscription_id: subscription.id,
+            started_at: new Date().toISOString(),
+          });
+
+        console.log(`Updated to ${plan} plan with ${credits} credits`);
+      }
+    }
+
+    // Handle invoice.paid (subscription renewals)
+    if (event.type === 'invoice.paid') {
+      const invoice = event.data.object as Stripe.Invoice;
+      
+      if (invoice.subscription && invoice.billing_reason === 'subscription_cycle') {
+        const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+        const priceId = subscription.items.data[0].price.id;
+        const plan = PRICE_ID_TO_PLAN[priceId] || 'free';
+        const credits = PLAN_CREDITS[plan] || 0;
+
+        console.log(`Invoice paid for ${plan} plan - renewal`);
+
+        const { data: professional } = await supabase
+          .from('professional_profiles')
+          .select('id')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+
+        if (professional) {
+          await supabase
+            .from('professional_profiles')
+            .update({
+              subscription_status: 'active',
+              subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+            })
+            .eq('id', professional.id);
+
+          // Add monthly credits on renewal
+          const { data: currentCredits } = await supabase
+            .from('email_credits')
+            .select('credits')
+            .eq('master_id', professional.id)
+            .maybeSingle();
+
+          await supabase
+            .from('email_credits')
+            .upsert({
+              master_id: professional.id,
+              credits: (currentCredits?.credits || 0) + credits,
+              updated_at: new Date().toISOString()
+            });
+
+          console.log(`Renewal: Added ${credits} credits to professional ${professional.id}`);
+        }
+      }
+    }
+
+    // Handle subscription deletion/cancellation
+    if (event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object as Stripe.Subscription;
+
+      console.log('Subscription cancelled:', subscription.id);
+
+      const { data: professional } = await supabase
+        .from('professional_profiles')
+        .select('id')
+        .eq('stripe_subscription_id', subscription.id)
+        .single();
+
+      if (professional) {
+        // Downgrade to FREE
+        await supabase
+          .from('professional_profiles')
+          .update({
+            plan: 'free',
+            subscription_status: 'inactive',
+            subscription_end_date: null,
+            stripe_subscription_id: null,
+            subscription_last_changed: new Date().toISOString(),
+          })
+          .eq('id', professional.id);
+
+        // Reset email credits to 0
+        await supabase
+          .from('email_credits')
+          .update({
+            credits: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('master_id', professional.id);
 
         // Close subscription history
         await supabase
@@ -261,7 +302,33 @@ serve(async (req) => {
           .eq('stripe_subscription_id', subscription.id)
           .is('ended_at', null);
 
-        console.log('Subscription cancelled for professional:', professional.id);
+        console.log(`Downgraded professional ${professional.id} to FREE plan`);
+      }
+    }
+
+    // Handle invoice.payment_failed
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice;
+      
+      if (invoice.subscription) {
+        const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+
+        const { data: professional } = await supabase
+          .from('professional_profiles')
+          .select('id')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+
+        if (professional) {
+          await supabase
+            .from('professional_profiles')
+            .update({
+              subscription_status: 'past_due',
+            })
+            .eq('id', professional.id);
+
+          console.log(`Payment failed for professional ${professional.id}`);
+        }
       }
     }
 
