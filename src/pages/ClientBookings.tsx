@@ -11,6 +11,8 @@ import { Calendar, MessageSquare, ChevronDown } from 'lucide-react';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import EmptyStateAnimation from '@/components/EmptyStateAnimation';
 import ReviewModal from '@/components/ReviewModal';
+import { toast } from 'sonner';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const ClientBookings = () => {
   const t = useTranslation('lv');
@@ -26,6 +28,48 @@ const ClientBookings = () => {
     if (user) {
       loadBookings();
     }
+  }, [user]);
+
+  // Real-time subscription for booking updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('client-bookings-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `client_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('📱 Client booking changed:', payload);
+          
+          // Reload bookings when any change occurs
+          loadBookings();
+          
+          // Show toast for status changes
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const newStatus = (payload.new as any).status;
+            const oldStatus = (payload.old as any)?.status;
+            
+            if (oldStatus === 'pending' && newStatus === 'confirmed') {
+              toast.success('✅ Jūsu rezervācija ir apstiprināta!');
+            } else if (newStatus === 'canceled') {
+              toast.error('❌ Rezervācija tika atcelta');
+            } else if (oldStatus === 'confirmed' && newStatus === 'completed') {
+              toast.success('✓ Rezervācija pabeigta');
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const loadBookings = async () => {
@@ -292,6 +336,9 @@ const ClientBookings = () => {
           onSuccess={handleReviewSuccess}
         />
       )}
+
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 };
