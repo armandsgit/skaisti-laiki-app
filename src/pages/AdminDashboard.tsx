@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PlanBadge from "@/components/PlanBadge";
 import DeleteProfessionalModal from "@/components/DeleteProfessionalModal";
 import DeleteClientModal from "@/components/DeleteClientModal";
+import DeleteBookingModal from "@/components/DeleteBookingModal";
 import SuspendUserModal from "@/components/SuspendUserModal";
 import RestoreUserModal from "@/components/RestoreUserModal";
 import StatusBadge from "@/components/StatusBadge";
@@ -59,6 +60,8 @@ const AdminDashboard = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
   const [deleteClientModalOpen, setDeleteClientModalOpen] = useState(false);
+  const [deleteBookingModalOpen, setDeleteBookingModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [suspendModalOpen, setSuspendModalOpen] = useState(false);
   const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -427,6 +430,44 @@ const AdminDashboard = () => {
       console.error("Error deleting client:", error);
       toast.dismiss(loadingToast);
       toast.error(`Neizdevās izdzēst profilu: ${error.message}`);
+    }
+  };
+
+  const handleOpenDeleteBookingModal = (booking: any) => {
+    setSelectedBooking(booking);
+    setDeleteBookingModalOpen(true);
+  };
+
+  const handleDeleteBooking = async () => {
+    if (!selectedBooking) return false;
+
+    try {
+      console.log("=== DELETE BOOKING START ===");
+      console.log("Booking ID:", selectedBooking.id);
+      
+      const { error } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('id', selectedBooking.id);
+
+      if (error) {
+        console.error("Delete booking error:", error);
+        throw error;
+      }
+
+      console.log("Booking deleted successfully");
+      toast.success("Rezervācija veiksmīgi izdzēsta.");
+      
+      setDeleteBookingModalOpen(false);
+      setSelectedBooking(null);
+      await loadData();
+      
+      return true;
+    } catch (error: any) {
+      console.error("=== DELETE BOOKING ERROR ===");
+      console.error("Error:", error);
+      toast.error(error?.message || "Neizdevās izdzēst rezervāciju.");
+      return false;
     }
   };
 
@@ -1092,19 +1133,29 @@ const AdminDashboard = () => {
                           </p>
                         </div>
 
-                        <Badge
-                          variant={
-                            booking.status === "confirmed"
-                              ? "default"
-                              : booking.status === "completed"
-                                ? "secondary"
-                                : booking.status === "canceled"
-                                  ? "destructive"
-                                  : "outline"
-                          }
-                        >
-                          {t[booking.status as keyof typeof t] || booking.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              booking.status === "confirmed"
+                                ? "default"
+                                : booking.status === "completed"
+                                  ? "secondary"
+                                  : booking.status === "canceled"
+                                    ? "destructive"
+                                    : "outline"
+                            }
+                          >
+                            {t[booking.status as keyof typeof t] || booking.status}
+                          </Badge>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleOpenDeleteBookingModal(booking)}
+                            className="rounded-xl"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -1134,6 +1185,13 @@ const AdminDashboard = () => {
         onOpenChange={setDeleteClientModalOpen}
         clientName={selectedClient?.name || ""}
         onConfirmDelete={handleDeleteClient}
+      />
+
+      <DeleteBookingModal
+        open={deleteBookingModalOpen}
+        onOpenChange={setDeleteBookingModalOpen}
+        bookingDetails={`${selectedBooking?.profiles?.name} → ${selectedBooking?.professional_profiles?.profiles?.name} (${selectedBooking?.services?.name})`}
+        onConfirmDelete={handleDeleteBooking}
       />
 
       <SuspendUserModal
