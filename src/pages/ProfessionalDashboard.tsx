@@ -788,7 +788,8 @@ const ProfessionalDashboard = () => {
     );
   }
 
-  if (profile && profile.subscription_status !== 'active') {
+  // Allow access for users with active subscription OR free plan
+  if (profile && profile.subscription_status !== 'active' && profile.plan !== 'free') {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <Card className="max-w-2xl w-full shadow-card border-border/50">
@@ -806,7 +807,7 @@ const ProfessionalDashboard = () => {
           <CardContent className="text-center">
             <Button 
               size="lg"
-              onClick={() => window.location.href = '/subscription-plans'}
+              onClick={() => window.location.href = '/abonesana'}
               className="w-full max-w-md mx-auto"
             >
               Izvēlēties plānu
