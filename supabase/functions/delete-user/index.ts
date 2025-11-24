@@ -12,7 +12,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('Delete user function called')
     const { userId } = await req.json()
+    console.log('Deleting user:', userId)
 
     if (!userId) {
       return new Response(
@@ -36,6 +38,7 @@ Deno.serve(async (req) => {
     // Verify the caller is an admin
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      console.error('No authorization header')
       return new Response(
         JSON.stringify({ error: 'No authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -46,11 +49,14 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
 
     if (authError || !user) {
+      console.error('Unauthorized:', authError)
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('Admin user verified:', user.id)
 
     // Check if user is admin
     const { data: roles, error: roleError } = await supabaseAdmin
@@ -61,32 +67,118 @@ Deno.serve(async (req) => {
       .single()
 
     if (roleError || !roles) {
+      console.error('Admin access required:', roleError)
       return new Response(
         JSON.stringify({ error: 'Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Delete user data in correct order to respect foreign key constraints
-    
-    // 1. Get professional profile ID if exists
+    console.log('Starting deletion process for user:', userId)
+
+    // Get professional profile ID if exists
     const { data: professionalProfile } = await supabaseAdmin
       .from('professional_profiles')
       .select('id')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
 
-    // 2. Delete reviews (both as client and as professional)
-    const { error: reviewsError } = await supabaseAdmin
-      .from('reviews')
-      .delete()
-      .eq('client_id', userId)
-    
-    if (reviewsError) {
-      console.error('Error deleting reviews as client:', reviewsError)
-    }
+    console.log('Professional profile:', professionalProfile?.id)
 
     if (professionalProfile) {
+      // Delete all professional-related data
+      
+      // 1. Delete subscription history
+      const { error: subHistoryError } = await supabaseAdmin
+        .from('subscription_history')
+        .delete()
+        .eq('professional_id', professionalProfile.id)
+      
+      if (subHistoryError) {
+        console.error('Error deleting subscription history:', subHistoryError)
+      }
+
+      // 2. Delete email logs
+      const { error: emailLogsError } = await supabaseAdmin
+        .from('email_logs')
+        .delete()
+        .eq('professional_id', professionalProfile.id)
+      
+      if (emailLogsError) {
+        console.error('Error deleting email logs:', emailLogsError)
+      }
+
+      // 3. Delete email usage
+      const { error: emailUsageError } = await supabaseAdmin
+        .from('email_usage')
+        .delete()
+        .eq('master_id', professionalProfile.id)
+      
+      if (emailUsageError) {
+        console.error('Error deleting email usage:', emailUsageError)
+      }
+
+      // 4. Delete email credits
+      const { error: emailCreditsError } = await supabaseAdmin
+        .from('email_credits')
+        .delete()
+        .eq('master_id', professionalProfile.id)
+      
+      if (emailCreditsError) {
+        console.error('Error deleting email credits:', emailCreditsError)
+      }
+
+      // 5. Get staff members
+      const { data: staffMembers } = await supabaseAdmin
+        .from('staff_members')
+        .select('id')
+        .eq('professional_id', professionalProfile.id)
+
+      if (staffMembers && staffMembers.length > 0) {
+        // Delete master_services for all staff members
+        for (const staff of staffMembers) {
+          const { error: masterServicesError } = await supabaseAdmin
+            .from('master_services')
+            .delete()
+            .eq('staff_member_id', staff.id)
+          
+          if (masterServicesError) {
+            console.error('Error deleting master services:', masterServicesError)
+          }
+        }
+
+        // Delete staff members
+        const { error: staffError } = await supabaseAdmin
+          .from('staff_members')
+          .delete()
+          .eq('professional_id', professionalProfile.id)
+        
+        if (staffError) {
+          console.error('Error deleting staff members:', staffError)
+        }
+      }
+
+      // 6. Delete blocked time slots
+      const { error: blockedSlotsError } = await supabaseAdmin
+        .from('blocked_time_slots')
+        .delete()
+        .eq('professional_id', professionalProfile.id)
+      
+      if (blockedSlotsError) {
+        console.error('Error deleting blocked time slots:', blockedSlotsError)
+      }
+
+      // 7. Delete professional schedules
+      const { error: schedulesError } = await supabaseAdmin
+        .from('professional_schedules')
+        .delete()
+        .eq('professional_id', professionalProfile.id)
+      
+      if (schedulesError) {
+        console.error('Error deleting schedules:', schedulesError)
+      }
+
+      // 8. Delete reviews as professional
       const { error: profReviewsError } = await supabaseAdmin
         .from('reviews')
         .delete()
@@ -95,19 +187,8 @@ Deno.serve(async (req) => {
       if (profReviewsError) {
         console.error('Error deleting reviews as professional:', profReviewsError)
       }
-    }
 
-    // 3. Delete bookings (both as client and as professional)
-    const { error: bookingsError } = await supabaseAdmin
-      .from('bookings')
-      .delete()
-      .eq('client_id', userId)
-    
-    if (bookingsError) {
-      console.error('Error deleting bookings as client:', bookingsError)
-    }
-
-    if (professionalProfile) {
+      // 9. Delete bookings as professional
       const { error: profBookingsError } = await supabaseAdmin
         .from('bookings')
         .delete()
@@ -117,7 +198,7 @@ Deno.serve(async (req) => {
         console.error('Error deleting bookings as professional:', profBookingsError)
       }
 
-      // 4. Delete services
+      // 10. Delete services
       const { error: servicesError } = await supabaseAdmin
         .from('services')
         .delete()
@@ -127,19 +208,42 @@ Deno.serve(async (req) => {
         console.error('Error deleting services:', servicesError)
       }
 
-      // 5. Delete professional profile
+      // 11. Finally delete professional profile
       const { error: profProfileError } = await supabaseAdmin
         .from('professional_profiles')
         .delete()
-        .eq('user_id', userId)
+        .eq('id', professionalProfile.id)
       
       if (profProfileError) {
         console.error('Error deleting professional profile:', profProfileError)
         throw profProfileError
       }
+
+      console.log('Professional data deleted successfully')
     }
 
-    // 6. Delete user roles
+    // Delete client-related data
+    // 1. Delete reviews as client
+    const { error: reviewsError } = await supabaseAdmin
+      .from('reviews')
+      .delete()
+      .eq('client_id', userId)
+    
+    if (reviewsError) {
+      console.error('Error deleting reviews as client:', reviewsError)
+    }
+
+    // 2. Delete bookings as client
+    const { error: bookingsError } = await supabaseAdmin
+      .from('bookings')
+      .delete()
+      .eq('client_id', userId)
+    
+    if (bookingsError) {
+      console.error('Error deleting bookings as client:', bookingsError)
+    }
+
+    // 3. Delete user roles
     const { error: rolesError } = await supabaseAdmin
       .from('user_roles')
       .delete()
@@ -149,7 +253,7 @@ Deno.serve(async (req) => {
       console.error('Error deleting user roles:', rolesError)
     }
 
-    // 7. Delete profile
+    // 4. Delete profile
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .delete()
@@ -160,7 +264,7 @@ Deno.serve(async (req) => {
       throw profileError
     }
 
-    // 8. Delete auth user
+    // 5. Delete auth user
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (deleteError) {
@@ -177,7 +281,7 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error('Delete user error:', error)
     return new Response(
-      JSON.stringify({ error: error?.message || 'Unknown error' }),
+      JSON.stringify({ error: error?.message || 'Unknown error occurred' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
