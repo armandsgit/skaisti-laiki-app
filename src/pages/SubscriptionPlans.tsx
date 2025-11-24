@@ -79,15 +79,27 @@ export default function SubscriptionPlans() {
 
   useEffect(() => {
     const verifySubscription = async () => {
+      console.log('=== SUBSCRIPTION VERIFICATION START ===');
+      console.log('Current URL:', window.location.href);
+      console.log('Search params:', Object.fromEntries(searchParams.entries()));
+      
       const sessionId = searchParams.get('session_id');
       const sessionSuccess = searchParams.get('session_success');
 
+      console.log('sessionId:', sessionId);
+      console.log('sessionSuccess:', sessionSuccess);
+
       if (sessionSuccess === 'true' && sessionId) {
+        console.log('✅ Conditions met, starting verification...');
         setVerifying(true);
         
         try {
           const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
+          console.log('User:', user?.id);
+          if (!user) {
+            console.log('❌ No user found');
+            return;
+          }
 
           const { data: profile } = await supabase
             .from('professional_profiles')
@@ -95,22 +107,28 @@ export default function SubscriptionPlans() {
             .eq('user_id', user.id)
             .single();
 
-          if (!profile) return;
+          console.log('Professional profile:', profile?.id);
+          if (!profile) {
+            console.log('❌ No professional profile found');
+            return;
+          }
 
-          console.log('Verifying subscription for session:', sessionId);
-
+          console.log('🔄 Calling verify-subscription edge function...');
           const { data, error } = await supabase.functions.invoke('verify-subscription', {
             body: { sessionId, professionalId: profile.id }
           });
 
+          console.log('Edge function response:', { data, error });
+
           if (error) {
-            console.error('Verification error:', error);
+            console.error('❌ Verification error:', error);
             toast({
               title: 'Kļūda',
               description: 'Neizdevās aktivizēt abonementu. Lūdzu sazinies ar atbalstu.',
               variant: 'destructive',
             });
           } else if (data?.success) {
+            console.log('✅ Verification successful!');
             toast({
               title: 'Veiksmīgi!',
               description: `${data.plan} plāns tika aktivizēts ar ${data.credits} e-pasta kredītiem.`,
@@ -120,10 +138,13 @@ export default function SubscriptionPlans() {
             }, 2000);
           }
         } catch (error) {
-          console.error('Verification failed:', error);
+          console.error('❌ Verification failed:', error);
         } finally {
           setVerifying(false);
         }
+      } else {
+        console.log('❌ Conditions NOT met for verification');
+        console.log('Missing:', !sessionSuccess ? 'sessionSuccess' : '', !sessionId ? 'sessionId' : '');
       }
     };
 
