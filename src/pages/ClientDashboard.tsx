@@ -10,6 +10,7 @@ import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import LoadingAnimation from '@/components/LoadingAnimation';
+import BottomNavigation from '@/components/BottomNavigation';
 const ClientDashboard = () => {
   const t = useTranslation('lv');
   const {
@@ -27,6 +28,7 @@ const ClientDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<SortedMaster[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
+  const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   
   useEffect(() => {
     if (user) {
@@ -34,6 +36,7 @@ const ClientDashboard = () => {
       loadCategories();
       loadProfile();
       loadRecentlyViewedIds();
+      loadPendingBookingsCount();
     }
   }, [user]);
 
@@ -70,6 +73,56 @@ const ClientDashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [userLocation, recentlyViewedIds]);
+
+  // Real-time subscription for booking updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('client-bookings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `client_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Client booking changed:', payload);
+          loadPendingBookingsCount();
+          
+          // Show toast when booking status changes
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const newStatus = (payload.new as any).status;
+            const oldStatus = (payload.old as any)?.status;
+            
+            if (oldStatus === 'pending' && newStatus === 'confirmed') {
+              toast.success('Jūsu rezervācija ir apstiprināta! ✓');
+            } else if (newStatus === 'canceled') {
+              toast.error('Rezervācija tika atcelta');
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const loadPendingBookingsCount = async () => {
+    if (!user) return;
+    
+    const { count } = await supabase
+      .from('bookings')
+      .select('*', { count: 'exact', head: true })
+      .eq('client_id', user.id)
+      .eq('status', 'pending');
+    
+    setPendingBookingsCount(count || 0);
+  };
 
   const loadRecentlyViewedIds = () => {
     const viewed = localStorage.getItem('recentlyViewedIds');
@@ -324,6 +377,9 @@ const ClientDashboard = () => {
         )}
 
       </main>
+
+      {/* Bottom Navigation with Badge */}
+      <BottomNavigation pendingBookingsCount={pendingBookingsCount} />
     </div>;
 };
 export default ClientDashboard;

@@ -3,7 +3,11 @@ import { Home, Map, Calendar, User, Search, CheckCircle, MessageSquare } from 'l
 import { useAuth } from '@/lib/auth';
 import { useEffect, useState } from 'react';
 
-const BottomNavigation = () => {
+interface BottomNavigationProps {
+  pendingBookingsCount?: number;
+}
+
+const BottomNavigation = ({ pendingBookingsCount = 0 }: BottomNavigationProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -135,7 +139,8 @@ const BottomNavigation = () => {
       icon: Calendar, 
       label: 'Rezervācijas', 
       path: '/client/bookings', 
-      isActive: location.pathname === '/client/bookings' 
+      isActive: location.pathname === '/client/bookings',
+      badge: pendingBookingsCount
     },
     { 
       icon: User, 
@@ -150,6 +155,7 @@ const BottomNavigation = () => {
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
         {tabs.map((tab, index) => {
           const Icon = tab.icon;
+          const showBadge = 'badge' in tab && tab.badge && tab.badge > 0;
           return (
             <button
               key={index}
@@ -160,14 +166,21 @@ const BottomNavigation = () => {
                 }
               }}
               className={`
-                flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl transition-all duration-200 min-w-[60px] active:scale-95
+                relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl transition-all duration-200 min-w-[60px] active:scale-95
                 ${tab.isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}
               `}
             >
-              <Icon 
-                className={`h-[22px] w-[22px] transition-all duration-200 ${tab.isActive ? 'stroke-[2.5]' : 'stroke-[1.5]'}`} 
-                strokeWidth={tab.isActive ? 2.5 : 1.5}
-              />
+              <div className="relative">
+                <Icon 
+                  className={`h-[22px] w-[22px] transition-all duration-200 ${tab.isActive ? 'stroke-[2.5]' : 'stroke-[1.5]'}`} 
+                  strokeWidth={tab.isActive ? 2.5 : 1.5}
+                />
+                {showBadge && (
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                    {tab.badge}
+                  </span>
+                )}
+              </div>
               <span className={`text-[10px] font-medium transition-all duration-200 ${tab.isActive ? 'font-semibold' : ''}`}>
                 {tab.label}
               </span>
