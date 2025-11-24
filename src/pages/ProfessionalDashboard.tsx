@@ -944,26 +944,22 @@ const ProfessionalDashboard = () => {
               emailCredits={emailCredits}
             />
 
-            {/* KPI Stats - Only for paid plans */}
-            {!isFreePlan(profile.plan) && getPlanFeatures(profile.plan).canViewStatistics && (
-              <DashboardStats
-                todayEarnings={stats.todayEarnings}
-                monthlyEarnings={stats.monthlyEarnings}
-                todayBookings={stats.todayBookings}
-                completedServices={stats.completedBookings}
-              />
-            )}
+            {/* KPI Stats - Show for all plans */}
+            <DashboardStats
+              todayEarnings={stats.todayEarnings}
+              monthlyEarnings={stats.monthlyEarnings}
+              todayBookings={stats.todayBookings}
+              completedServices={stats.completedBookings}
+            />
 
-            {/* Email Stats Card - Only for paid plans with email automation */}
-            {!isFreePlan(profile.plan) && getPlanFeatures(profile.plan).canUseEmailAutomation && (
-              <EmailStatsCard
-                emailCredits={emailCredits}
-                emailStats={emailStats}
-                onSendTest={handleSendTestEmail}
-                onNavigateToBilling={() => navigate('/billing')}
-                sendingEmail={sendingEmail}
-              />
-            )}
+            {/* Email Stats Card - Show for all plans */}
+            <EmailStatsCard
+              emailCredits={emailCredits}
+              emailStats={emailStats}
+              onSendTest={handleSendTestEmail}
+              onNavigateToBilling={() => navigate('/billing')}
+              sendingEmail={sendingEmail}
+            />
 
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-3">
