@@ -194,6 +194,7 @@ export async function downgradeToFree(professionalId: string): Promise<boolean> 
 
 /**
  * Deactivate staff members that exceed plan limit
+ * CRITICAL: Always protects the owner (Īpašnieks) staff member from deactivation
  */
 export async function deactivateExcessStaffMembers(professionalId: string, newPlan: string): Promise<void> {
   try {
@@ -203,11 +204,13 @@ export async function deactivateExcessStaffMembers(professionalId: string, newPl
     if (limit === -1 || limit === 999) return;
 
     // Get all active staff members ordered by creation date
+    // CRITICAL: Exclude the owner (position = 'Īpašnieks') from deactivation
     const { data: staffMembers, error } = await supabase
       .from('staff_members')
-      .select('id')
+      .select('id, position')
       .eq('professional_id', professionalId)
       .eq('is_active', true)
+      .neq('position', 'Īpašnieks')
       .order('created_at', { ascending: true });
 
     if (error || !staffMembers) {
@@ -215,7 +218,7 @@ export async function deactivateExcessStaffMembers(professionalId: string, newPl
       return;
     }
 
-    // If within limit, nothing to do
+    // If within limit, nothing to do (limit doesn't include the owner)
     if (staffMembers.length <= limit) return;
 
     // Deactivate staff members beyond the limit

@@ -100,23 +100,25 @@ serve(async (req) => {
       })
       .eq('master_id', profile.id);
 
-    // Deactivate excess staff members (keep only first 1 for FREE)
+    // Deactivate excess staff members for FREE plan
+    // CRITICAL: Only deactivate non-owner staff members (position != 'Īpašnieks')
     const { data: staffMembers } = await supabase
       .from('staff_members')
-      .select('id')
+      .select('id, position')
       .eq('professional_id', profile.id)
       .eq('is_active', true)
+      .neq('position', 'Īpašnieks')
       .order('created_at', { ascending: true });
 
-    if (staffMembers && staffMembers.length > 1) {
-      const toDeactivate = staffMembers.slice(1).map((s: any) => s.id);
+    if (staffMembers && staffMembers.length > 0) {
+      const toDeactivate = staffMembers.map((s: any) => s.id);
       
       await supabase
         .from('staff_members')
         .update({ is_active: false })
         .in('id', toDeactivate);
       
-      console.log(`Deactivated ${toDeactivate.length} excess staff members`);
+      console.log(`Deactivated ${toDeactivate.length} excess staff members for FREE plan`);
     }
 
     // Close subscription history

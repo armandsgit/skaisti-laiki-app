@@ -39,18 +39,20 @@ const PLAN_STAFF_LIMITS: Record<string, number> = {
 };
 
 // Helper function to deactivate excess staff members
+// CRITICAL: Always protects the owner (Īpašnieks) from deactivation
 async function deactivateExcessStaffMembers(supabase: any, professionalId: string, newPlan: string) {
   const limit = PLAN_STAFF_LIMITS[newPlan] || 1;
   
   // If unlimited, no need to deactivate
   if (limit === 999) return;
 
-  // Get all active staff members ordered by creation date
+  // CRITICAL: Get only non-owner staff members (exclude position = 'Īpašnieks')
   const { data: staffMembers } = await supabase
     .from('staff_members')
-    .select('id')
+    .select('id, position')
     .eq('professional_id', professionalId)
     .eq('is_active', true)
+    .neq('position', 'Īpašnieks')
     .order('created_at', { ascending: true });
 
   if (!staffMembers || staffMembers.length <= limit) return;
