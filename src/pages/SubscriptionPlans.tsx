@@ -9,8 +9,22 @@ import { useToast } from '@/hooks/use-toast';
 
 const plans = [
   {
+    id: 'free',
+    name: 'Bezmaksas',
+    price: '0',
+    description: 'Pamata funkcijas',
+    features: [
+      '0 e-pasta kredīti',
+      'Pamata profils',
+      'Līdz 1 pakalpojums',
+      'Ierobežota redzamība',
+    ],
+    recommended: false,
+    isFree: true,
+  },
+  {
     id: 'starter',
-    name: 'Starter',
+    name: 'Starteris',
     price: '9.99',
     description: 'Sāc savu biznesu',
     features: [
@@ -25,7 +39,7 @@ const plans = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '19.99',
+    price: '24.99',
     description: 'Profesionāliem meistariem',
     features: [
       '1000 e-pasta kredīti/mēnesī',
@@ -39,9 +53,9 @@ const plans = [
     recommended: true,
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    price: '39.99',
+    id: 'bizness',
+    name: 'Bizness',
+    price: '49.99',
     description: 'Maksimālā redzamība',
     features: [
       '5000 e-pasta kredīti/mēnesī',
@@ -93,9 +107,9 @@ export default function SubscriptionPlans() {
 
       // Map plan to Stripe price IDs
       const stripePriceIds: Record<string, string> = {
-        starter: 'price_1SWmMTRtOhWJgeVeCxB9RCxm',
+        starteris: 'price_1SWmMTRtOhWJgeVeCxB9RCxm',
         pro: 'price_1SWmMtRtOhWJgeVeiKK0m0YL',
-        premium: 'price_1SWmNCRtOhWJgeVekHZDvwzP'
+        bizness: 'price_1SWmNCRtOhWJgeVekHZDvwzP'
       };
 
       const priceId = stripePriceIds[planId];
@@ -154,7 +168,7 @@ export default function SubscriptionPlans() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-4 gap-8">
           {plans.map((plan) => (
             <Card
               key={plan.id}
@@ -188,35 +202,27 @@ export default function SubscriptionPlans() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button
-                  className="w-full"
-                  variant={plan.recommended ? 'default' : 'outline'}
-                  onClick={() => handleActivate(plan.id)}
-                  disabled={loading !== null}
-                >
-                  {loading === plan.id ? 'Aktivizē...' : 'Aktivizēt'}
-                </Button>
+                {plan.isFree ? (
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    disabled
+                  >
+                    Pašreizējais plāns
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    variant={plan.recommended ? 'default' : 'outline'}
+                    onClick={() => handleActivate(plan.id)}
+                    disabled={loading !== null}
+                  >
+                    {loading === plan.id ? 'Aktivizē...' : 'Aktivizēt'}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}
-        </div>
-
-        <div className="mt-12 text-center">
-          <div className="max-w-3xl mx-auto bg-muted/30 rounded-lg p-6 border border-border/50">
-            <h3 className="font-semibold text-lg mb-3">⚙️ Konfigurācijas instrukcijas</h3>
-            <div className="text-sm text-muted-foreground space-y-2 text-left">
-              <p><strong>1.</strong> Atver Stripe Dashboard → Products → Pricing</p>
-              <p><strong>2.</strong> Izveido vai atrodi Price ID katram plānam</p>
-              <p><strong>3.</strong> Koda failā <code className="bg-muted px-2 py-0.5 rounded">SubscriptionPlans.tsx</code> aizvieto:</p>
-              <ul className="ml-6 mt-2 space-y-1">
-                <li>• <code className="bg-muted px-2 py-0.5 rounded">price_starter_monthly</code> ar tavu Starter Price ID</li>
-                <li>• <code className="bg-muted px-2 py-0.5 rounded">price_pro_monthly</code> ar tavu Pro Price ID</li>
-                <li>• <code className="bg-muted px-2 py-0.5 rounded">price_premium_monthly</code> ar tavu Premium Price ID</li>
-              </ul>
-              <p className="mt-3"><strong>Piemērs:</strong> <code className="bg-muted px-2 py-0.5 rounded">price_1ABC123xyz456DEF</code></p>
-              <p className="mt-3 text-warning">⚠️ Bez pareiziem Price ID maksājumi nedarbosies!</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
