@@ -96,6 +96,27 @@ const ProfessionalDashboard = () => {
     }
   }, [user]);
 
+  // Handle successful subscription purchase
+  useEffect(() => {
+    const sessionSuccess = searchParams.get('session_success');
+    if (sessionSuccess === 'true' && profile) {
+      // Refresh profile data after successful purchase
+      console.log('Subscription purchase successful, refreshing profile...');
+      toast.success('Abonēšanas plāns veiksmīgi aktivizēts!');
+      
+      // Reload profile and credits
+      setTimeout(() => {
+        loadProfile();
+        if (profile) {
+          loadEmailCredits();
+        }
+      }, 2000); // Wait 2 seconds for webhook to process
+      
+      // Remove query parameter
+      navigate('/professional', { replace: true });
+    }
+  }, [searchParams, profile?.id]);
+
   // Handle tab query parameter and refresh data when returning to dashboard
   useEffect(() => {
     const tabParam = searchParams.get('tab');
