@@ -55,15 +55,12 @@ const BottomNavigation = () => {
       
       const { supabase } = await import('@/integrations/supabase/client');
       
-      console.log('🔔 Loading pending count for client:', user.id);
-      
       const { count, error } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
         .eq('client_id', user.id)
         .eq('status', 'pending');
       
-      console.log('🔔 Initial pending count:', count, 'error:', error);
       setPendingBookingsCount(count || 0);
 
       // Subscribe to realtime changes
@@ -78,8 +75,6 @@ const BottomNavigation = () => {
             filter: `client_id=eq.${user.id}`
           },
           async (payload) => {
-            console.log('🔔 Booking changed, reloading count...', payload);
-            
             // Reload count when bookings change
             const { count: newCount, error: countError } = await supabase
               .from('bookings')
@@ -87,7 +82,6 @@ const BottomNavigation = () => {
               .eq('client_id', user.id)
               .eq('status', 'pending');
             
-            console.log('🔔 New pending count:', newCount, 'error:', countError);
             setPendingBookingsCount(newCount || 0);
           }
         )
@@ -209,18 +203,6 @@ const BottomNavigation = () => {
         {tabs.map((tab, index) => {
           const Icon = tab.icon;
           const showBadge = 'badge' in tab && typeof tab.badge === 'number' && tab.badge > 0;
-          
-          // Debug logging
-          if ('badge' in tab) {
-            console.log('🔔 Tab badge check:', {
-              path: tab.path,
-              badge: tab.badge,
-              showBadge,
-              condition1: 'badge' in tab,
-              condition2: typeof tab.badge === 'number',
-              condition3: tab.badge > 0
-            });
-          }
           
           return (
             <button
