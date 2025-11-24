@@ -30,21 +30,44 @@ export default function DeleteProfessionalModal({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleFirstConfirm = () => {
+    console.log("=== STEP 1: Moving to confirmation ===");
     setStep(2);
   };
 
   const handleFinalDelete = async () => {
+    console.log("=== STEP 2: Final delete button clicked ===");
+    console.log("Confirm text:", confirmText);
+    console.log("Is deleting:", isDeleting);
+    
     if (confirmText === 'DZĒST' && !isDeleting) {
+      console.log("=== Calling onConfirmDelete ===");
       setIsDeleting(true);
-      const result = await onConfirmDelete();
-      setIsDeleting(false);
-      if (result !== false) {
-        handleClose();
+      
+      try {
+        const result = await onConfirmDelete();
+        console.log("Delete result:", result);
+        setIsDeleting(false);
+        
+        if (result !== false) {
+          handleClose();
+        }
+      } catch (error) {
+        console.error("Delete failed in modal:", error);
+        setIsDeleting(false);
+      }
+    } else {
+      console.log("Delete conditions not met");
+      if (confirmText !== 'DZĒST') {
+        console.log("Text doesn't match 'DZĒST'");
+      }
+      if (isDeleting) {
+        console.log("Already deleting");
       }
     }
   };
 
   const handleClose = () => {
+    console.log("=== Closing modal ===");
     if (!isDeleting) {
       setStep(1);
       setConfirmText('');
