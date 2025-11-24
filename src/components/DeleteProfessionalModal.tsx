@@ -91,7 +91,10 @@ export default function DeleteProfessionalModal({
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleClose}>Atcelt</AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleFirstConfirm}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleFirstConfirm();
+                }}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Turpināt dzēst
@@ -122,7 +125,10 @@ export default function DeleteProfessionalModal({
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleClose}>Atcelt</AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleFinalDelete}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleFinalDelete();
+                }}
                 disabled={!isDeleteEnabled}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
