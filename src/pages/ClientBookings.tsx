@@ -150,17 +150,6 @@ const ClientBookings = () => {
                               {booking.services?.name}
                             </p>
                           </div>
-
-                          {/* Status Badge on the Right */}
-                          <Badge 
-                            variant={
-                              booking.status === 'confirmed' ? 'default' :
-                              booking.status === 'canceled' ? 'destructive' : 'outline'
-                            }
-                            className="text-xs px-3 py-1 flex-shrink-0"
-                          >
-                            {t[booking.status as keyof typeof t] || booking.status}
-                          </Badge>
                         </div>
                         
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -168,6 +157,22 @@ const ClientBookings = () => {
                           <span>
                             {new Date(booking.booking_date).toLocaleDateString('lv-LV')} • {booking.booking_time}
                           </span>
+                        </div>
+
+                        {/* Status Badge Below Date/Time */}
+                        <div className="flex justify-center pt-1">
+                          <Badge 
+                            variant={
+                              booking.status === 'confirmed' ? 'default' :
+                              booking.status === 'canceled' ? 'destructive' : 'outline'
+                            }
+                            className={`text-xs px-4 py-1.5 ${
+                              booking.status === 'pending' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                              booking.status === 'confirmed' ? 'bg-green-100 text-green-800 border-green-300' : ''
+                            }`}
+                          >
+                            {t[booking.status as keyof typeof t] || booking.status}
+                          </Badge>
                         </div>
                       </div>
                     </CardContent>
