@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, Mail, Zap, Award } from 'lucide-react';
+import { Check, Mail, Zap, Award, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // TODO: Replace these placeholder Price IDs with real ones from your Stripe Dashboard
@@ -68,6 +68,82 @@ export default function Abonesana() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string>('free');
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+
+  useEffect(() => {
+    loadCurrentPlan();
+  }, []);
+
+  const loadCurrentPlan = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('professional_profiles')
+        .select('plan, subscription_status')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile) {
+        setCurrentPlan(profile.plan || 'free');
+        setHasActiveSubscription(profile.subscription_status === 'active');
+      }
+    } catch (error) {
+      console.error('Error loading plan:', error);
+    }
+  };
+
+  const handleDowngradeToFree = async () => {
+    setLoading('free');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: 'Kļūda',
+          description: 'Lūdzu piesakieties, lai turpinātu',
+          variant: 'destructive',
+        });
+        navigate('/auth');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('downgrade-to-free', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) {
+        console.error('Downgrade error:', error);
+        toast({
+          title: 'Kļūda',
+          description: 'Neizdevās pāriet uz FREE plānu',
+          variant: 'destructive',
+        });
+        setLoading(null);
+        return;
+      }
+
+      toast({
+        title: 'Veiksmīgi!',
+        description: 'Jūsu abonements tika atcelts. Tagad izmantojat FREE plānu.',
+      });
+
+      // Reload current plan
+      await loadCurrentPlan();
+      setLoading(null);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: 'Kļūda',
+        description: 'Radās neparedzēta kļūda',
+        variant: 'destructive',
+      });
+      setLoading(null);
+    }
+  };
 
   const handleSubscribe = async (planId: string, stripePrice: string) => {
     setLoading(planId);
@@ -147,7 +223,63 @@ export default function Abonesana() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-4 gap-8">
+          {/* FREE Plan Card */}
+          <Card className="relative transition-all hover:shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2 mb-2">
+                <XCircle className="w-6 h-6 text-muted-foreground" />
+                <CardTitle className="text-2xl">Free</CardTitle>
+              </div>
+              <CardDescription>Pamata funkcijas</CardDescription>
+              <div className="mt-4">
+                <span className="text-4xl font-bold">€0</span>
+                <span className="text-muted-foreground">/mēn</span>
+              </div>
+              <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                <Mail className="w-4 h-4" />
+                <span>0 e-pasta kredīti</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground">Pamata profils</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground">Līdz 3 pakalpojumiem</span>
+                </li>
+                <li className="flex items-center gap-2 opacity-50">
+                  <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground line-through">E-pasta automātika</span>
+                </li>
+                <li className="flex items-center gap-2 opacity-50">
+                  <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground line-through">Statistika</span>
+                </li>
+              </ul>
+            </CardContent>
+            <CardFooter>
+              {currentPlan === 'free' || !hasActiveSubscription ? (
+                <Button className="w-full" variant="outline" disabled>
+                  Jūsu pašreizējais plāns
+                </Button>
+              ) : (
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={handleDowngradeToFree}
+                  disabled={loading !== null}
+                >
+                  {loading === 'free' ? 'Apstrādā...' : 'Pāriet uz FREE'}
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+
+          {/* Paid Plans */}
           {plans.map((plan) => {
             const IconComponent = plan.icon;
             return (
@@ -194,9 +326,13 @@ export default function Abonesana() {
                     className="w-full"
                     variant={plan.recommended ? 'default' : 'outline'}
                     onClick={() => handleSubscribe(plan.id, plan.stripePrice)}
-                    disabled={loading !== null}
+                    disabled={loading !== null || (currentPlan === plan.id && hasActiveSubscription)}
                   >
-                    {loading === plan.id ? 'Apstrādā...' : 'Abonēt'}
+                    {currentPlan === plan.id && hasActiveSubscription 
+                      ? 'Jūsu pašreizējais plāns'
+                      : loading === plan.id 
+                        ? 'Apstrādā...' 
+                        : 'Abonēt'}
                   </Button>
                 </CardFooter>
               </Card>

@@ -90,20 +90,25 @@ export const SubscriptionBanner = ({
   }
 
   return (
-    <Card className="mb-6 border-warning/20 bg-warning/5">
+    <Card className="mb-6 border-border/50 bg-card shadow-card">
       <CardContent className="p-5">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-warning/10">
-              <AlertCircle className="w-5 h-5 text-warning stroke-[2]" />
+            <div className="p-2.5 rounded-xl bg-muted">
+              <AlertCircle className="w-5 h-5 text-muted-foreground stroke-[2]" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-foreground mb-1">
-                Nav aktīva plāna
+                Jūsu plāns: {getPlanDisplayName(plan)}
               </h3>
-              <p className="text-sm text-muted-foreground">
-                Lai turpinātu izmantot sistēmu, izvēlieties plānu
+              <p className="text-sm text-muted-foreground mb-2">
+                {plan === 'free' 
+                  ? 'Bezmaksas plāns. Nākamā maksa: Nav' 
+                  : 'Nav aktīva plāna. Izvēlieties plānu, lai turpinātu'}
               </p>
+              <Badge variant="secondary" className="text-xs font-medium">
+                E-pasta kredīti: {emailCredits}
+              </Badge>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -114,7 +119,7 @@ export const SubscriptionBanner = ({
               className="gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              Izvēlēties plānu
+              {plan === 'free' ? 'Uzlabot plānu' : 'Izvēlēties plānu'}
             </Button>
             <Button
               variant="outline"
