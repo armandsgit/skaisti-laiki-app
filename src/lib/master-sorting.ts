@@ -41,12 +41,11 @@ export function getSortedMasters(
   const now = new Date();
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
   
-  // Filtrē tikai apstiprinātos, aktīvos meistarus ar aktīvu subscription
+  // Filtrē tikai apstiprinātos, aktīvos meistarus (neatkarīgi no subscription plāna)
   const validMasters = masters.filter(
     (master) => 
       master.approved === true && 
-      master.active === true &&
-      (master as any).subscription_status === 'active'
+      master.active === true
   );
   
   // Pievieno papildu info katram meistaram
