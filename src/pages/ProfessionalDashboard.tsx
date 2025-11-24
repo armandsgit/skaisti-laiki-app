@@ -96,16 +96,24 @@ const ProfessionalDashboard = () => {
     }
   }, [user]);
 
-  // Handle tab query parameter
+  // Handle tab query parameter and refresh data when returning to dashboard
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam && ['dashboard', 'bookings', 'services', 'schedule'].includes(tabParam)) {
       setSelectedTab(tabParam);
+      // Refresh email credits when switching to dashboard tab
+      if (tabParam === 'dashboard' && profile) {
+        loadEmailCredits();
+      }
     } else {
       // Reset to dashboard when no tab parameter
       setSelectedTab('dashboard');
+      // Refresh email credits when navigating back to dashboard
+      if (profile) {
+        loadEmailCredits();
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, profile?.id]);
 
   useEffect(() => {
     if (profile) {
@@ -203,39 +211,48 @@ const ProfessionalDashboard = () => {
   const loadEmailCredits = async () => {
     if (!profile?.id) return;
     
-    const { data } = await supabase
+    // Fetch email credits from email_credits table
+    const { data: credits } = await supabase
       .from('email_credits')
       .select('credits')
       .eq('master_id', profile.id)
       .maybeSingle();
     
-    setEmailCredits(data?.credits || 0);
+    setEmailCredits(credits?.credits || 0);
 
-    // Load email usage statistics
-    const today = new Date().toISOString().split('T')[0];
-    const monthStart = startOfMonth(new Date()).toISOString().split('T')[0];
+    // Fetch email logs for last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const { data: usage } = await supabase
-      .from('email_usage')
+    
+    const { data: emailLogs } = await supabase
+      .from('email_logs')
       .select('*')
-      .eq('master_id', profile.id);
+      .eq('professional_id', profile.id)
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .order('created_at', { ascending: false });
 
-    if (usage) {
-      const sentToday = usage.filter(e => 
-        e.created_at.startsWith(today)
+    if (emailLogs) {
+      // Calculate statistics using Europe/Riga timezone
+      const now = new Date();
+      
+      // Today: same date string comparison (handles timezone automatically)
+      const sentToday = emailLogs.filter(e => 
+        new Date(e.created_at).toDateString() === now.toDateString()
       ).length;
 
-      const sentThisMonth = usage.filter(e => 
-        e.created_at >= monthStart
-      ).length;
+      // This month: same month and year
+      const sentThisMonth = emailLogs.filter(e => {
+        const emailDate = new Date(e.created_at);
+        return emailDate.getMonth() === now.getMonth() && 
+               emailDate.getFullYear() === now.getFullYear();
+      }).length;
 
-      const sent30Days = usage.filter(e => 
-        e.created_at >= thirtyDaysAgo.toISOString()
-      ).length;
+      // Last 30 days: already filtered by query
+      const sent30Days = emailLogs.length;
 
       setEmailStats({ sentToday, sentThisMonth, sent30Days });
+    } else {
+      setEmailStats({ sentToday: 0, sentThisMonth: 0, sent30Days: 0 });
     }
   };
 
