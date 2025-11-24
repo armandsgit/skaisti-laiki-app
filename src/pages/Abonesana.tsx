@@ -4,8 +4,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, Mail, Zap, Award, XCircle } from 'lucide-react';
+import { Check, Mail, Zap, Award, XCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // TODO: Replace these placeholder Price IDs with real ones from your Stripe Dashboard
 // Go to: https://dashboard.stripe.com/products
@@ -70,6 +80,8 @@ export default function Abonesana() {
   const [loading, setLoading] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<string>('free');
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const [emailCredits, setEmailCredits] = useState(0);
 
   useEffect(() => {
     loadCurrentPlan();
@@ -82,13 +94,22 @@ export default function Abonesana() {
 
       const { data: profile } = await supabase
         .from('professional_profiles')
-        .select('plan, subscription_status')
+        .select('id, plan, subscription_status')
         .eq('user_id', user.id)
         .single();
 
       if (profile) {
         setCurrentPlan(profile.plan || 'free');
         setHasActiveSubscription(profile.subscription_status === 'active');
+
+        // Get email credits
+        const { data: credits } = await supabase
+          .from('email_credits')
+          .select('credits')
+          .eq('master_id', profile.id)
+          .single();
+
+        setEmailCredits(credits?.credits || 0);
       }
     } catch (error) {
       console.error('Error loading plan:', error);
@@ -96,6 +117,7 @@ export default function Abonesana() {
   };
 
   const handleDowngradeToFree = async () => {
+    setShowDowngradeDialog(false);
     setLoading('free');
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -106,6 +128,7 @@ export default function Abonesana() {
           variant: 'destructive',
         });
         navigate('/auth');
+        setLoading(null);
         return;
       }
 
@@ -162,7 +185,7 @@ export default function Abonesana() {
 
       const { data: profile } = await supabase
         .from('professional_profiles')
-        .select('id')
+        .select('id, stripe_subscription_id')
         .eq('user_id', user.id)
         .single();
 
@@ -180,6 +203,7 @@ export default function Abonesana() {
         body: {
           priceId: stripePrice,
           professionalId: profile.id,
+          existingSubscriptionId: profile.stripe_subscription_id,
           successUrl: `${window.location.origin}/maksa-izdevusies`,
           cancelUrl: `${window.location.origin}/abonesana`
         }
@@ -270,7 +294,7 @@ export default function Abonesana() {
                 <Button
                   className="w-full"
                   variant="outline"
-                  onClick={handleDowngradeToFree}
+                  onClick={() => setShowDowngradeDialog(true)}
                   disabled={loading !== null}
                 >
                   {loading === 'free' ? 'Apstrādā...' : 'Pāriet uz FREE'}
@@ -345,6 +369,53 @@ export default function Abonesana() {
           <p className="mt-2">✉️ E-pasta kredīti atjaunojas automātiski katru mēnesi</p>
         </div>
       </div>
+
+      {/* Downgrade Confirmation Dialog */}
+      <AlertDialog open={showDowngradeDialog} onOpenChange={setShowDowngradeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Pāriet uz FREE plānu?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 text-left">
+              <p className="font-medium text-foreground">
+                Pārejot uz FREE plānu, jūs zaudēsiet:
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <span><strong>E-pasta automātiku</strong> - automātiskie rezervāciju apstiprinājumi un atgādinājumi</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <span><strong>Statistiku</strong> - detalizēta analītika par rezervācijām un ieņēmumiem</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <span><strong>Papildus pakalpojumus</strong> - maksimums 3 pakalpojumi</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <span><strong>Esošos e-pasta kredītus</strong> - pašreizējie {emailCredits} kredīti tiks atiestatīti uz 0</span>
+                </li>
+              </ul>
+              <p className="text-warning font-medium mt-4">
+                Vai tiešām vēlaties turpināt?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Atcelt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDowngradeToFree}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Jā, pāriet uz FREE
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

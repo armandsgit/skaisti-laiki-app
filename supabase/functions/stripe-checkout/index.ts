@@ -18,6 +18,7 @@ const corsHeaders = {
 interface CheckoutRequest {
   priceId: string;
   professionalId: string;
+  existingSubscriptionId?: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -28,7 +29,7 @@ serve(async (req) => {
   }
 
   try {
-    const { priceId, professionalId, successUrl, cancelUrl }: CheckoutRequest = await req.json();
+    const { priceId, professionalId, existingSubscriptionId, successUrl, cancelUrl }: CheckoutRequest = await req.json();
 
     console.log('Creating checkout session for professional:', professionalId);
 
@@ -37,7 +38,7 @@ serve(async (req) => {
     // Get professional data
     const { data: professional, error: profError } = await supabase
       .from('professional_profiles')
-      .select('stripe_customer_id, user_id')
+      .select('stripe_customer_id, user_id, stripe_subscription_id')
       .eq('id', professionalId)
       .single();
 
@@ -76,7 +77,45 @@ serve(async (req) => {
       console.log('Created Stripe customer:', customerId);
     }
 
-    // Create checkout session
+    // If user has existing subscription, update it instead of creating new checkout
+    if (existingSubscriptionId || professional.stripe_subscription_id) {
+      const subId = existingSubscriptionId || professional.stripe_subscription_id;
+      console.log('Updating existing subscription:', subId);
+
+      try {
+        // Get the subscription
+        const subscription = await stripe.subscriptions.retrieve(subId);
+        
+        // Update the subscription with new price
+        const updatedSubscription = await stripe.subscriptions.update(subId, {
+          items: [{
+            id: subscription.items.data[0].id,
+            price: priceId,
+          }],
+          proration_behavior: 'create_prorations',
+        });
+
+        console.log('Subscription updated successfully:', updatedSubscription.id);
+
+        // Return success URL directly since no checkout needed
+        return new Response(
+          JSON.stringify({ 
+            sessionId: null, 
+            url: successUrl,
+            subscriptionUpdated: true 
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      } catch (updateError) {
+        console.error('Failed to update subscription:', updateError);
+        // If update fails, fall through to create new checkout session
+      }
+    }
+
+    // Create checkout session for new subscriptions
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
