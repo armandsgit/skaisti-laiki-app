@@ -7,6 +7,201 @@ export interface SubscriptionStatus {
   daysRemaining: number | null;
 }
 
+export interface SubscriptionData {
+  plan: string;
+  subscription_status: string;
+  subscription_end_date: string | null;
+  stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
+}
+
+// Price ID to Plan mapping
+export const PRICE_ID_TO_PLAN: Record<string, string> = {
+  'price_1SWmMTRtOhWJgeVeCxB9RCxm': 'starter',
+  'price_1SWmMtRtOhWJgeVeiKK0m0YL': 'pro',
+  'price_1SWmNCRtOhWJgeVekHZDvwzP': 'business',
+};
+
+// Plan to Credits mapping
+export const PLAN_CREDITS: Record<string, number> = {
+  'free': 0,
+  'starter': 200,
+  'pro': 1000,
+  'business': 5000,
+};
+
+/**
+ * Get user's current subscription data
+ */
+export async function getUserSubscription(userId: string): Promise<SubscriptionData | null> {
+  try {
+    const { data: profile, error } = await supabase
+      .from('professional_profiles')
+      .select('plan, subscription_status, subscription_end_date, stripe_subscription_id, stripe_customer_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !profile) {
+      return null;
+    }
+
+    return profile as SubscriptionData;
+  } catch (error) {
+    console.error('Error getting user subscription:', error);
+    return null;
+  }
+}
+
+/**
+ * Update user's subscription in database
+ */
+export async function updateUserSubscription(
+  professionalId: string,
+  data: {
+    plan: string;
+    subscription_status: string;
+    subscription_end_date: string | null;
+    stripe_subscription_id?: string | null;
+  }
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('professional_profiles')
+      .update({
+        plan: data.plan,
+        subscription_status: data.subscription_status,
+        subscription_end_date: data.subscription_end_date,
+        ...(data.stripe_subscription_id !== undefined && {
+          stripe_subscription_id: data.stripe_subscription_id
+        }),
+        subscription_last_changed: new Date().toISOString(),
+      })
+      .eq('id', professionalId);
+
+    if (error) {
+      console.error('Error updating subscription:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error updating subscription:', error);
+    return false;
+  }
+}
+
+/**
+ * Add email credits to user
+ */
+export async function addEmailCredits(professionalId: string, credits: number): Promise<boolean> {
+  try {
+    // Check if email_credits record exists
+    const { data: existing } = await supabase
+      .from('email_credits')
+      .select('credits')
+      .eq('master_id', professionalId)
+      .maybeSingle();
+
+    if (existing) {
+      // Update existing record
+      const { error } = await supabase
+        .from('email_credits')
+        .update({
+          credits: existing.credits + credits,
+          updated_at: new Date().toISOString()
+        })
+        .eq('master_id', professionalId);
+
+      if (error) {
+        console.error('Error updating email credits:', error);
+        return false;
+      }
+    } else {
+      // Create new record
+      const { error } = await supabase
+        .from('email_credits')
+        .insert({
+          master_id: professionalId,
+          credits: credits,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error creating email credits:', error);
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error adding email credits:', error);
+    return false;
+  }
+}
+
+/**
+ * Set email credits to specific amount (replaces existing)
+ */
+export async function setEmailCredits(professionalId: string, credits: number): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('email_credits')
+      .upsert({
+        master_id: professionalId,
+        credits: credits,
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('Error setting email credits:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error setting email credits:', error);
+    return false;
+  }
+}
+
+/**
+ * Downgrade user to FREE plan
+ */
+export async function downgradeToFree(professionalId: string): Promise<boolean> {
+  try {
+    // Update profile to FREE
+    const updated = await updateUserSubscription(professionalId, {
+      plan: 'free',
+      subscription_status: 'inactive',
+      subscription_end_date: null,
+      stripe_subscription_id: null,
+    });
+
+    if (!updated) return false;
+
+    // Reset email credits to 0
+    await setEmailCredits(professionalId, 0);
+
+    return true;
+  } catch (error) {
+    console.error('Error downgrading to free:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if subscription is expired
+ */
+export function isSubscriptionExpired(endDate: string | null): boolean {
+  if (!endDate) return true;
+  const now = new Date();
+  const end = new Date(endDate);
+  return end < now;
+}
+
+/**
+ * Check subscription status with expiration logic
+ */
 export async function checkSubscriptionStatus(userId: string): Promise<SubscriptionStatus | null> {
   try {
     const { data: profile, error } = await supabase
@@ -19,7 +214,7 @@ export async function checkSubscriptionStatus(userId: string): Promise<Subscript
       return null;
     }
 
-    const isActive = profile.subscription_status === 'active';
+    const isActive = profile.subscription_status === 'active' && !isSubscriptionExpired(profile.subscription_end_date);
     const endDate = profile.subscription_end_date;
     
     let daysRemaining = null;

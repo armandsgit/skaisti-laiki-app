@@ -97,26 +97,47 @@ const ProfessionalDashboard = () => {
     }
   }, [user]);
 
-  // Handle successful subscription purchase
+  // Handle successful subscription purchase or update
   useEffect(() => {
     const sessionSuccess = searchParams.get('session_success');
-    if (sessionSuccess === 'true' && profile) {
-      // Refresh profile data after successful purchase
-      console.log('Subscription purchase successful, refreshing profile...');
-      toast.success('Abonēšanas plāns veiksmīgi aktivizēts!');
+    const subscriptionUpdated = searchParams.get('subscription_updated');
+    
+    if ((sessionSuccess === 'true' || subscriptionUpdated === 'true') && user) {
+      console.log('Subscription changed, refreshing profile...');
       
-      // Reload profile and credits
-      setTimeout(() => {
-        loadProfile();
-        if (profile) {
-          loadEmailCredits();
+      // Show appropriate success message
+      if (subscriptionUpdated === 'true') {
+        toast.success('Abonēšanas plāns veiksmīgi mainīts!');
+      } else {
+        toast.success('Abonēšanas plāns veiksmīgi aktivizēts!');
+      }
+      
+      // Force reload profile and credits after webhook processes
+      const reloadData = async () => {
+        // Wait for webhook to process (increased to 3 seconds)
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Reload profile
+        await loadProfile();
+        
+        // Force reload email credits
+        if (profile?.id) {
+          const { data: credits } = await supabase
+            .from('email_credits')
+            .select('credits')
+            .eq('master_id', profile.id)
+            .maybeSingle();
+          
+          setEmailCredits(credits?.credits || 0);
         }
-      }, 2000); // Wait 2 seconds for webhook to process
+      };
       
-      // Remove query parameter
+      reloadData();
+      
+      // Remove query parameters
       navigate('/professional', { replace: true });
     }
-  }, [searchParams, profile?.id]);
+  }, [searchParams, user?.id]);
 
   // Handle tab query parameter and refresh data when returning to dashboard
   useEffect(() => {
