@@ -165,7 +165,7 @@ export async function setEmailCredits(professionalId: string, credits: number): 
 }
 
 /**
- * Downgrade user to FREE plan
+ * Downgrade user to FREE plan and deactivate excess staff members
  */
 export async function downgradeToFree(professionalId: string): Promise<boolean> {
   try {
@@ -182,10 +182,57 @@ export async function downgradeToFree(professionalId: string): Promise<boolean> 
     // Reset email credits to 0
     await setEmailCredits(professionalId, 0);
 
+    // Deactivate excess staff members (keep only first 1 for FREE plan)
+    await deactivateExcessStaffMembers(professionalId, 'free');
+
     return true;
   } catch (error) {
     console.error('Error downgrading to free:', error);
     return false;
+  }
+}
+
+/**
+ * Deactivate staff members that exceed plan limit
+ */
+export async function deactivateExcessStaffMembers(professionalId: string, newPlan: string): Promise<void> {
+  try {
+    const limit = getStaffMemberLimit(newPlan);
+    
+    // If unlimited, no need to deactivate
+    if (limit === -1 || limit === 999) return;
+
+    // Get all active staff members ordered by creation date
+    const { data: staffMembers, error } = await supabase
+      .from('staff_members')
+      .select('id')
+      .eq('professional_id', professionalId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: true });
+
+    if (error || !staffMembers) {
+      console.error('Error fetching staff members:', error);
+      return;
+    }
+
+    // If within limit, nothing to do
+    if (staffMembers.length <= limit) return;
+
+    // Deactivate staff members beyond the limit
+    const toDeactivate = staffMembers.slice(limit).map(s => s.id);
+    
+    if (toDeactivate.length > 0) {
+      const { error: deactivateError } = await supabase
+        .from('staff_members')
+        .update({ is_active: false })
+        .in('id', toDeactivate);
+
+      if (deactivateError) {
+        console.error('Error deactivating staff members:', deactivateError);
+      }
+    }
+  } catch (error) {
+    console.error('Error deactivating excess staff members:', error);
   }
 }
 
@@ -258,21 +305,21 @@ export const planLimits = {
   },
   starteris: {
     maxServices: 5,
-    maxStaffMembers: 1,
+    maxStaffMembers: 3,
     maxPhotos: 10,
     emailCreditsIncluded: 200,
     priority: 2
   },
   pro: {
     maxServices: 20,
-    maxStaffMembers: 5,
+    maxStaffMembers: 10,
     maxPhotos: 50,
     emailCreditsIncluded: 1000,
     priority: 1
   },
   bizness: {
     maxServices: -1, // unlimited
-    maxStaffMembers: -1, // unlimited
+    maxStaffMembers: 999, // unlimited
     maxPhotos: -1, // unlimited
     emailCreditsIncluded: 5000,
     priority: 0
@@ -286,7 +333,14 @@ export function canAddService(plan: string, currentCount: number): boolean {
 
 export function canAddStaffMember(plan: string, currentCount: number): boolean {
   const limit = planLimits[plan as keyof typeof planLimits]?.maxStaffMembers || 1;
-  return limit === -1 || currentCount < limit;
+  return limit === -1 || limit === 999 || currentCount < limit;
+}
+
+// Alias for consistency
+export const canAddStaffMemberByPlan = canAddStaffMember;
+
+export function getStaffMemberLimit(plan: string): number {
+  return planLimits[plan as keyof typeof planLimits]?.maxStaffMembers || 1;
 }
 
 export function canUploadPhoto(plan: string, currentCount: number): boolean {

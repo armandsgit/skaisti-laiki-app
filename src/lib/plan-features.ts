@@ -4,6 +4,7 @@ export const PLAN_FEATURES = {
     name: 'Bezmaksas',
     emailCredits: 0,
     maxServices: 3,
+    maxStaffMembers: 1,
     canUseEmailAutomation: false,
     canViewStatistics: true,
     canUseAdvancedBooking: false,
@@ -15,6 +16,7 @@ export const PLAN_FEATURES = {
     name: 'Starteris',
     emailCredits: 200,
     maxServices: 10,
+    maxStaffMembers: 3,
     canUseEmailAutomation: true,
     canViewStatistics: true,
     canUseAdvancedBooking: false,
@@ -26,6 +28,7 @@ export const PLAN_FEATURES = {
     name: 'Pro',
     emailCredits: 1000,
     maxServices: -1, // unlimited
+    maxStaffMembers: 10,
     canUseEmailAutomation: true,
     canViewStatistics: true,
     canUseAdvancedBooking: true,
@@ -37,6 +40,7 @@ export const PLAN_FEATURES = {
     name: 'Bizness',
     emailCredits: 5000,
     maxServices: -1, // unlimited
+    maxStaffMembers: 999, // unlimited
     canUseEmailAutomation: true,
     canViewStatistics: true,
     canUseAdvancedBooking: true,
