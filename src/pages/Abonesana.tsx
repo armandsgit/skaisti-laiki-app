@@ -94,13 +94,34 @@ export default function Abonesana() {
 
       const { data: profile } = await supabase
         .from('professional_profiles')
-        .select('id, plan, subscription_status')
+        .select('id, plan, subscription_status, stripe_subscription_id')
         .eq('user_id', user.id)
         .single();
 
       if (profile) {
-        setCurrentPlan(profile.plan || 'free');
-        setHasActiveSubscription(profile.subscription_status === 'active');
+        // Fix inconsistent state: if subscription is "active" but no Stripe ID, reset to inactive
+        if (profile.subscription_status === 'active' && !profile.stripe_subscription_id) {
+          console.log('Fixing inconsistent subscription state');
+          await supabase
+            .from('professional_profiles')
+            .update({ 
+              subscription_status: 'inactive',
+              plan: 'free'
+            })
+            .eq('id', profile.id);
+          
+          setCurrentPlan('free');
+          setHasActiveSubscription(false);
+          
+          toast({
+            title: 'Abonements atjaunināts',
+            description: 'Jūsu iepriekšējais abonements vairs nav aktīvs. Lūdzu izvēlieties jaunu plānu.',
+            variant: 'default',
+          });
+        } else {
+          setCurrentPlan(profile.plan || 'free');
+          setHasActiveSubscription(profile.subscription_status === 'active');
+        }
 
         // Get email credits
         const { data: credits } = await supabase
