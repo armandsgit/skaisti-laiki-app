@@ -7,6 +7,7 @@ interface QuickActionButtonProps {
   label: string;
   onClick: () => void;
   variant?: 'default' | 'secondary';
+  badge?: number;
 }
 
 export const QuickActionButton = ({
@@ -14,9 +15,10 @@ export const QuickActionButton = ({
   label,
   onClick,
   variant = 'default',
+  badge,
 }: QuickActionButtonProps) => {
   return (
-    <motion.div whileTap={{ scale: 0.96 }}>
+    <motion.div whileTap={{ scale: 0.96 }} className="relative">
       <Button
         onClick={onClick}
         variant={variant === 'default' ? 'default' : 'outline'}
@@ -27,6 +29,11 @@ export const QuickActionButton = ({
           <span className="text-[13px] font-medium leading-tight text-center">{label}</span>
         </div>
       </Button>
+      {badge !== undefined && badge > 0 && (
+        <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg">
+          {badge}
+        </span>
+      )}
     </motion.div>
   );
 };

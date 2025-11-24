@@ -89,6 +89,7 @@ const ProfessionalDashboard = () => {
     longitude: null as number | null
   });
   const [showCompleted, setShowCompleted] = useState(false);
+  const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -166,6 +167,54 @@ const ProfessionalDashboard = () => {
       loadEmailCredits();
     }
   }, [profile]);
+
+  // Real-time booking notifications
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    // Subscribe to new bookings
+    const channel = supabase
+      .channel('booking-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bookings',
+          filter: `professional_id=eq.${profile.id}`
+        },
+        async (payload) => {
+          console.log('New booking received:', payload);
+          
+          // Fetch client info for notification
+          const { data: clientData } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', payload.new.client_id)
+            .single();
+          
+          // Show toast notification
+          toast.success(`Jauna rezervācija no ${clientData?.name || 'klienta'}!`, {
+            description: 'Apstipriniet to rezervāciju sadaļā.',
+            duration: 5000,
+          });
+          
+          // Reload bookings
+          loadBookings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
+
+  // Update pending bookings count whenever bookings change
+  useEffect(() => {
+    const pendingCount = bookings.filter(b => b.status === 'pending').length;
+    setPendingBookingsCount(pendingCount);
+  }, [bookings]);
 
   const loadCategories = async () => {
     const { data } = await supabase
@@ -840,9 +889,24 @@ const ProfessionalDashboard = () => {
             </div>
           </div>
           
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="w-5 h-5 stroke-[1.5]" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {pendingBookingsCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative"
+                onClick={() => setSelectedTab('bookings')}
+              >
+                <Bell className="w-5 h-5 stroke-[1.5]" />
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                  {pendingBookingsCount}
+                </span>
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="w-5 h-5 stroke-[1.5]" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -885,9 +949,14 @@ const ProfessionalDashboard = () => {
               <LayoutDashboard className="w-4 h-4 stroke-[1.5]" />
               <span className="hidden sm:inline">Galvenā</span>
             </TabsTrigger>
-            <TabsTrigger value="bookings" className="gap-2">
+            <TabsTrigger value="bookings" className="gap-2 relative">
               <Calendar className="w-4 h-4 stroke-[1.5]" />
               <span className="hidden sm:inline">Rezervācijas</span>
+              {pendingBookingsCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                  {pendingBookingsCount}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="services" className="gap-2">
               <Sparkles className="w-4 h-4 stroke-[1.5]" />
@@ -983,6 +1052,7 @@ const ProfessionalDashboard = () => {
                 label="Rezervācijas"
                 onClick={() => setSelectedTab('bookings')}
                 variant="secondary"
+                badge={pendingBookingsCount > 0 ? pendingBookingsCount : undefined}
               />
             </div>
 
