@@ -48,16 +48,22 @@ const BottomNavigation = () => {
   // Load pending bookings count for clients
   useEffect(() => {
     const loadPendingBookingsCount = async () => {
-      if (!user?.id || userRole !== 'CLIENT') return;
+      if (!user?.id || userRole !== 'CLIENT') {
+        setPendingBookingsCount(0);
+        return;
+      }
       
       const { supabase } = await import('@/integrations/supabase/client');
       
-      const { count } = await supabase
+      console.log('🔔 Loading pending count for client:', user.id);
+      
+      const { count, error } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
         .eq('client_id', user.id)
         .eq('status', 'pending');
       
+      console.log('🔔 Initial pending count:', count, 'error:', error);
       setPendingBookingsCount(count || 0);
 
       // Subscribe to realtime changes
@@ -71,14 +77,17 @@ const BottomNavigation = () => {
             table: 'bookings',
             filter: `client_id=eq.${user.id}`
           },
-          async () => {
+          async (payload) => {
+            console.log('🔔 Booking changed, reloading count...', payload);
+            
             // Reload count when bookings change
-            const { count: newCount } = await supabase
+            const { count: newCount, error: countError } = await supabase
               .from('bookings')
               .select('*', { count: 'exact', head: true })
               .eq('client_id', user.id)
               .eq('status', 'pending');
             
+            console.log('🔔 New pending count:', newCount, 'error:', countError);
             setPendingBookingsCount(newCount || 0);
           }
         )
