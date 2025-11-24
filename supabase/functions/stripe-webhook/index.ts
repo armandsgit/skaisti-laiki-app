@@ -95,9 +95,29 @@ serve(async (req) => {
 
     // Handle subscription events
     if (event.type === 'customer.subscription.created' || 
-        event.type === 'customer.subscription.updated') {
-      const subscription = event.data.object as Stripe.Subscription;
-      const customerId = subscription.customer as string;
+        event.type === 'customer.subscription.updated' ||
+        event.type === 'invoice.paid') {
+      
+      let subscription: Stripe.Subscription;
+      let customerId: string;
+
+      // Handle different event types
+      if (event.type === 'invoice.paid') {
+        const invoice = event.data.object as Stripe.Invoice;
+        if (!invoice.subscription) {
+          console.log('Invoice paid but no subscription attached, skipping');
+          return new Response(JSON.stringify({ received: true }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        // Fetch the subscription details
+        subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+        customerId = invoice.customer as string;
+      } else {
+        subscription = event.data.object as Stripe.Subscription;
+        customerId = subscription.customer as string;
+      }
 
       console.log('Processing subscription event:', event.type, 'for customer:', customerId);
 
@@ -116,12 +136,17 @@ serve(async (req) => {
       // Determine plan from price
       const priceId = subscription.items.data[0]?.price.id;
       let plan = 'free';
-      if (priceId === Deno.env.get('STRIPE_PRICE_STARTER')) plan = 'starter';
-      else if (priceId === Deno.env.get('STRIPE_PRICE_PRO')) plan = 'pro';
-      else if (priceId === Deno.env.get('STRIPE_PRICE_PREMIUM')) plan = 'premium';
+      
+      // Map Stripe price IDs to plan names
+      // These should match your Stripe dashboard price IDs
+      if (priceId?.includes('starter') || priceId === 'price_starter_monthly') plan = 'starter';
+      else if (priceId?.includes('pro') || priceId === 'price_pro_monthly') plan = 'pro';
+      else if (priceId?.includes('premium') || priceId === 'price_premium_monthly') plan = 'premium';
 
       const status = subscription.status === 'active' ? 'active' : 'inactive';
       const endDate = new Date(subscription.current_period_end * 1000);
+
+      console.log('Updating professional to plan:', plan, 'status:', status, 'end date:', endDate);
 
       // Update professional profile
       const { error: updateError } = await supabase
@@ -140,7 +165,7 @@ serve(async (req) => {
         return new Response('Failed to update profile', { status: 500, headers: corsHeaders });
       }
 
-      // Allocate email credits based on plan
+      // Set email credits based on plan (replace, not add)
       const planCredits: Record<string, number> = {
         starter: 200,
         pro: 1000,
@@ -148,10 +173,10 @@ serve(async (req) => {
         free: 0
       };
 
-      const creditsToAdd = planCredits[plan] || 0;
-      console.log('Allocating credits for plan:', plan, 'credits:', creditsToAdd);
+      const newCredits = planCredits[plan] || 0;
+      console.log('Setting credits for plan:', plan, 'credits:', newCredits);
 
-      if (creditsToAdd > 0) {
+      if (newCredits > 0 || event.type === 'customer.subscription.created') {
         // Check if email_credits record exists
         const { data: existingCredits } = await supabase
           .from('email_credits')
@@ -160,38 +185,45 @@ serve(async (req) => {
           .single();
 
         if (existingCredits) {
-          // Add credits to existing balance
+          // For new subscriptions or upgrades, ADD credits
+          // For renewals (invoice.paid), SET to plan credits
+          const finalCredits = event.type === 'invoice.paid' 
+            ? existingCredits.credits + newCredits  // Add on renewal
+            : newCredits;  // Set on new subscription or upgrade
+            
           await supabase
             .from('email_credits')
             .update({ 
-              credits: existingCredits.credits + creditsToAdd,
+              credits: finalCredits,
               updated_at: new Date().toISOString()
             })
             .eq('master_id', professional.id);
-          console.log('Added', creditsToAdd, 'credits to existing balance');
+          console.log('Updated credits to:', finalCredits);
         } else {
           // Create new email_credits record
           await supabase
             .from('email_credits')
             .insert({
               master_id: professional.id,
-              credits: creditsToAdd,
+              credits: newCredits,
               updated_at: new Date().toISOString()
             });
-          console.log('Created new email_credits record with', creditsToAdd, 'credits');
+          console.log('Created new email_credits record with', newCredits, 'credits');
         }
       }
 
-      // Log subscription history
-      await supabase
-        .from('subscription_history')
-        .insert({
-          professional_id: professional.id,
-          plan,
-          status,
-          stripe_subscription_id: subscription.id,
-          started_at: new Date().toISOString()
-        });
+      // Log subscription history only for new subscriptions
+      if (event.type === 'customer.subscription.created') {
+        await supabase
+          .from('subscription_history')
+          .insert({
+            professional_id: professional.id,
+            plan,
+            status,
+            stripe_subscription_id: subscription.id,
+            started_at: new Date().toISOString()
+          });
+      }
 
       console.log('Subscription updated successfully for professional:', professional.id);
     }

@@ -25,17 +25,18 @@ export const SubscriptionBanner = ({
   const getPlanDisplayName = (planCode: string | null) => {
     if (!planCode) return 'Nav plāna';
     const planMap: { [key: string]: string } = {
-      starter: 'Starteris',
+      starter: 'Starter',
       pro: 'Pro',
-      premium: 'Bizness',
+      premium: 'Premium',
+      free: 'Bezmaksas'
     };
-    return planMap[planCode.toLowerCase()] || planCode;
+    return planMap[planCode.toLowerCase()] || planCode.toUpperCase();
   };
 
   const formatNextBillingDate = (endDate: string | null) => {
     if (!endDate) return 'Nav noteikts';
     try {
-      return format(new Date(endDate), 'd. MMMM yyyy', { locale: lv });
+      return format(new Date(endDate), 'dd.MM.yyyy', { locale: lv });
     } catch {
       return 'Nav pieejams';
     }

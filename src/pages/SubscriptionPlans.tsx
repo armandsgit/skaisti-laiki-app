@@ -11,41 +11,46 @@ const plans = [
   {
     id: 'starter',
     name: 'Starter',
-    price: '0',
+    price: '9.99',
     description: 'Sāc savu biznesu',
     features: [
+      '200 e-pasta kredīti/mēnesī',
       'Redzams sarakstā',
       'Pamata profils',
-      'Līdz 1 kategorija',
-      'Vienkāršs dizains',
+      'Līdz 5 pakalpojumi',
+      'Rezervāciju pārvaldība',
     ],
     recommended: false,
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '14.99',
+    price: '19.99',
     description: 'Profesionāliem meistariem',
     features: [
+      '1000 e-pasta kredīti/mēnesī',
       'Verificēts status',
       'Izcelts profils',
-      'Neierobežotas kategorijas',
+      'Neierobežoti pakalpojumi',
       'Redzams kartē',
       'Prioritāte meklēšanā',
+      'Detalizēta statistika',
     ],
     recommended: true,
   },
   {
     id: 'premium',
     name: 'Premium',
-    price: '24.99',
+    price: '39.99',
     description: 'Maksimālā redzamība',
     features: [
+      '5000 e-pasta kredīti/mēnesī',
       'Visi Pro plus',
       'Augstākā prioritāte',
       'Lielāka profila kartīte',
       'Premium badge',
-      'VIP atbalsts',
+      'VIP atbalsts 24/7',
+      'Mārketinga rīki',
     ],
     recommended: false,
   },
@@ -86,11 +91,14 @@ export default function SubscriptionPlans() {
         return;
       }
 
-      // Map plan to Stripe price IDs (replace with actual Stripe price IDs from your Stripe dashboard)
+      // Map plan to Stripe price IDs
+      // IMPORTANT: Replace these with your actual Stripe Price IDs from your Stripe Dashboard
+      // The Price IDs should contain 'starter', 'pro', or 'premium' in their ID for automatic detection
+      // Or update the webhook to match your exact Price IDs
       const stripePriceIds: Record<string, string> = {
-        starter: 'price_starter_monthly', // Replace with actual Stripe price ID
-        pro: 'price_pro_monthly',
-        premium: 'price_premium_monthly'
+        starter: 'price_starter_monthly', // Replace with actual Stripe price ID (e.g., price_1ABC123...)
+        pro: 'price_pro_monthly',         // Replace with actual Stripe price ID
+        premium: 'price_premium_monthly'  // Replace with actual Stripe price ID
       };
 
       const priceId = stripePriceIds[planId];
@@ -196,9 +204,22 @@ export default function SubscriptionPlans() {
           ))}
         </div>
 
-        <div className="mt-12 text-center text-sm text-muted-foreground">
-          <p>⚠️ Pirms maksājuma, lūdzu pārliecinies, ka Stripe Price ID ir pareizi konfigurēti kodā</p>
-          <p>Aizvieto 'price_starter_monthly', 'price_pro_monthly', 'price_premium_monthly' ar taviem faktiskajiem Stripe Price ID</p>
+        <div className="mt-12 text-center">
+          <div className="max-w-3xl mx-auto bg-muted/30 rounded-lg p-6 border border-border/50">
+            <h3 className="font-semibold text-lg mb-3">⚙️ Konfigurācijas instrukcijas</h3>
+            <div className="text-sm text-muted-foreground space-y-2 text-left">
+              <p><strong>1.</strong> Atver Stripe Dashboard → Products → Pricing</p>
+              <p><strong>2.</strong> Izveido vai atrodi Price ID katram plānam</p>
+              <p><strong>3.</strong> Koda failā <code className="bg-muted px-2 py-0.5 rounded">SubscriptionPlans.tsx</code> aizvieto:</p>
+              <ul className="ml-6 mt-2 space-y-1">
+                <li>• <code className="bg-muted px-2 py-0.5 rounded">price_starter_monthly</code> ar tavu Starter Price ID</li>
+                <li>• <code className="bg-muted px-2 py-0.5 rounded">price_pro_monthly</code> ar tavu Pro Price ID</li>
+                <li>• <code className="bg-muted px-2 py-0.5 rounded">price_premium_monthly</code> ar tavu Premium Price ID</li>
+              </ul>
+              <p className="mt-3"><strong>Piemērs:</strong> <code className="bg-muted px-2 py-0.5 rounded">price_1ABC123xyz456DEF</code></p>
+              <p className="mt-3 text-warning">⚠️ Bez pareiziem Price ID maksājumi nedarbosies!</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
