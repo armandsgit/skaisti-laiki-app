@@ -89,6 +89,7 @@ const ProfessionalDashboard = () => {
     longitude: null as number | null
   });
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showCanceled, setShowCanceled] = useState(false);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
 
   useEffect(() => {
@@ -1097,20 +1098,105 @@ const ProfessionalDashboard = () => {
             ) : (
               <div className="space-y-6">
                 {/* Active Bookings Section */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-foreground">Gaidāmās rezervācijas</h3>
-                  {bookings.filter(b => b.status !== 'completed').length > 0 ? (
-                    bookings.filter(b => b.status !== 'completed').map((booking) => (
-                      <Card 
-                        key={booking.id}
-                        className="hover:shadow-lg transition-all duration-300 border-l-4 bg-white border-border/50 shadow-card"
-                        style={{
-                          borderLeftColor: 
-                            booking.status === 'pending' ? '#f59e0b' :
-                            booking.status === 'confirmed' ? '#10b981' :
-                            '#ef4444'
-                        }}
-                      >
+                <div className="space-y-6">
+                  {/* Pending Bookings - Highlighted at Top */}
+                  {bookings.filter(b => b.status === 'pending').length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-foreground">Gaida apstiprinājumu</h3>
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
+                          {bookings.filter(b => b.status === 'pending').length}
+                        </Badge>
+                      </div>
+                      {bookings.filter(b => b.status === 'pending').map((booking) => (
+                        <Card 
+                          key={booking.id}
+                          className="hover:shadow-lg transition-all duration-300 border-l-4 bg-amber-50 border-amber-400 shadow-lg ring-2 ring-amber-200"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-lg">{booking.profiles.name}</p>
+                                </div>
+                                <div className="space-y-1 mt-1">
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-xs font-mono bg-white px-2 py-1 rounded-md text-muted-foreground break-all">
+                                      {booking.profiles.email || 'Nav e-pasta'}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">
+                                    📱 {booking.profiles.phone || 'Nav telefona'}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
+                                Gaida
+                              </Badge>
+                            </div>
+
+                            <div className="space-y-2 mb-4">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                                <span>{format(new Date(booking.booking_date), 'dd.MM.yyyy', { locale: lv })}</span>
+                                <Clock className="w-4 h-4 text-muted-foreground ml-2" />
+                                <span>{booking.booking_time}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Sparkles className="w-4 h-4 text-muted-foreground" />
+                                <span>{booking.services.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <User className="w-4 h-4 text-muted-foreground" />
+                                <span>Meistars: {booking.staff_members?.name || 'Nav norādīts'}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Euro className="w-4 h-4 text-primary" />
+                                <span className="font-bold text-primary">€{booking.services.price}</span>
+                              </div>
+                            </div>
+
+                            <div className="mb-4 p-3 bg-white rounded-lg">
+                              <p className="text-sm text-muted-foreground">
+                                <strong>Piezīme:</strong> {booking.notes || 'Nav piezīmju'}
+                              </p>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleBookingAction(booking.id, 'confirmed')}
+                                className="flex-1"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1 stroke-[2]" />
+                                Apstiprināt
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleBookingAction(booking.id, 'canceled')}
+                                className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10"
+                              >
+                                <XCircle className="w-4 h-4 mr-1 stroke-[2]" />
+                                Atcelt
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Confirmed Bookings */}
+                  {bookings.filter(b => b.status === 'confirmed').length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-foreground">Apstiprinātas rezervācijas</h3>
+                      {bookings.filter(b => b.status === 'confirmed').map((booking) => (
+                        <Card 
+                          key={booking.id}
+                          className="hover:shadow-lg transition-all duration-300 border-l-4 bg-white border-border/50 shadow-card"
+                          style={{ borderLeftColor: '#10b981' }}
+                        >
                         <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
@@ -1128,19 +1214,9 @@ const ProfessionalDashboard = () => {
                             </p>
                           </div>
                         </div>
-                        <Badge
-                          variant={
-                            booking.status === 'confirmed' ? 'default' :
-                            booking.status === 'completed' ? 'outline' :
-                            booking.status === 'canceled' ? 'destructive' :
-                            'secondary'
-                          }
-                        >
-                          {booking.status === 'pending' && 'Gaida'}
-                          {booking.status === 'confirmed' && 'Apstiprināts'}
-                          {booking.status === 'completed' && 'Pabeigts'}
-                          {booking.status === 'canceled' && 'Atcelts'}
-                        </Badge>
+                          <Badge variant="default">
+                            Apstiprināts
+                          </Badge>
                       </div>
 
                       <div className="space-y-2 mb-4">
@@ -1170,68 +1246,36 @@ const ProfessionalDashboard = () => {
                         </p>
                       </div>
 
-                      {booking.status === 'pending' && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleBookingAction(booking.id, 'confirmed')}
-                            className="flex-1"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1 stroke-[2]" />
-                            Apstiprināt
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleBookingAction(booking.id, 'canceled')}
-                            className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10"
-                          >
-                            <XCircle className="w-4 h-4 mr-1 stroke-[2]" />
-                            Atcelt
-                          </Button>
-                        </div>
-                      )}
-
-                      {booking.status === 'confirmed' && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleBookingAction(booking.id, 'completed')}
-                            className="flex-1"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1 stroke-[2]" />
-                            Atzīmēt kā pabeigtu
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleBookingAction(booking.id, 'canceled')}
-                            className="border-destructive/30 text-destructive hover:bg-destructive/10"
-                          >
-                            <XCircle className="w-4 h-4 mr-1 stroke-[2]" />
-                            Atcelt
-                          </Button>
-                        </div>
-                      )}
-
-                          {booking.status === 'canceled' && (
+                          <div className="flex gap-2">
                             <Button
                               size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteBooking(booking.id)}
-                              className="w-full"
+                              onClick={() => handleBookingAction(booking.id, 'completed')}
+                              className="flex-1"
                             >
-                              <Trash2 className="w-4 h-4 mr-1" />
-                              Dzēst rezervāciju
+                              <CheckCircle className="w-4 h-4 mr-1 stroke-[2]" />
+                              Atzīmēt kā pabeigtu
                             </Button>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleBookingAction(booking.id, 'canceled')}
+                              className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                            >
+                              <XCircle className="w-4 h-4 mr-1 stroke-[2]" />
+                              Atcelt
+                            </Button>
+                          </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {bookings.filter(b => b.status === 'pending' || b.status === 'confirmed').length === 0 && (
                     <Card className="p-8 border-0 shadow-card">
                       <p className="text-center text-muted-foreground">
-                        Nav gaidāmo rezervāciju
+                        Nav aktīvo rezervāciju
                       </p>
                     </Card>
                   )}
@@ -1239,7 +1283,7 @@ const ProfessionalDashboard = () => {
 
                 {/* Completed Bookings Section - Collapsible */}
                 {bookings.filter(b => b.status === 'completed').length > 0 && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 mt-6">
                     <Button
                       variant="ghost"
                       onClick={() => setShowCompleted(!showCompleted)}
@@ -1317,6 +1361,123 @@ const ProfessionalDashboard = () => {
                                       <span className="text-sm text-muted-foreground">
                                         {booking.staff_members.name}
                                       </span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <p className="text-sm">
+                                  <span className="font-medium">Datums:</span>{' '}
+                                  {format(new Date(booking.booking_date), 'dd.MM.yyyy', { locale: lv })}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Laiks:</span>{' '}
+                                  {booking.booking_time.slice(0, 5)} - {booking.booking_end_time?.slice(0, 5)}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Cena:</span> €{booking.services?.price}
+                                </p>
+                                {booking.notes && (
+                                  <p className="text-sm">
+                                    <span className="font-medium">Piezīmes:</span> {booking.notes}
+                                  </p>
+                                )}
+                              </div>
+
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteBooking(booking.id)}
+                                className="w-full mt-4"
+                              >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Dzēst rezervāciju
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+
+                {/* Canceled Bookings Section - Collapsible */}
+                {bookings.filter(b => b.status === 'canceled').length > 0 && (
+                  <div className="space-y-4 mt-6">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowCanceled(!showCanceled)}
+                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-muted-foreground">
+                          Atceltās rezervācijas
+                        </h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {bookings.filter(b => b.status === 'canceled').length}
+                        </Badge>
+                      </div>
+                      <ChevronDown 
+                        className={`h-5 w-5 text-muted-foreground transition-transform duration-300 ${
+                          showCanceled ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </Button>
+
+                    {showCanceled && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-3"
+                      >
+                        {bookings.filter(b => b.status === 'canceled').map((booking) => (
+                          <Card 
+                            key={booking.id}
+                            className="opacity-60 hover:opacity-80 transition-all duration-200 border-l-4 bg-muted/30 border-0 shadow-card"
+                            style={{ borderLeftColor: '#ef4444' }}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-semibold text-lg text-muted-foreground">
+                                      {booking.profiles.name}
+                                    </p>
+                                  </div>
+                                  <div className="space-y-1 mt-1">
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-xs font-mono bg-muted px-2 py-1 rounded-md text-muted-foreground break-all">
+                                        {booking.profiles.email || 'Nav e-pasta'}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      📱 {booking.profiles.phone || 'Nav telefona'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Badge variant="destructive" className="opacity-70">
+                                  Atcelts
+                                </Badge>
+                              </div>
+
+                              <div className="space-y-2">
+                                <p className="text-sm">
+                                  <span className="font-medium">Pakalpojums:</span>{' '}
+                                  {booking.services?.name}
+                                </p>
+                                
+                                {booking.staff_members && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium">Meistars:</span>
+                                    <div className="flex items-center gap-2">
+                                      {booking.staff_members.avatar && (
+                                        <img 
+                                          src={booking.staff_members.avatar} 
+                                          alt={booking.staff_members.name}
+                                          className="w-6 h-6 rounded-full object-cover"
+                                        />
+                                      )}
+                                      <span className="text-sm">{booking.staff_members.name}</span>
                                     </div>
                                   </div>
                                 )}
