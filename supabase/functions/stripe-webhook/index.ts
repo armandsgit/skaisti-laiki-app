@@ -38,7 +38,7 @@ serve(async (req) => {
     // Verify webhook signature
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       console.error('Webhook signature verification failed:', errorMessage);
@@ -138,6 +138,48 @@ serve(async (req) => {
       if (updateError) {
         console.error('Error updating professional profile:', updateError);
         return new Response('Failed to update profile', { status: 500, headers: corsHeaders });
+      }
+
+      // Allocate email credits based on plan
+      const planCredits: Record<string, number> = {
+        starter: 200,
+        pro: 1000,
+        premium: 5000,
+        free: 0
+      };
+
+      const creditsToAdd = planCredits[plan] || 0;
+      console.log('Allocating credits for plan:', plan, 'credits:', creditsToAdd);
+
+      if (creditsToAdd > 0) {
+        // Check if email_credits record exists
+        const { data: existingCredits } = await supabase
+          .from('email_credits')
+          .select('credits')
+          .eq('master_id', professional.id)
+          .single();
+
+        if (existingCredits) {
+          // Add credits to existing balance
+          await supabase
+            .from('email_credits')
+            .update({ 
+              credits: existingCredits.credits + creditsToAdd,
+              updated_at: new Date().toISOString()
+            })
+            .eq('master_id', professional.id);
+          console.log('Added', creditsToAdd, 'credits to existing balance');
+        } else {
+          // Create new email_credits record
+          await supabase
+            .from('email_credits')
+            .insert({
+              master_id: professional.id,
+              credits: creditsToAdd,
+              updated_at: new Date().toISOString()
+            });
+          console.log('Created new email_credits record with', creditsToAdd, 'credits');
+        }
       }
 
       // Log subscription history
