@@ -16,7 +16,7 @@ interface DeleteProfessionalModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   professionalName: string;
-  onConfirmDelete: () => void;
+  onConfirmDelete: () => Promise<boolean | void>;
 }
 
 export default function DeleteProfessionalModal({
@@ -27,25 +27,32 @@ export default function DeleteProfessionalModal({
 }: DeleteProfessionalModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [confirmText, setConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleFirstConfirm = () => {
     setStep(2);
   };
 
-  const handleFinalDelete = () => {
-    if (confirmText === 'DZĒST') {
-      onConfirmDelete();
-      handleClose();
+  const handleFinalDelete = async () => {
+    if (confirmText === 'DZĒST' && !isDeleting) {
+      setIsDeleting(true);
+      const result = await onConfirmDelete();
+      setIsDeleting(false);
+      if (result !== false) {
+        handleClose();
+      }
     }
   };
 
   const handleClose = () => {
-    setStep(1);
-    setConfirmText('');
-    onOpenChange(false);
+    if (!isDeleting) {
+      setStep(1);
+      setConfirmText('');
+      onOpenChange(false);
+    }
   };
 
-  const isDeleteEnabled = confirmText === 'DZĒST';
+  const isDeleteEnabled = confirmText === 'DZĒST' && !isDeleting;
 
   return (
     <AlertDialog open={open} onOpenChange={handleClose}>
@@ -96,7 +103,7 @@ export default function DeleteProfessionalModal({
                 disabled={!isDeleteEnabled}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Dzēst profilu galīgi
+                {isDeleting ? "Dzēš..." : "Dzēst profilu galīgi"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </>

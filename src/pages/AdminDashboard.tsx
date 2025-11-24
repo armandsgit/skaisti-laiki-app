@@ -256,10 +256,14 @@ const AdminDashboard = () => {
       }
 
       toast.success("Profils veiksmīgi izdzēsts.");
+      setDeleteModalOpen(false);
+      setSelectedProfessional(null);
       loadData();
+      return true;
     } catch (error) {
       console.error("Error deleting professional:", error);
       toast.error("Neizdevās izdzēst profilu. Lūdzu, mēģiniet vēlreiz.");
+      return false;
     }
   };
 
