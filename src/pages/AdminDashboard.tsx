@@ -235,32 +235,59 @@ const AdminDashboard = () => {
     }
 
     try {
-      console.log("Starting delete for professional:", selectedProfessional.user_id);
+      console.log("=== DELETE PROFESSIONAL START ===");
+      console.log("Professional ID:", selectedProfessional.id);
+      console.log("User ID:", selectedProfessional.user_id);
+      console.log("Professional Name:", selectedProfessional.profiles?.name);
       
-      const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { userId: selectedProfessional.user_id }
+      // Get session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error("Session error:", sessionError);
+        throw new Error("No active session");
+      }
+
+      console.log("Session obtained, calling edge function...");
+
+      // Call edge function with explicit URL
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userId: selectedProfessional.user_id 
+        }),
       });
 
-      if (error) {
-        console.error("Delete error:", error);
-        throw error;
+      console.log("Response status:", response.status);
+      
+      const result = await response.json();
+      console.log("Response data:", result);
+
+      if (!response.ok) {
+        throw new Error(result.error || `HTTP ${response.status}: Failed to delete`);
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || "Failed to delete user");
-      }
-
-      console.log("Delete successful, reloading data");
+      console.log("Delete successful!");
       toast.success("Profils veiksmīgi izdzēsts.");
       
-      // Force reload data immediately
-      await loadData();
-      
+      // Close modal first
       setDeleteModalOpen(false);
       setSelectedProfessional(null);
+      
+      // Reload data
+      console.log("Reloading data...");
+      await loadData();
+      console.log("=== DELETE PROFESSIONAL END ===");
+      
       return true;
     } catch (error: any) {
-      console.error("Error deleting professional:", error);
+      console.error("=== DELETE PROFESSIONAL ERROR ===");
+      console.error("Error:", error);
+      console.error("Error message:", error?.message);
       toast.error(error?.message || "Neizdevās izdzēst profilu. Lūdzu, mēģiniet vēlreiz.");
       return false;
     }
