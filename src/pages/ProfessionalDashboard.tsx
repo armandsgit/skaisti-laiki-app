@@ -29,6 +29,7 @@ import { UpcomingBookingCard } from '@/components/UpcomingBookingCard';
 import { ServiceCard } from '@/components/ServiceCard';
 import { QuickActionButton } from '@/components/QuickActionButton';
 import { SubscriptionBanner } from '@/components/SubscriptionBanner';
+import { EmailStatsCard } from '@/components/EmailStatsCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday, startOfMonth, endOfMonth, addDays, startOfWeek } from 'date-fns';
 import { lv } from 'date-fns/locale';
@@ -52,6 +53,12 @@ const ProfessionalDashboard = () => {
     monthlyEarnings: 0
   });
   const [emailCredits, setEmailCredits] = useState(0);
+  const [emailStats, setEmailStats] = useState({
+    sentToday: 0,
+    sentThisMonth: 0,
+    sent30Days: 0
+  });
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
@@ -203,6 +210,33 @@ const ProfessionalDashboard = () => {
       .maybeSingle();
     
     setEmailCredits(data?.credits || 0);
+
+    // Load email usage statistics
+    const today = new Date().toISOString().split('T')[0];
+    const monthStart = startOfMonth(new Date()).toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: usage } = await supabase
+      .from('email_usage')
+      .select('*')
+      .eq('master_id', profile.id);
+
+    if (usage) {
+      const sentToday = usage.filter(e => 
+        e.created_at.startsWith(today)
+      ).length;
+
+      const sentThisMonth = usage.filter(e => 
+        e.created_at >= monthStart
+      ).length;
+
+      const sent30Days = usage.filter(e => 
+        e.created_at >= thirtyDaysAgo.toISOString()
+      ).length;
+
+      setEmailStats({ sentToday, sentThisMonth, sent30Days });
+    }
   };
 
   const loadStaffMembers = async () => {
@@ -448,6 +482,9 @@ const ProfessionalDashboard = () => {
   };
 
   const handleBookingAction = async (bookingId: string, status: 'pending' | 'confirmed' | 'completed' | 'canceled') => {
+    // Get booking details for email
+    const booking = bookings.find(b => b.id === bookingId);
+    
     const { error } = await supabase
       .from('bookings')
       .update({ status })
@@ -459,10 +496,123 @@ const ProfessionalDashboard = () => {
         status === 'completed' ? t.bookingCompleted :
         t.bookingCanceled
       );
+
+      // Send confirmation email when booking is confirmed
+      if (status === 'confirmed' && booking && emailCredits >= 1) {
+        await sendBookingEmail(booking, 'confirmation');
+      }
+
       loadBookings();
     } else {
       toast.error(t.error);
     }
+  };
+
+  const sendBookingEmail = async (booking: any, type: 'confirmation' | 'reminder' | 'test') => {
+    if (!profile?.id || !userProfile) return;
+
+    if (emailCredits < 1) {
+      toast.error('Nav pietiekami e-pasta kredīti');
+      return;
+    }
+
+    setSendingEmail(true);
+
+    try {
+      const clientEmail = booking.profiles?.email;
+      if (!clientEmail) {
+        throw new Error('Klienta e-pasta adrese nav atrasta');
+      }
+
+      const serviceName = booking.services?.name || 'Pakalpojums';
+      const bookingDate = new Date(booking.booking_date).toLocaleDateString('lv-LV');
+      const bookingTime = booking.booking_time.substring(0, 5);
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #000; color: #fff; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { padding: 30px; background: #f9f9f9; border-radius: 0 0 8px 8px; }
+            .details { background: #fff; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #000; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>BeautyOn</h1>
+            </div>
+            <div class="content">
+              <h2>${type === 'test' ? 'Testa e-pasts' : 'Rezervācija apstiprināta!'}</h2>
+              <p>Sveiki, ${booking.profiles?.name || 'Klients'}!</p>
+              ${type === 'test' ? '<p>Šis ir testa e-pasts. Jūsu e-pasta sistēma darbojas pareizi!</p>' : '<p>Jūsu rezervācija ir veiksmīgi apstiprināta.</p>'}
+              
+              <div class="details">
+                <h3>Rezervācijas detaļas</h3>
+                <p><strong>Meistars:</strong> ${userProfile.name}</p>
+                <p><strong>Pakalpojums:</strong> ${serviceName}</p>
+                <p><strong>Datums:</strong> ${bookingDate}</p>
+                <p><strong>Laiks:</strong> ${bookingTime}</p>
+              </div>
+              
+              ${type !== 'test' ? '<p>Ja nepieciešams atcelt vai mainīt rezervāciju, lūdzu, sazinieties ar meistaru savlaicīgi.</p>' : ''}
+            </div>
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} BeautyOn. Skaistumkopšanas pakalpojumu platforma.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          professionalId: profile.id,
+          to: clientEmail,
+          subject: type === 'test' ? 'BeautyOn - Testa e-pasts' : 'BeautyOn - Rezervācija apstiprināta',
+          htmlContent,
+          emailType: type === 'test' ? 'system' : 'booking_confirmation'
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`E-pasts nosūtīts! Atlikušie kredīti: ${data.creditsRemaining || emailCredits - 1}`);
+      
+      // Reload credits and stats
+      await loadEmailCredits();
+    } catch (error: any) {
+      console.error('Email sending error:', error);
+      toast.error(error.message || 'Neizdevās nosūtīt e-pastu');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!userProfile?.email) {
+      toast.error('Nav atrasta jūsu e-pasta adrese');
+      return;
+    }
+
+    // Create a dummy booking for test email
+    const testBooking = {
+      profiles: {
+        name: userProfile.name,
+        email: userProfile.email
+      },
+      services: {
+        name: 'Testa pakalpojums'
+      },
+      booking_date: new Date().toISOString(),
+      booking_time: '10:00:00'
+    };
+
+    await sendBookingEmail(testBooking, 'test');
   };
 
   const handleDeleteBooking = async (bookingId: string) => {
@@ -690,6 +840,15 @@ const ProfessionalDashboard = () => {
               monthlyEarnings={stats.monthlyEarnings}
               todayBookings={stats.todayBookings}
               completedServices={stats.completedBookings}
+            />
+
+            {/* Email Stats Card */}
+            <EmailStatsCard
+              emailCredits={emailCredits}
+              emailStats={emailStats}
+              onSendTest={handleSendTestEmail}
+              onNavigateToBilling={() => navigate('/billing')}
+              sendingEmail={sendingEmail}
             />
 
             {/* Quick Actions */}
