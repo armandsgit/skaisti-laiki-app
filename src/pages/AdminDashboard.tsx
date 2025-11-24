@@ -47,9 +47,9 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalProfessionals: 0,
     totalBookings: 0,
-    starterPlan: 0,
+    starterisPlan: 0,
     proPlan: 0,
-    premiumPlan: 0,
+    biznessPlan: 0,
     activeSubscriptions: 0,
   });
   const [professionals, setProfessionals] = useState<any[]>([]);
@@ -117,9 +117,9 @@ const AdminDashboard = () => {
     ]);
 
     const subscriptionStats = {
-      starter: profsData.data?.filter((p) => p.plan === "starter").length || 0,
+      starteris: profsData.data?.filter((p) => p.plan === "starteris").length || 0,
       pro: profsData.data?.filter((p) => p.plan === "pro").length || 0,
-      premium: profsData.data?.filter((p) => p.plan === "premium").length || 0,
+      bizness: profsData.data?.filter((p) => p.plan === "bizness").length || 0,
       active: profsData.data?.filter((p) => p.subscription_status === "active").length || 0,
     };
 
@@ -127,9 +127,9 @@ const AdminDashboard = () => {
       totalUsers: usersData.count || 0,
       totalProfessionals: profsData.data?.length || 0,
       totalBookings: bookingsData.data?.length || 0,
-      starterPlan: subscriptionStats.starter,
+      starterisPlan: subscriptionStats.starteris,
       proPlan: subscriptionStats.pro,
-      premiumPlan: subscriptionStats.premium,
+      biznessPlan: subscriptionStats.bizness,
       activeSubscriptions: subscriptionStats.active,
     });
 
@@ -487,10 +487,10 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <Card className="shadow-card border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Starter plāns</CardTitle>
+              <CardTitle className="text-base">Starteris plāns</CardTitle>
             </CardHeader>
             <CardContent>
-              <span className="text-3xl font-bold">{stats.starterPlan}</span>
+              <span className="text-3xl font-bold">{stats.starterisPlan}</span>
               <p className="text-sm text-muted-foreground mt-1">meistari</p>
             </CardContent>
           </Card>
@@ -507,10 +507,10 @@ const AdminDashboard = () => {
 
           <Card className="shadow-card border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Premium plāns</CardTitle>
+              <CardTitle className="text-base">Bizness plāns</CardTitle>
             </CardHeader>
             <CardContent>
-              <span className="text-3xl font-bold">{stats.premiumPlan}</span>
+              <span className="text-3xl font-bold">{stats.biznessPlan}</span>
               <p className="text-sm text-muted-foreground mt-1">meistari</p>
             </CardContent>
           </Card>
@@ -888,16 +888,16 @@ const AdminDashboard = () => {
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4 pt-3 border-t">
                         <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Pašreizējais plāns:</span>
                         <Select
-                          value={prof.plan || "starter"}
+                          value={prof.plan || "starteris"}
                           onValueChange={(value) => handleUpdatePlan(prof.id, value)}
                         >
                           <SelectTrigger className="w-full sm:w-[200px] h-9 text-sm rounded-xl">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="rounded-xl">
-                            <SelectItem value="starter">Starter (€0)</SelectItem>
-                            <SelectItem value="pro">Pro (€14.99)</SelectItem>
-                            <SelectItem value="premium">Premium (€24.99)</SelectItem>
+                            <SelectItem value="starteris">Starteris (€9.99)</SelectItem>
+                            <SelectItem value="pro">Pro (€24.99)</SelectItem>
+                            <SelectItem value="bizness">Bizness (€49.99)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

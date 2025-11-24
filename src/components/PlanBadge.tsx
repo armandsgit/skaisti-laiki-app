@@ -8,11 +8,11 @@ interface PlanBadgeProps {
 }
 
 export default function PlanBadge({ plan, isVerified, className = '' }: PlanBadgeProps) {
-  if (plan === 'premium') {
+  if (plan === 'bizness') {
     return (
       <Badge className={`bg-gradient-to-r from-amber-500 to-amber-600 text-white ${className}`}>
         <Crown className="w-3 h-3 mr-1" />
-        Premium
+        Bizness
       </Badge>
     );
   }

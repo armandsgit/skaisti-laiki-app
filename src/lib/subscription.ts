@@ -17,17 +17,17 @@ export interface SubscriptionData {
 
 // Price ID to Plan mapping
 export const PRICE_ID_TO_PLAN: Record<string, string> = {
-  'price_1SWmMTRtOhWJgeVeCxB9RCxm': 'starter',
+  'price_1SWmMTRtOhWJgeVeCxB9RCxm': 'starteris',
   'price_1SWmMtRtOhWJgeVeiKK0m0YL': 'pro',
-  'price_1SWmNCRtOhWJgeVekHZDvwzP': 'business',
+  'price_1SWmNCRtOhWJgeVekHZDvwzP': 'bizness',
 };
 
 // Plan to Credits mapping
 export const PLAN_CREDITS: Record<string, number> = {
   'free': 0,
-  'starter': 200,
+  'starteris': 200,
   'pro': 1000,
-  'business': 5000,
+  'bizness': 5000,
 };
 
 /**
@@ -256,25 +256,25 @@ export const planLimits = {
     emailCreditsIncluded: 0,
     priority: 3
   },
-  starter: {
+  starteris: {
     maxServices: 5,
     maxStaffMembers: 1,
     maxPhotos: 10,
-    emailCreditsIncluded: 50,
+    emailCreditsIncluded: 200,
     priority: 2
   },
   pro: {
     maxServices: 20,
     maxStaffMembers: 5,
     maxPhotos: 50,
-    emailCreditsIncluded: 200,
+    emailCreditsIncluded: 1000,
     priority: 1
   },
-  premium: {
+  bizness: {
     maxServices: -1, // unlimited
     maxStaffMembers: -1, // unlimited
     maxPhotos: -1, // unlimited
-    emailCreditsIncluded: 500,
+    emailCreditsIncluded: 5000,
     priority: 0
   }
 };

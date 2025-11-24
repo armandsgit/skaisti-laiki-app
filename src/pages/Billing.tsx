@@ -93,9 +93,9 @@ export default function Billing() {
   const getPlanBadge = (plan: string) => {
     const colors = {
       free: 'bg-muted',
-      starter: 'bg-primary',
+      starteris: 'bg-primary',
       pro: 'bg-gradient-to-r from-primary to-accent',
-      premium: 'bg-gradient-to-r from-amber-500 to-amber-600'
+      bizness: 'bg-gradient-to-r from-amber-500 to-amber-600'
     };
     return colors[plan as keyof typeof colors] || 'bg-muted';
   };
