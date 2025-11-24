@@ -182,8 +182,8 @@ export default function SubscriptionPlans() {
         body: {
           priceId,
           professionalId: profile.id,
-          successUrl: `${window.location.origin}/professional?session_success=true`,
-          cancelUrl: `${window.location.origin}/subscription-plans?session_canceled=true`
+          successUrl: `${window.location.origin}/abonesana`,
+          cancelUrl: `${window.location.origin}/abonesana?session_canceled=true`
         }
       });
 
