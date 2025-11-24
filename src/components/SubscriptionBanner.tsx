@@ -25,9 +25,9 @@ export const SubscriptionBanner = ({
   const getPlanDisplayName = (planCode: string | null) => {
     if (!planCode) return 'Nav plāna';
     const planMap: { [key: string]: string } = {
-      starter: 'Starter',
+      starteris: 'Starteris',
       pro: 'Pro',
-      premium: 'Premium',
+      bizness: 'Bizness',
       free: 'Bezmaksas'
     };
     return planMap[planCode.toLowerCase()] || planCode.toUpperCase();

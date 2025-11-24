@@ -92,13 +92,10 @@ export default function SubscriptionPlans() {
       }
 
       // Map plan to Stripe price IDs
-      // IMPORTANT: Replace these with your actual Stripe Price IDs from your Stripe Dashboard
-      // The Price IDs should contain 'starter', 'pro', or 'premium' in their ID for automatic detection
-      // Or update the webhook to match your exact Price IDs
       const stripePriceIds: Record<string, string> = {
-        starter: 'price_starter_monthly', // Replace with actual Stripe price ID (e.g., price_1ABC123...)
-        pro: 'price_pro_monthly',         // Replace with actual Stripe price ID
-        premium: 'price_premium_monthly'  // Replace with actual Stripe price ID
+        starter: 'price_1SWmMTRtOhWJgeVeCxB9RCxm',
+        pro: 'price_1SWmMtRtOhWJgeVeiKK0m0YL',
+        premium: 'price_1SWmNCRtOhWJgeVekHZDvwzP'
       };
 
       const priceId = stripePriceIds[planId];

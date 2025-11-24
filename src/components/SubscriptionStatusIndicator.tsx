@@ -8,7 +8,7 @@ interface SubscriptionStatusIndicatorProps {
 
 export default function SubscriptionStatusIndicator({ plan, status }: SubscriptionStatusIndicatorProps) {
   const isActive = status === 'active';
-  const planName = plan === 'starter' ? 'Starter' : plan === 'pro' ? 'Pro' : plan === 'premium' ? 'Premium' : 'Nav izvēlēts';
+  const planName = plan === 'starteris' ? 'Starteris' : plan === 'pro' ? 'Pro' : plan === 'bizness' ? 'Bizness' : 'Nav izvēlēts';
   
   return (
     <TooltipProvider>
