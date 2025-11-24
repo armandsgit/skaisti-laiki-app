@@ -17,17 +17,17 @@ const corsHeaders = {
 
 // Price ID to Plan mapping - MUST match your Stripe Dashboard
 const PRICE_ID_TO_PLAN: Record<string, string> = {
-  'price_1SWmMTRtOhWJgeVeCxB9RCxm': 'starter',
+  'price_1SWmMTRtOhWJgeVeCxB9RCxm': 'starteris',
   'price_1SWmMtRtOhWJgeVeiKK0m0YL': 'pro',
-  'price_1SWmNCRtOhWJgeVekHZDvwzP': 'business',
+  'price_1SWmNCRtOhWJgeVekHZDvwzP': 'bizness',
 };
 
 // Plan to Credits mapping
 const PLAN_CREDITS: Record<string, number> = {
   'free': 0,
-  'starter': 200,
+  'starteris': 200,
   'pro': 1000,
-  'business': 5000,
+  'bizness': 5000,
 };
 
 serve(async (req) => {
