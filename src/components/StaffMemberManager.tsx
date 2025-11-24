@@ -68,6 +68,13 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     }
   };
 
+  // Count only non-owner staff members for limit calculations
+  const getNonOwnerStaffCount = () => {
+    return staffMembers.filter(s => s.position !== 'Īpašnieks').length;
+  };
+
+  const canAddMore = canAddStaffMemberByPlan(currentPlan, getNonOwnerStaffCount());
+
   const loadServices = async () => {
     try {
       const { data, error } = await supabase
@@ -139,9 +146,9 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
       return;
     }
 
-    // Check limit when adding new staff
-    if (!editingStaff && !canAddStaffMemberByPlan(currentPlan, staffMembers.length)) {
-      toast.error(`Jūsu plāns atļauj tikai ${staffLimit} meistarus. Uzlabojiet abonementu, lai pievienotu vairāk.`);
+    // Check limit when adding new staff (only count non-owner staff)
+    if (!editingStaff && !canAddMore) {
+      toast.error(`Jūsu plāns atļauj tikai ${staffLimit} ${staffLimit === 1 ? 'meistaru' : 'meistarus'}. Uzlabojiet abonementu, lai pievienotu vairāk.`);
       return;
     }
 
@@ -284,7 +291,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     );
   }
 
-  const canAddMore = canAddStaffMemberByPlan(currentPlan, staffMembers.length);
+  const nonOwnerCount = getNonOwnerStaffCount();
 
   return (
     <Card>
@@ -294,7 +301,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
             <User className="w-5 h-5" />
             Meistari
             <span className="text-xs text-muted-foreground font-normal">
-              ({staffMembers.length}/{staffLimit === 999 ? '∞' : staffLimit})
+              ({nonOwnerCount}/{staffLimit === 999 ? '∞' : staffLimit})
             </span>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -479,7 +486,10 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
             )}
             {staffMembers.map((staff, index) => {
               const isSelected = selectedStaffMemberId === staff.id;
-              const isOverLimit = index >= staffLimit;
+              // Never mark owner as over limit
+              const isOwner = staff.position === 'Īpašnieks';
+              const nonOwnerIndex = staffMembers.filter((s, i) => i < index && s.position !== 'Īpašnieks').length;
+              const isOverLimit = !isOwner && nonOwnerIndex >= staffLimit;
               return (
                 <div
                   key={staff.id}
