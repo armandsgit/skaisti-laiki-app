@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,7 +73,62 @@ const plans = [
 export default function SubscriptionPlans() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
+  useEffect(() => {
+    const verifySubscription = async () => {
+      const sessionId = searchParams.get('session_id');
+      const sessionSuccess = searchParams.get('session_success');
+
+      if (sessionSuccess === 'true' && sessionId) {
+        setVerifying(true);
+        
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const { data: profile } = await supabase
+            .from('professional_profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (!profile) return;
+
+          console.log('Verifying subscription for session:', sessionId);
+
+          const { data, error } = await supabase.functions.invoke('verify-subscription', {
+            body: { sessionId, professionalId: profile.id }
+          });
+
+          if (error) {
+            console.error('Verification error:', error);
+            toast({
+              title: 'Kļūda',
+              description: 'Neizdevās aktivizēt abonementu. Lūdzu sazinies ar atbalstu.',
+              variant: 'destructive',
+            });
+          } else if (data?.success) {
+            toast({
+              title: 'Veiksmīgi!',
+              description: `${data.plan} plāns tika aktivizēts ar ${data.credits} e-pasta kredītiem.`,
+            });
+            setTimeout(() => {
+              navigate('/professional');
+            }, 2000);
+          }
+        } catch (error) {
+          console.error('Verification failed:', error);
+        } finally {
+          setVerifying(false);
+        }
+      }
+    };
+
+    verifySubscription();
+  }, [searchParams, navigate, toast]);
 
   const handleActivate = async (planId: string) => {
     setLoading(planId);
@@ -157,6 +212,17 @@ export default function SubscriptionPlans() {
       setLoading(null);
     }
   };
+
+  if (verifying) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg">Aktivizē abonementu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12 px-4">

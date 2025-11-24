@@ -127,14 +127,21 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: `${successUrl}?session_success=true`,
+      success_url: `${successUrl}?session_success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
       metadata: {
         professionalId: professionalId,
+        priceId: priceId,
       },
+      subscription_data: {
+        metadata: {
+          professionalId: professionalId,
+          priceId: priceId,
+        }
+      }
     });
 
-    console.log('Checkout session created:', session.id);
+    console.log('Checkout session created:', session.id, 'for price:', priceId);
 
     return new Response(
       JSON.stringify({ sessionId: session.id, url: session.url }),
