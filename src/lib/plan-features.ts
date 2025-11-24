@@ -5,14 +5,14 @@ export const PLAN_FEATURES = {
     emailCredits: 0,
     maxServices: 3,
     canUseEmailAutomation: false,
-    canViewStatistics: false,
+    canViewStatistics: true,
     canUseAdvancedBooking: false,
     showInMap: false,
     verified: false,
     priorityInSearch: false,
   },
-  starter: {
-    name: 'Starter',
+  starteris: {
+    name: 'Starteris',
     emailCredits: 200,
     maxServices: 10,
     canUseEmailAutomation: true,
@@ -33,8 +33,8 @@ export const PLAN_FEATURES = {
     verified: true,
     priorityInSearch: true,
   },
-  premium: {
-    name: 'Premium',
+  bizness: {
+    name: 'Bizness',
     emailCredits: 5000,
     maxServices: -1, // unlimited
     canUseEmailAutomation: true,
