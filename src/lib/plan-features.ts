@@ -16,7 +16,7 @@ export const PLAN_FEATURES = {
     emailCredits: 200,
     maxServices: 10,
     canUseEmailAutomation: true,
-    canViewStatistics: false,
+    canViewStatistics: true,
     canUseAdvancedBooking: false,
     showInMap: true,
     verified: false,
