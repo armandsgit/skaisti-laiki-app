@@ -74,7 +74,7 @@ serve(async (req) => {
     console.log(`Activating ${plan} plan for professional ${professionalId}`);
 
     // Update professional profile
-    await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('professional_profiles')
       .update({
         plan: plan,
@@ -84,10 +84,18 @@ serve(async (req) => {
         stripe_customer_id: session.customer as string,
         subscription_last_changed: new Date().toISOString(),
       })
-      .eq('id', professionalId);
+      .eq('id', professionalId)
+      .select();
+
+    if (profileError) {
+      console.error('❌ Profile update error:', profileError);
+      throw new Error(`Failed to update profile: ${profileError.message}`);
+    }
+
+    console.log('✅ Profile updated:', profileData);
 
     // Set email credits
-    await supabase
+    const { error: creditsError } = await supabase
       .from('email_credits')
       .upsert({
         master_id: professionalId,
@@ -95,8 +103,15 @@ serve(async (req) => {
         updated_at: new Date().toISOString()
       });
 
+    if (creditsError) {
+      console.error('❌ Credits update error:', creditsError);
+      throw new Error(`Failed to update credits: ${creditsError.message}`);
+    }
+
+    console.log('✅ Credits updated:', credits);
+
     // Create subscription history record
-    await supabase
+    const { error: historyError } = await supabase
       .from('subscription_history')
       .insert({
         professional_id: professionalId,
@@ -106,7 +121,12 @@ serve(async (req) => {
         stripe_subscription_id: subscriptionId,
       });
 
-    console.log(`Successfully activated ${plan} plan with ${credits} credits`);
+    if (historyError) {
+      console.error('⚠️ History insert error:', historyError);
+      // Don't throw - history is not critical
+    }
+
+    console.log(`✅ Successfully activated ${plan} plan with ${credits} credits`);
 
     return new Response(
       JSON.stringify({ 
