@@ -152,10 +152,14 @@ export default function SubscriptionPlans() {
   }, [searchParams, navigate, toast]);
 
   const handleActivate = async (planId: string) => {
+    console.log('🚀 === SUBSCRIPTION ACTIVATION START ===');
+    console.log('Plan ID:', planId);
     setLoading(planId);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('✅ User authenticated:', user?.id);
       if (!user) {
+        console.log('❌ No user found');
         toast({
           title: 'Kļūda',
           description: 'Lietotājs nav autentificēts',
@@ -172,7 +176,9 @@ export default function SubscriptionPlans() {
         .eq('user_id', user.id)
         .single();
 
+      console.log('✅ Professional profile:', profile?.id);
       if (!profile) {
+        console.log('❌ No professional profile found');
         toast({
           title: 'Kļūda',
           description: 'Profesionāla profila nav atrasts',
@@ -189,7 +195,9 @@ export default function SubscriptionPlans() {
       };
 
       const priceId = stripePriceIds[planId];
+      console.log('✅ Price ID:', priceId);
       if (!priceId) {
+        console.log('❌ Invalid plan ID');
         toast({
           title: 'Kļūda',
           description: 'Nederīgs plāns',
@@ -197,6 +205,14 @@ export default function SubscriptionPlans() {
         });
         return;
       }
+
+      console.log('🔄 Calling stripe-checkout edge function...');
+      console.log('Body:', {
+        priceId,
+        professionalId: profile.id,
+        successUrl: `${window.location.origin}/abonesana`,
+        cancelUrl: `${window.location.origin}/abonesana?session_canceled=true`
+      });
 
       // Create Stripe checkout session
       const { data, error } = await supabase.functions.invoke('stripe-checkout', {
@@ -208,8 +224,10 @@ export default function SubscriptionPlans() {
         }
       });
 
+      console.log('📦 Edge function response:', { data, error });
+
       if (error) {
-        console.error('Checkout error:', error);
+        console.error('❌ Checkout error:', error);
         toast({
           title: 'Kļūda',
           description: 'Neizdevās izveidot maksājumu sesiju',
@@ -219,11 +237,16 @@ export default function SubscriptionPlans() {
       }
 
       // Redirect to Stripe Checkout
+      console.log('🔗 Checking redirect URL:', data?.url);
       if (data?.url) {
+        console.log('✅ Redirecting to Stripe:', data.url);
         window.location.href = data.url;
+      } else {
+        console.log('❌ No URL in response!');
+        console.log('Full data object:', JSON.stringify(data, null, 2));
       }
     } catch (error) {
-      console.error('Error activating plan:', error);
+      console.error('❌ Error activating plan:', error);
       toast({
         title: 'Kļūda',
         description: 'Radās neparedzēta kļūda',
