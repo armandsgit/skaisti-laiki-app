@@ -226,43 +226,42 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteProfessional = async () => {
-    if (!selectedProfessional) return;
+    if (!selectedProfessional) return false;
 
     // Double-check to prevent self-deletion
     if (selectedProfessional.user_id === user?.id) {
       toast.error("Nevar izdzēst savu profilu!");
-      return;
+      return false;
     }
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error("No session");
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId: selectedProfessional.user_id }),
+      console.log("Starting delete for professional:", selectedProfessional.user_id);
+      
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: selectedProfessional.user_id }
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to delete user");
+      if (error) {
+        console.error("Delete error:", error);
+        throw error;
       }
 
+      if (!data?.success) {
+        throw new Error(data?.error || "Failed to delete user");
+      }
+
+      console.log("Delete successful, reloading data");
       toast.success("Profils veiksmīgi izdzēsts.");
+      
+      // Force reload data immediately
+      await loadData();
+      
       setDeleteModalOpen(false);
       setSelectedProfessional(null);
-      loadData();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting professional:", error);
-      toast.error("Neizdevās izdzēst profilu. Lūdzu, mēģiniet vēlreiz.");
+      toast.error(error?.message || "Neizdevās izdzēst profilu. Lūdzu, mēģiniet vēlreiz.");
       return false;
     }
   };
