@@ -22,6 +22,7 @@ const plans = [
     id: 'free',
     name: 'Bezmaksas',
     price: '0',
+    tier: 1,
     description: 'Pamata funkcijas',
     features: [
       '0 e-pasta kredīti',
@@ -36,6 +37,7 @@ const plans = [
     id: 'starteris',
     name: 'Starteris',
     price: '9.99',
+    tier: 2,
     description: 'Sāc savu biznesu',
     features: [
       '200 e-pasta kredīti/mēnesī',
@@ -50,6 +52,7 @@ const plans = [
     id: 'pro',
     name: 'Pro',
     price: '24.99',
+    tier: 3,
     description: 'Profesionāliem meistariem',
     features: [
       '1000 e-pasta kredīti/mēnesī',
@@ -66,6 +69,7 @@ const plans = [
     id: 'bizness',
     name: 'Bizness',
     price: '49.99',
+    tier: 4,
     description: 'Maksimālā redzamība',
     features: [
       '5000 e-pasta kredīti/mēnesī',
@@ -318,17 +322,22 @@ export default function SubscriptionPlans() {
 
   const isDowngrade = (fromPlan: string | null, toPlan: string) => {
     if (!fromPlan) return false;
-    const fromLevel = planHierarchy[fromPlan as keyof typeof planHierarchy];
-    const toLevel = planHierarchy[toPlan as keyof typeof planHierarchy];
-    console.log('Checking downgrade:', { fromPlan, toPlan, fromLevel, toLevel, isDowngrade: fromLevel > toLevel });
-    return fromLevel > toLevel;
+    const fromPlanObj = plans.find(p => p.id === fromPlan);
+    const toPlanObj = plans.find(p => p.id === toPlan);
+    if (!fromPlanObj || !toPlanObj) return false;
+    const result = fromPlanObj.tier > toPlanObj.tier;
+    console.log('🔽 Downgrade check:', { fromPlan, toPlan, fromTier: fromPlanObj.tier, toTier: toPlanObj.tier, isDowngrade: result });
+    return result;
   };
 
   const isUpgrade = (fromPlan: string | null, toPlan: string) => {
     if (!fromPlan) return false;
-    const fromLevel = planHierarchy[fromPlan as keyof typeof planHierarchy];
-    const toLevel = planHierarchy[toPlan as keyof typeof planHierarchy];
-    return toLevel > fromLevel;
+    const fromPlanObj = plans.find(p => p.id === fromPlan);
+    const toPlanObj = plans.find(p => p.id === toPlan);
+    if (!fromPlanObj || !toPlanObj) return false;
+    const result = toPlanObj.tier > fromPlanObj.tier;
+    console.log('🔼 Upgrade check:', { fromPlan, toPlan, fromTier: fromPlanObj.tier, toTier: toPlanObj.tier, isUpgrade: result });
+    return result;
   };
 
   const handlePlanClick = (planId: string) => {
