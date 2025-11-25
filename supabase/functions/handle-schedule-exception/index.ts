@@ -71,14 +71,16 @@ serve(async (req: Request) => {
       console.log(`Found ${bookings?.length || 0} bookings to cancel`);
 
       if (bookings && bookings.length > 0) {
-        // Cancel all bookings
+        // Cancel all bookings with proper tracking
         const bookingIds = bookings.map(b => b.id);
         
         const { error: updateError } = await supabase
           .from("bookings")
           .update({
-            status: "canceled",
+            status: "cancelled_system",
             auto_cancelled_by_exception: true,
+            cancelled_at: new Date().toISOString(),
+            cancellation_reason: "Slēgta diena",
           })
           .in("id", bookingIds);
 

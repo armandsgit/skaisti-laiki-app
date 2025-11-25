@@ -64,6 +64,9 @@ export type Database = {
           booking_date: string
           booking_end_time: string
           booking_time: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           client_id: string
           created_at: string
           id: string
@@ -79,6 +82,9 @@ export type Database = {
           booking_date: string
           booking_end_time: string
           booking_time: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           client_id: string
           created_at?: string
           id?: string
@@ -94,6 +100,9 @@ export type Database = {
           booking_date?: string
           booking_end_time?: string
           booking_time?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           client_id?: string
           created_at?: string
           id?: string
@@ -105,6 +114,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_client_id_fkey"
             columns: ["client_id"]
@@ -794,7 +810,14 @@ export type Database = {
       }
     }
     Enums: {
-      booking_status: "pending" | "confirmed" | "completed" | "canceled"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "canceled"
+        | "cancelled_by_master"
+        | "cancelled_by_client"
+        | "cancelled_system"
       user_role: "CLIENT" | "PROFESSIONAL" | "ADMIN"
     }
     CompositeTypes: {
@@ -923,7 +946,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      booking_status: ["pending", "confirmed", "completed", "canceled"],
+      booking_status: [
+        "pending",
+        "confirmed",
+        "completed",
+        "canceled",
+        "cancelled_by_master",
+        "cancelled_by_client",
+        "cancelled_system",
+      ],
       user_role: ["CLIENT", "PROFESSIONAL", "ADMIN"],
     },
   },

@@ -186,7 +186,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
 
       const { data, error } = await supabase
         .from('schedule_exceptions')
-        .select('exception_date, is_closed, time_ranges')
+        .select('exception_date, is_closed, time_ranges, staff_member_id')
         .eq('professional_id', professionalId)
         .gte('exception_date', startDateStr)
         .lte('exception_date', endDateStr);
@@ -602,21 +602,34 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                       if (date < today) return true;
                       if (maxDate && date > maxDate) return true;
                       
-                      // Check if date is in closed exceptions
-                      const dateStr = date.toISOString().split('T')[0];
+                      // Check if date is in closed exceptions - normalize to YYYY-MM-DD in local timezone
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      const dateStr = `${year}-${month}-${day}`;
+                      
                       const exception = scheduleExceptions.find(e => e.exception_date === dateStr);
-                      if (exception?.is_closed) return true;
+                      if (exception?.is_closed) {
+                        console.log('🚫 Date blocked:', dateStr, 'is closed');
+                        return true;
+                      }
                       
                       return false;
                     }}
                     modifiers={{
                       closed: (date) => {
-                        const dateStr = date.toISOString().split('T')[0];
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
                         const exception = scheduleExceptions.find(e => e.exception_date === dateStr);
                         return exception?.is_closed || false;
                       },
                       specialSchedule: (date) => {
-                        const dateStr = date.toISOString().split('T')[0];
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
                         const exception = scheduleExceptions.find(e => e.exception_date === dateStr);
                         return !exception?.is_closed && !!exception?.time_ranges;
                       }
