@@ -9,6 +9,7 @@ const BottomNavigation = () => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
 
   // Load user role from both user_roles (for ADMIN) and profiles (for other roles)
   useEffect(() => {
@@ -95,6 +96,53 @@ const BottomNavigation = () => {
     loadPendingBookingsCount();
   }, [user?.id, userRole]);
 
+  // Load pending approvals count for admins
+  useEffect(() => {
+    const loadPendingApprovalsCount = async () => {
+      if (!user?.id || userRole !== 'ADMIN') {
+        setPendingApprovalsCount(0);
+        return;
+      }
+      
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { count } = await supabase
+        .from('professional_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('approved', false);
+      
+      setPendingApprovalsCount(count || 0);
+
+      // Subscribe to realtime changes
+      const channel = supabase
+        .channel('admin-pending-approvals')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'professional_profiles'
+          },
+          async (payload) => {
+            // Reload count when professional profiles change
+            const { count: newCount } = await supabase
+              .from('professional_profiles')
+              .select('*', { count: 'exact', head: true })
+              .eq('approved', false);
+            
+            setPendingApprovalsCount(newCount || 0);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+    
+    loadPendingApprovalsCount();
+  }, [user?.id, userRole]);
+
   // Don't show on auth page or when not logged in
   if (location.pathname === '/auth' || !user) return null;
 
@@ -124,7 +172,8 @@ const BottomNavigation = () => {
       icon: CheckCircle, 
       label: 'Gaida', 
       path: '/admin?tab=pending', 
-      isActive: location.pathname === '/admin' && currentTab === 'pending'
+      isActive: location.pathname === '/admin' && currentTab === 'pending',
+      badge: pendingApprovalsCount
     },
     { 
       icon: MessageSquare, 
