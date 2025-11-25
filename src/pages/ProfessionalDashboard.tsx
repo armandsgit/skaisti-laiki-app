@@ -451,7 +451,8 @@ const ProfessionalDashboard = () => {
           toast.error(t.error);
         }
       } else {
-        const { error } = await supabase
+        // First, create the service
+        const { data: newServiceData, error: insertError } = await supabase
           .from('services')
           .insert({
             professional_id: profile.id,
@@ -459,16 +460,45 @@ const ProfessionalDashboard = () => {
             price: validatedData.price,
             duration: validatedData.duration,
             description: validatedData.description
-          });
+          })
+          .select()
+          .single();
         
-        if (!error) {
-          toast.success(t.serviceAdded);
-          setServiceDialogOpen(false);
-          setNewService({ name: '', price: '', duration: '60', description: '' });
-          loadServices();
-        } else {
+        if (insertError) {
           toast.error(t.error);
+          return;
         }
+
+        // Get the owner's staff member record
+        const { data: ownerStaff, error: staffError } = await supabase
+          .from('staff_members')
+          .select('id')
+          .eq('professional_id', profile.id)
+          .eq('position', 'Īpašnieks')
+          .maybeSingle();
+
+        if (staffError) {
+          console.error('Error finding owner staff:', staffError);
+        }
+
+        // If owner staff member exists, assign this service to them
+        if (ownerStaff) {
+          const { error: masterServiceError } = await supabase
+            .from('master_services')
+            .insert({
+              staff_member_id: ownerStaff.id,
+              service_id: newServiceData.id
+            });
+
+          if (masterServiceError) {
+            console.error('Error assigning service to owner:', masterServiceError);
+          }
+        }
+        
+        toast.success(t.serviceAdded);
+        setServiceDialogOpen(false);
+        setNewService({ name: '', price: '', duration: '60', description: '' });
+        loadServices();
       }
     } catch (error: any) {
       if (error.errors) {
