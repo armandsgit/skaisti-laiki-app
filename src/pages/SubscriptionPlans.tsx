@@ -236,7 +236,22 @@ export default function SubscriptionPlans() {
         return;
       }
 
-      // Redirect to Stripe Checkout
+      // Check if subscription was updated (paid to paid switch)
+      if (data?.subscriptionUpdated) {
+        console.log('✅ Subscription updated successfully');
+        toast({
+          title: 'Veiksmīgi!',
+          description: 'Tavs abonements tika atjaunināts. Izmaiņas būs redzamas pēc dažām sekundēm.',
+        });
+        
+        // Wait 2 seconds for webhook to process, then redirect
+        setTimeout(() => {
+          navigate('/professional');
+        }, 2000);
+        return;
+      }
+
+      // Redirect to Stripe Checkout for new subscriptions
       console.log('🔗 Checking redirect URL:', data?.url);
       if (data?.url) {
         console.log('✅ Redirecting to Stripe:', data.url);
