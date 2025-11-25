@@ -77,47 +77,15 @@ serve(async (req) => {
       console.log('Created Stripe customer:', customerId);
     }
 
-    // If user has existing subscription, update it instead of creating new checkout
-    if (existingSubscriptionId || professional.stripe_subscription_id) {
-      const subId = existingSubscriptionId || professional.stripe_subscription_id;
-      console.log('Updating existing subscription:', subId);
-
-      try {
-        // Get the subscription
-        const subscription = await stripe.subscriptions.retrieve(subId);
-        
-        // Update the subscription with new price
-        const updatedSubscription = await stripe.subscriptions.update(subId, {
-          items: [{
-            id: subscription.items.data[0].id,
-            price: priceId,
-          }],
-          proration_behavior: 'create_prorations',
-        });
-
-        console.log('Subscription updated successfully:', updatedSubscription.id);
-
-        // The webhook will handle updating the database
-        // Return success URL with special parameter
-        return new Response(
-          JSON.stringify({ 
-            sessionId: null, 
-            url: `${successUrl}?subscription_updated=true`,
-            subscriptionUpdated: true 
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      } catch (updateError) {
-        console.error('Failed to update subscription:', updateError);
-        // If update fails, fall through to create new checkout session
-      }
+    // For existing subscriptions, create checkout session with subscription_update mode
+    const existingSubId = existingSubscriptionId || professional.stripe_subscription_id;
+    
+    if (existingSubId) {
+      console.log('Creating checkout session to update existing subscription:', existingSubId);
     }
 
-    // Create checkout session for new subscriptions
-    const session = await stripe.checkout.sessions.create({
+    // Create checkout session
+    const sessionConfig: any = {
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -133,13 +101,29 @@ serve(async (req) => {
         professionalId: professionalId,
         priceId: priceId,
       },
-      subscription_data: {
+    };
+
+    // If updating existing subscription, add subscription_data
+    if (existingSubId) {
+      // For plan changes, cancel the existing subscription and create a new one
+      sessionConfig.subscription_data = {
+        metadata: {
+          professionalId: professionalId,
+          priceId: priceId,
+          previousSubscriptionId: existingSubId,
+        }
+      };
+    } else {
+      // For new subscriptions
+      sessionConfig.subscription_data = {
         metadata: {
           professionalId: professionalId,
           priceId: priceId,
         }
-      }
-    });
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     console.log('Checkout session created:', session.id, 'for price:', priceId);
 
