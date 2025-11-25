@@ -10,6 +10,8 @@ import Lottie from 'lottie-react';
 import { triggerHaptic } from '@/lib/haptic';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getPlanFeatures } from '@/lib/plan-features';
+import { addDays } from 'date-fns';
 
 // Simple calendar animation data
 const calendarAnimation = {
@@ -66,6 +68,7 @@ interface ModernBookingModalProps {
   services: any[];
   professionalId: string;
   professionalName: string;
+  professionalPlan?: string | null;
   onSubmit: (data: BookingFormData) => void;
   initialServiceId?: string | null;
 }
@@ -81,13 +84,19 @@ export interface BookingFormData {
   notes?: string;
 }
 
-const ModernBookingModal = ({ isOpen, onClose, services, professionalId, professionalName, onSubmit, initialServiceId }: ModernBookingModalProps) => {
+const ModernBookingModal = ({ isOpen, onClose, services, professionalId, professionalName, professionalPlan, onSubmit, initialServiceId }: ModernBookingModalProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState<Partial<BookingFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [availableStaff, setAvailableStaff] = useState<any[]>([]);
   const [staffTimeSlots, setStaffTimeSlots] = useState<Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>>>({});
+
+  // Calculate max date based on professional's plan
+  const planFeatures = getPlanFeatures(professionalPlan);
+  const maxDate = planFeatures.calendarDaysVisible === -1 
+    ? undefined 
+    : addDays(new Date(), planFeatures.calendarDaysVisible);
 
   useEffect(() => {
     if (isOpen) {
@@ -506,11 +515,23 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                     mode="single"
                     selected={formData.date}
                     onSelect={(date) => setFormData({ ...formData, date, time: undefined, staffMemberId: undefined })}
-                    disabled={(date) => date < new Date()}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      
+                      if (date < today) return true;
+                      if (maxDate && date > maxDate) return true;
+                      return false;
+                    }}
                     className={cn("pointer-events-auto")}
                   />
                 </div>
               </div>
+              {maxDate && planFeatures.calendarDaysVisible !== -1 && (
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Pieejama rezervācija {planFeatures.calendarDaysVisible} dienām uz priekšu
+                </p>
+              )}
               {errors.date && (
                 <p className="text-sm text-destructive mt-2">{errors.date}</p>
               )}

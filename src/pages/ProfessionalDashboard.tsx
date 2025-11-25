@@ -415,11 +415,19 @@ const ProfessionalDashboard = () => {
     
     if (!profile?.id) return;
 
-    // Check service limit for FREE plan
+    // Check service limit based on plan
     const planFeatures = getPlanFeatures(profile.plan);
-    if (!editingService && planFeatures.maxServices > 0 && services.length >= planFeatures.maxServices) {
-      toast.error(`Bezmaksas plāns atļauj tikai ${planFeatures.maxServices} pakalpojumus. Lūdzu, aktivizējiet augstāka līmeņa plānu.`);
-      return;
+    if (!editingService) {
+      // -1 means unlimited
+      if (planFeatures.maxServices !== -1 && services.length >= planFeatures.maxServices) {
+        toast.error(`Jūsu plāns atļauj tikai ${planFeatures.maxServices} pakalpojumus. Lūdzu, izvēlieties augstāka līmeņa plānu.`, {
+          action: {
+            label: 'Skatīt plānus',
+            onClick: () => navigate('/abonesana')
+          }
+        });
+        return;
+      }
     }
 
     try {

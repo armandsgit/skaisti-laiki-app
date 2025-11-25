@@ -31,6 +31,9 @@ const plans = [
       'Rezervāciju e-pasti',
       'Apstiprinājumi',
       'Līdz 3 meistariem',
+      'Līdz 15 pakalpojumiem',
+      '10 galerijas bildes',
+      '30 dienu kalendārs',
     ],
     icon: Mail,
     recommended: false,
@@ -46,6 +49,9 @@ const plans = [
       'Visi e-pasti',
       'SMS integrācija',
       'Līdz 10 meistariem',
+      'Līdz 30 pakalpojumiem',
+      '30 galerijas bildes',
+      '90 dienu kalendārs',
     ],
     icon: Zap,
     recommended: true,
@@ -61,6 +67,9 @@ const plans = [
       'Visi e-pasti',
       'API piekļuve',
       'Neierobežoti meistari',
+      'Neierobežoti pakalpojumi',
+      'Neierobežotas bildes',
+      'Neierobežots kalendārs',
     ],
     icon: Award,
     recommended: false,
@@ -294,6 +303,18 @@ export default function Abonesana() {
                   <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <span className="text-sm text-muted-foreground font-semibold">1 meistars</span>
                 </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground font-semibold">5 pakalpojumi</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground font-semibold">3 bildes</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground font-semibold">7 dienu kalendārs</span>
+                </li>
               </ul>
             </CardContent>
             <CardFooter>
@@ -414,7 +435,15 @@ export default function Abonesana() {
                 </li>
                 <li className="flex items-start gap-2">
                   <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                  <span><strong>Papildus pakalpojumus</strong> - maksimums 3 pakalpojumi</span>
+                  <span><strong>Pakalpojumu limits</strong> - maksimums 5 pakalpojumi (bija 15+)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <span><strong>Galerijas limits</strong> - maksimums 3 bildes (bija 10+)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <span><strong>Kalendāra pieejamība</strong> - tikai 7 dienas (bija 30+ dienas)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
