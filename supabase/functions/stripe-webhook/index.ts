@@ -30,43 +30,10 @@ const PLAN_CREDITS: Record<string, number> = {
   'bizness': 5000,
 };
 
-// Plan staff member limits
-const PLAN_STAFF_LIMITS: Record<string, number> = {
-  'free': 1,
-  'starteris': 3,
-  'pro': 10,
-  'bizness': 999,
-};
-
-// Helper function to deactivate excess staff members
-async function deactivateExcessStaffMembers(supabase: any, professionalId: string, newPlan: string) {
-  const limit = PLAN_STAFF_LIMITS[newPlan] || 1;
-  
-  // If unlimited, no need to deactivate
-  if (limit === 999) return;
-
-  // Get all active staff members ordered by creation date
-  const { data: staffMembers } = await supabase
-    .from('staff_members')
-    .select('id')
-    .eq('professional_id', professionalId)
-    .eq('is_active', true)
-    .order('created_at', { ascending: true });
-
-  if (!staffMembers || staffMembers.length <= limit) return;
-
-  // Deactivate staff members beyond the limit
-  const toDeactivate = staffMembers.slice(limit).map((s: any) => s.id);
-  
-  if (toDeactivate.length > 0) {
-    await supabase
-      .from('staff_members')
-      .update({ is_active: false })
-      .in('id', toDeactivate);
-    
-    console.log(`Deactivated ${toDeactivate.length} excess staff members for professional ${professionalId}`);
-  }
-}
+// REMOVED: Staff member limit enforcement
+// Plan limits are enforced by UI visibility and backend filtering only.
+// Staff members are NEVER deactivated or deleted when plans change.
+// All staff data is preserved; UI shows only allowed quantity per plan.
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -229,8 +196,7 @@ serve(async (req) => {
             updated_at: new Date().toISOString()
           });
 
-        // Deactivate excess staff members if plan was downgraded
-        await deactivateExcessStaffMembers(supabase, professional.id, plan);
+        // Plan limits enforced by UI only - no staff deactivation on plan change
 
         // Close old subscription history and create new one
         await supabase
@@ -335,8 +301,7 @@ serve(async (req) => {
           })
           .eq('master_id', professional.id);
 
-        // Deactivate excess staff members (keep only first 1 for FREE)
-        await deactivateExcessStaffMembers(supabase, professional.id, 'free');
+        // Plan limits enforced by UI only - no staff deactivation on cancellation
 
         // Close subscription history
         await supabase
