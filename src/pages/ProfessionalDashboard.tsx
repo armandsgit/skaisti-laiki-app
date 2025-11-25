@@ -1671,7 +1671,7 @@ const ProfessionalDashboard = () => {
               }}
             />
 
-            {selectedStaffMember ? (
+            {selectedStaffMember && (
               <div className="mt-6">
                 <Button
                   variant="outline"
@@ -1685,25 +1685,6 @@ const ProfessionalDashboard = () => {
                   staffMemberId={selectedStaffMember}
                 />
               </div>
-            ) : (
-              <>
-                {/* Owner's own schedule */}
-                <div className="mb-8">
-                  <WorkScheduleManager professionalId={profile.id} staffMemberId={null} />
-                </div>
-
-                {/* Staff members section */}
-                {staffMembers.length > 0 && (
-                  <div className="mt-8 pt-8 border-t">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-semibold">Darbinieku grafiki</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Izvēlieties darbinieku, lai pārvaldītu viņa darba grafiku
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </>
             )}
           </TabsContent>
         </Tabs>
