@@ -100,24 +100,9 @@ serve(async (req) => {
       })
       .eq('master_id', profile.id);
 
-    // Deactivate excess staff members (keep only first 1 for FREE)
-    const { data: staffMembers } = await supabase
-      .from('staff_members')
-      .select('id')
-      .eq('professional_id', profile.id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: true });
-
-    if (staffMembers && staffMembers.length > 1) {
-      const toDeactivate = staffMembers.slice(1).map((s: any) => s.id);
-      
-      await supabase
-        .from('staff_members')
-        .update({ is_active: false })
-        .in('id', toDeactivate);
-      
-      console.log(`Deactivated ${toDeactivate.length} excess staff members`);
-    }
+    // Plan limits enforced by UI only - no staff deactivation on downgrade
+    // All staff members remain in database with is_active: true
+    // UI filters based on plan limits in StaffMemberManager and public profiles
 
     // Close subscription history
     await supabase
