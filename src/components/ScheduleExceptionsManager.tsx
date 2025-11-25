@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Plus, Trash2, Calendar as CalendarIcon, X } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon, X, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { lv } from "date-fns/locale";
 
@@ -38,6 +39,7 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
   const [exceptionType, setExceptionType] = useState<"closed" | "special">("closed");
   const [timeRanges, setTimeRanges] = useState<TimeRange[]>([{ start: "09:00", end: "17:00" }]);
   const [editingException, setEditingException] = useState<ScheduleException | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadExceptions();
@@ -134,6 +136,7 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
       return;
     }
 
+    setIsSaving(true);
     try {
       const exceptionData = {
         professional_id: professionalId,
@@ -143,6 +146,8 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
         time_ranges: exceptionType === "special" ? JSON.parse(JSON.stringify(timeRanges)) : null,
       };
 
+      let exceptionId: string;
+
       if (editingException) {
         const { error } = await supabase
           .from("schedule_exceptions")
@@ -150,14 +155,41 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
           .eq("id", editingException.id);
 
         if (error) throw error;
+        exceptionId = editingException.id;
         toast.success("Izņēmums atjaunināts");
       } else {
-        const { error } = await supabase
+        const { data: newException, error } = await supabase
           .from("schedule_exceptions")
-          .insert(exceptionData);
+          .insert(exceptionData)
+          .select()
+          .single();
 
         if (error) throw error;
+        exceptionId = newException.id;
         toast.success("Izņēmums pievienots");
+      }
+
+      // Call edge function to handle booking cancellations
+      if (exceptionType === "closed") {
+        try {
+          const { error: functionError } = await supabase.functions.invoke(
+            "handle-schedule-exception",
+            {
+              body: {
+                exceptionId,
+                action: "created",
+                exception: exceptionData,
+              },
+            }
+          );
+
+          if (functionError) {
+            console.error("Error calling handle-schedule-exception:", functionError);
+            toast.warning("Izņēmums saglabāts, bet paziņojumu nosūtīšana neizdevās");
+          }
+        } catch (fnError) {
+          console.error("Error invoking function:", fnError);
+        }
       }
 
       setIsDialogOpen(false);
@@ -165,6 +197,8 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
     } catch (error) {
       console.error("Error saving exception:", error);
       toast.error("Kļūda saglabājot izņēmumu");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -300,6 +334,15 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
                 </RadioGroup>
               </div>
 
+              {exceptionType === "closed" && (
+                <Alert className="border-amber-200 bg-amber-50">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-sm text-amber-800">
+                    <strong>Brīdinājums:</strong> Slēgtas dienas atzīmēšana automātiski atcels visas rezervācijas šajā datumā un klienti saņems paziņojumu e-pastā.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {exceptionType === "special" && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -356,14 +399,16 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
                   className="flex-1"
+                  disabled={isSaving}
                 >
                   Atcelt
                 </Button>
                 <Button
                   onClick={handleSaveException}
                   className="flex-1"
+                  disabled={isSaving}
                 >
-                  Saglabāt
+                  {isSaving ? "Saglabā..." : "Saglabāt"}
                 </Button>
               </div>
             </div>
