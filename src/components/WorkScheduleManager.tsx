@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Clock, Calendar, Plus, X } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptic';
+import { getPlanFeatures } from '@/lib/plan-features';
 
 interface Schedule {
   id?: string;
@@ -44,11 +45,27 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
   const [schedules, setSchedules] = useState<Record<number, Schedule[]>>({});
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [professionalPlan, setProfessionalPlan] = useState<string | null>(null);
 
   useEffect(() => {
+    loadProfessionalPlan();
     loadSchedules();
     loadServices();
   }, [professionalId, staffMemberId]);
+
+  const loadProfessionalPlan = async () => {
+    try {
+      const { data } = await supabase
+        .from('professional_profiles')
+        .select('plan')
+        .eq('id', professionalId)
+        .single();
+      
+      setProfessionalPlan(data?.plan || null);
+    } catch (error) {
+      console.error('Error loading professional plan:', error);
+    }
+  };
 
   const loadServices = async () => {
     try {
@@ -172,6 +189,15 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
 
   const addTimeSlot = async (dayOfWeek: number) => {
     triggerHaptic('light');
+    
+    // Check schedule limit based on plan
+    const planFeatures = getPlanFeatures(professionalPlan);
+    const totalSchedules = Object.values(schedules).flat().length;
+    
+    if (planFeatures.maxSchedules !== -1 && totalSchedules >= planFeatures.maxSchedules) {
+      toast.error(`Jūsu plāns atļauj tikai ${planFeatures.maxSchedules} grafikus. Lūdzu, izvēlieties augstāka līmeņa plānu.`);
+      return;
+    }
     
     // Automatically select all available services for this staff member
     const serviceIds = services.map(s => s.id);
@@ -329,58 +355,77 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
 
             {schedules[day.value]?.length > 0 ? (
               <div className="space-y-2">
-                {schedules[day.value].map((schedule) => (
-                  <div
-                    key={schedule.id}
-                    className="flex flex-col gap-3 bg-muted/50 p-3 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">No</Label>
-                          <input
-                            type="time"
-                            value={schedule.start_time}
-                            onChange={(e) =>
-                              schedule.id &&
-                              updateSchedule(schedule.id, { start_time: e.target.value })
-                            }
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                          />
+                {schedules[day.value].map((schedule, scheduleIndex) => {
+                  const planFeatures = getPlanFeatures(professionalPlan);
+                  const totalSchedulesSoFar = Object.keys(schedules)
+                    .filter(d => parseInt(d) < day.value)
+                    .reduce((sum, d) => sum + schedules[parseInt(d)].length, 0) + scheduleIndex;
+                  const isWithinLimit = planFeatures.maxSchedules === -1 || totalSchedulesSoFar < planFeatures.maxSchedules;
+                  
+                  return (
+                    <div
+                      key={schedule.id}
+                      className={`flex flex-col gap-3 bg-muted/50 p-3 rounded-lg ${!isWithinLimit ? 'opacity-40' : ''}`}
+                    >
+                      {!isWithinLimit && (
+                        <div className="px-2 py-1 bg-muted rounded border border-border mb-2">
+                          <p className="text-xs text-muted-foreground font-medium">
+                            Nepieejams pašreizējā plānā
+                          </p>
                         </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Līdz</Label>
-                          <input
-                            type="time"
-                            value={schedule.end_time}
-                            onChange={(e) =>
-                              schedule.id &&
-                              updateSchedule(schedule.id, { end_time: e.target.value })
-                            }
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                          />
+                      )}
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">No</Label>
+                            <input
+                              type="time"
+                              value={schedule.start_time}
+                              onChange={(e) =>
+                                schedule.id && isWithinLimit &&
+                                updateSchedule(schedule.id, { start_time: e.target.value })
+                              }
+                              disabled={!isWithinLimit}
+                              className="w-full px-3 py-2 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Līdz</Label>
+                            <input
+                              type="time"
+                              value={schedule.end_time}
+                              onChange={(e) =>
+                                schedule.id && isWithinLimit &&
+                                updateSchedule(schedule.id, { end_time: e.target.value })
+                              }
+                              disabled={!isWithinLimit}
+                              className="w-full px-3 py-2 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={schedule.is_active}
-                          onCheckedChange={(checked) =>
-                            schedule.id && updateSchedule(schedule.id, { is_active: checked })
-                          }
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => schedule.id && deleteSchedule(schedule.id, day.value)}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={schedule.is_active}
+                            onCheckedChange={(checked) =>
+                              schedule.id && isWithinLimit && updateSchedule(schedule.id, { is_active: checked })
+                            }
+                            disabled={!isWithinLimit}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => schedule.id && isWithinLimit && deleteSchedule(schedule.id, day.value)}
+                            disabled={!isWithinLimit}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">

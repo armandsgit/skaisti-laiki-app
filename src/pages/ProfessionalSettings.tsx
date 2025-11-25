@@ -248,7 +248,16 @@ export default function ProfessionalSettings() {
     }
   };
 
-  const handleDeleteImage = async (imageUrl: string) => {
+  const handleDeleteImage = async (imageUrl: string, index: number) => {
+    // Check if image is within plan limit
+    const planFeatures = getPlanFeatures(profile?.plan);
+    const isWithinLimit = planFeatures.maxGalleryPhotos === -1 || index < planFeatures.maxGalleryPhotos;
+    
+    if (!isWithinLimit) {
+      toast.error('Šī bilde ir ārpus jūsu plāna limita un to nevar dzēst.');
+      return;
+    }
+    
     if (!confirm('Vai tiešām vēlaties dzēst šo bildi?') || !user?.id) return;
     
     try {
@@ -579,23 +588,37 @@ export default function ProfessionalSettings() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                  {profile.gallery?.map((imageUrl: string, index: number) => (
-                    <div key={index} className="relative aspect-square group">
-                      <img
-                        src={imageUrl}
-                        alt={`Gallery ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDeleteImage(imageUrl)}
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                  {profile.gallery?.map((imageUrl: string, index: number) => {
+                    const planFeatures = getPlanFeatures(profile?.plan);
+                    const isWithinLimit = planFeatures.maxGalleryPhotos === -1 || index < planFeatures.maxGalleryPhotos;
+                    
+                    return (
+                      <div key={index} className={`relative aspect-square group ${!isWithinLimit ? 'opacity-40' : ''}`}>
+                        <img
+                          src={imageUrl}
+                          alt={`Gallery ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        {!isWithinLimit && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
+                            <p className="text-xs text-white text-center px-2">
+                              Nepieejams pašreizējā plānā
+                            </p>
+                          </div>
+                        )}
+                        {isWithinLimit && (
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteImage(imageUrl, index)}
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 <Input
                   type="file"
