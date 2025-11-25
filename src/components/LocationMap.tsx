@@ -11,9 +11,10 @@ interface LocationMapProps {
   className?: string;
   showOpenButton?: boolean;
   professionalName?: string;
+  rating?: number | null;
 }
 
-const LocationMap = ({ latitude, longitude, address, className = '', showOpenButton = true, professionalName }: LocationMapProps) => {
+const LocationMap = ({ latitude, longitude, address, className = '', showOpenButton = true, professionalName, rating }: LocationMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -37,18 +38,18 @@ const LocationMap = ({ latitude, longitude, address, className = '', showOpenBut
       map.current?.resize();
     });
 
-    // Create custom marker - same style as AllMastersMap with professional's initial
+    // Create custom marker - same style as AllMastersMap with rating
     const markerEl = document.createElement('div');
     markerEl.className = 'custom-map-marker';
     
-    const initial = professionalName?.charAt(0).toUpperCase() || '?';
+    const displayRating = rating ? rating.toFixed(1) : '0.0';
     
     markerEl.innerHTML = `
       <div class="marker-container">
-        <div class="marker-badge">
-          <span class="marker-rating">${initial}</span>
+        <div class="marker-badge" style="background: #000000; border: 2px solid #FFFFFF; border-radius: 100px; padding: 5px 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; min-width: 48px;">
+          <span class="marker-rating" style="font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #FFFFFF; line-height: 1;">${displayRating}</span>
         </div>
-        <div class="marker-pointer"></div>
+        <div class="marker-pointer" style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #000000; margin-top: -2px;"></div>
       </div>
     `;
 

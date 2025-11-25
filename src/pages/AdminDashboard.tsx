@@ -835,6 +835,7 @@ const AdminDashboard = () => {
                                   latitude={prof.latitude}
                                   longitude={prof.longitude}
                                   showOpenButton={false}
+                                  rating={prof.rating}
                                 />
                               </div>
                             )}
@@ -973,7 +974,7 @@ const AdminDashboard = () => {
                           className="w-full rounded-2xl overflow-hidden border shadow-sm mb-3"
                           style={{ maxHeight: "200px", height: "180px" }}
                         >
-                          <LocationMap latitude={prof.latitude} longitude={prof.longitude} showOpenButton={false} />
+                          <LocationMap latitude={prof.latitude} longitude={prof.longitude} showOpenButton={false} rating={prof.rating} />
                         </div>
                       )}
 

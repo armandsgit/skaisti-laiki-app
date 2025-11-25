@@ -362,6 +362,7 @@ const ProfessionalProfile = () => {
                     longitude={professional.longitude}
                     address={professional.address}
                     professionalName={professional.profiles?.name}
+                    rating={professional.rating}
                   />
                 </div>
               </div>

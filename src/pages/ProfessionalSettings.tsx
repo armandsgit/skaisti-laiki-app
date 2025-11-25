@@ -531,6 +531,7 @@ export default function ProfessionalSettings() {
                         latitude={profile.latitude} 
                         longitude={profile.longitude}
                         professionalName={userProfile?.name}
+                        rating={profile.rating}
                       />
                     </div>
                   ) : (
