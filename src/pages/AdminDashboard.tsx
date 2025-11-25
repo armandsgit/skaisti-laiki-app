@@ -233,15 +233,10 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleRejectProfessional = async (id: string) => {
-    const { error } = await supabase.from("professional_profiles").delete().eq("id", id);
-
-    if (error) {
-      toast.error(t.error);
-    } else {
-      toast.success("Meistars noraidīts");
-      loadData();
-    }
+  const handleRejectProfessional = (professional: any) => {
+    // Open delete modal to completely remove the professional
+    setSelectedProfessional(professional);
+    setDeleteModalOpen(true);
   };
 
   const handleUpdatePlan = async (id: string, newPlan: string) => {
@@ -884,7 +879,7 @@ const AdminDashboard = () => {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleRejectProfessional(prof.id)}
+                                onClick={() => handleRejectProfessional(prof)}
                                 className="flex-1 text-[10px] sm:text-sm h-7 sm:h-9 px-2"
                               >
                                 <XCircle className="w-2.5 h-2.5 sm:w-4 sm:h-4 mr-1" />
