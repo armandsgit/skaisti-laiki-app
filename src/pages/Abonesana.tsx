@@ -20,6 +20,14 @@ import {
 // TODO: Replace these placeholder Price IDs with real ones from your Stripe Dashboard
 // Go to: https://dashboard.stripe.com/products
 // Create 3 recurring subscription products and copy their Price IDs here
+// Plan hierarchy for downgrade detection
+const PLAN_ORDER = {
+  free: 0,
+  starteris: 1,
+  pro: 2,
+  bizness: 3
+};
+
 const plans = [
   {
     id: 'starteris',
@@ -85,6 +93,8 @@ export default function Abonesana() {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
   const [emailCredits, setEmailCredits] = useState(0);
+  const [pendingTargetPlan, setPendingTargetPlan] = useState<string | null>(null);
+  const [pendingStripePrice, setPendingStripePrice] = useState<string | null>(null);
 
   useEffect(() => {
     loadCurrentPlan();
@@ -194,6 +204,24 @@ export default function Abonesana() {
 
   const handleSubscribe = async (planId: string, stripePrice: string) => {
     setLoading(planId);
+    
+    // Check if this is a downgrade
+    const currentLevel = PLAN_ORDER[currentPlan as keyof typeof PLAN_ORDER] || 0;
+    const targetLevel = PLAN_ORDER[planId as keyof typeof PLAN_ORDER] || 0;
+    const isDowngrade = targetLevel < currentLevel;
+    
+    console.log('Plan comparison:', { currentPlan, planId, currentLevel, targetLevel, isDowngrade });
+    
+    if (isDowngrade) {
+      // Show downgrade warning popup
+      setPendingTargetPlan(planId);
+      setPendingStripePrice(stripePrice);
+      setShowDowngradeDialog(true);
+      setLoading(null);
+      return;
+    }
+    
+    // If upgrade or same level, proceed immediately
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -258,6 +286,100 @@ export default function Abonesana() {
         variant: 'destructive',
       });
       setLoading(null);
+    }
+  };
+
+  const handleConfirmDowngrade = async () => {
+    setShowDowngradeDialog(false);
+    
+    if (!pendingTargetPlan) return;
+    
+    // If downgrading to FREE, use the special edge function
+    if (pendingTargetPlan === 'free') {
+      await handleDowngradeToFree();
+      setPendingTargetPlan(null);
+      setPendingStripePrice(null);
+      return;
+    }
+    
+    // For downgrades to paid plans, proceed with Stripe checkout
+    if (pendingStripePrice) {
+      setLoading(pendingTargetPlan);
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast({
+            title: 'Kļūda',
+            description: 'Lūdzu piesakieties, lai turpinātu',
+            variant: 'destructive',
+          });
+          setLoading(null);
+          setPendingTargetPlan(null);
+          setPendingStripePrice(null);
+          navigate('/auth');
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('professional_profiles')
+          .select('id, stripe_subscription_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!profile) {
+          toast({
+            title: 'Kļūda',
+            description: 'Profesionāla profila nav atrasts',
+            variant: 'destructive',
+          });
+          setLoading(null);
+          setPendingTargetPlan(null);
+          setPendingStripePrice(null);
+          return;
+        }
+
+        const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+          body: {
+            priceId: pendingStripePrice,
+            professionalId: profile.id,
+            existingSubscriptionId: profile.stripe_subscription_id,
+            successUrl: `${window.location.origin}/maksa-izdevusies`,
+            cancelUrl: `${window.location.origin}/abonesana`
+          }
+        });
+
+        if (error) {
+          console.error('Checkout error:', error);
+          toast({
+            title: 'Kļūda',
+            description: 'Neizdevās izveidot maksājumu sesiju',
+            variant: 'destructive',
+          });
+          setLoading(null);
+          setPendingTargetPlan(null);
+          setPendingStripePrice(null);
+          return;
+        }
+
+        if (data?.url) {
+          window.location.href = data.url;
+        } else {
+          setLoading(null);
+          setPendingTargetPlan(null);
+          setPendingStripePrice(null);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        toast({
+          title: 'Kļūda',
+          description: 'Radās neparedzēta kļūda',
+          variant: 'destructive',
+        });
+        setLoading(null);
+        setPendingTargetPlan(null);
+        setPendingStripePrice(null);
+      }
     }
   };
 
@@ -326,7 +448,7 @@ export default function Abonesana() {
                 <Button
                   className="w-full"
                   variant="outline"
-                  onClick={() => setShowDowngradeDialog(true)}
+                  onClick={() => handleSubscribe('free', '')}
                   disabled={loading !== null}
                 >
                   {loading === 'free' ? 'Apstrādā...' : 'Pāriet uz FREE'}
@@ -418,41 +540,117 @@ export default function Abonesana() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-warning" />
-              Pāriet uz FREE plānu?
+              Pāriet uz {pendingTargetPlan === 'free' ? 'FREE' : plans.find(p => p.id === pendingTargetPlan)?.name} plānu?
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3 text-left">
               <p className="font-medium text-foreground">
-                Pārejot uz FREE plānu, jūs zaudēsiet:
+                Pārejot uz {pendingTargetPlan === 'free' ? 'FREE' : plans.find(p => p.id === pendingTargetPlan)?.name} plānu, jūs zaudēsiet:
               </p>
               <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                  <span><strong>E-pasta automātiku</strong> - automātiskie rezervāciju apstiprinājumi un atgādinājumi</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                  <span><strong>Statistiku</strong> - detalizēta analītika par rezervācijām un ieņēmumiem</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                  <span><strong>Pakalpojumu limits</strong> - maksimums 5 pakalpojumi (bija 15+)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                  <span><strong>Galerijas limits</strong> - maksimums 3 bildes (bija 10+)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                  <span><strong>Kalendāra pieejamība</strong> - tikai 7 dienas (bija 30+ dienas)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                  <span><strong>Papildus meistarus</strong> - paliks tikai 1 meistars</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                  <span><strong>Esošos e-pasta kredītus</strong> - pašreizējie {emailCredits} kredīti tiks atiestatīti uz 0</span>
-                </li>
+                {pendingTargetPlan === 'free' && (
+                  <>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>E-pasta automātiku</strong> - automātiskie rezervāciju apstiprinājumi un atgādinājumi</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Statistiku</strong> - detalizēta analītika par rezervācijām un ieņēmumiem</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Pakalpojumu limits</strong> - maksimums 5 pakalpojumi (bija 15+)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Galerijas limits</strong> - maksimums 3 bildes (bija 10+)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Kalendāra pieejamība</strong> - tikai 7 dienas (bija 30+ dienas)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Papildus meistarus</strong> - paliks tikai 1 meistars</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Esošos e-pasta kredītus</strong> - pašreizējie {emailCredits} kredīti tiks atiestatīti uz 0</span>
+                    </li>
+                  </>
+                )}
+                {pendingTargetPlan === 'starteris' && currentPlan === 'pro' && (
+                  <>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>SMS integrāciju</strong> - automātiskie SMS paziņojumi</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Meistaru limits</strong> - maksimums 3 meistari (bija 10)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Pakalpojumu limits</strong> - maksimums 15 pakalpojumi (bija 30)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Galerijas limits</strong> - maksimums 10 bildes (bija 30)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>Kalendāra pieejamība</strong> - 30 dienas (bija 90 dienas)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>E-pasta kredītus</strong> - 200 kredīti/mēnesī (bija 1000)</span>
+                    </li>
+                  </>
+                )}
+                {(pendingTargetPlan === 'starteris' || pendingTargetPlan === 'pro') && currentPlan === 'bizness' && (
+                  <>
+                    <li className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span><strong>API piekļuvi</strong> - iespēju integrēt citas sistēmas</span>
+                    </li>
+                    {pendingTargetPlan === 'starteris' && (
+                      <>
+                        <li className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                          <span><strong>SMS integrāciju</strong> - automātiskie SMS paziņojumi</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                          <span><strong>Meistaru limits</strong> - maksimums 3 meistari (bija neierobežoti)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                          <span><strong>Pakalpojumu limits</strong> - maksimums 15 pakalpojumi (bija neierobežoti)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                          <span><strong>E-pasta kredītus</strong> - 200 kredīti/mēnesī (bija 5000)</span>
+                        </li>
+                      </>
+                    )}
+                    {pendingTargetPlan === 'pro' && (
+                      <>
+                        <li className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                          <span><strong>Meistaru limits</strong> - maksimums 10 meistari (bija neierobežoti)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                          <span><strong>Pakalpojumu limits</strong> - maksimums 30 pakalpojumi (bija neierobežoti)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                          <span><strong>E-pasta kredītus</strong> - 1000 kredīti/mēnesī (bija 5000)</span>
+                        </li>
+                      </>
+                    )}
+                  </>
+                )}
               </ul>
               <p className="text-warning font-medium mt-4">
                 Vai tiešām vēlaties turpināt?
@@ -460,12 +658,15 @@ export default function Abonesana() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Atcelt</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => {
+              setPendingTargetPlan(null);
+              setPendingStripePrice(null);
+            }}>Atcelt</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDowngradeToFree}
+              onClick={handleConfirmDowngrade}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Jā, pāriet uz FREE
+              Jā, pāriet uz {pendingTargetPlan === 'free' ? 'FREE' : plans.find(p => p.id === pendingTargetPlan)?.name}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
