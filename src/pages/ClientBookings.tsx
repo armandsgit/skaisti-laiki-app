@@ -215,17 +215,24 @@ const ClientBookings = () => {
 
                         {/* Status Badge Below Date/Time */}
                         <div className="flex justify-center pt-1">
-                          <Badge 
-                            variant={
-                              booking.status === 'confirmed' ? 'default' :
-                              booking.status === 'canceled' ? 'destructive' : 'outline'
-                            }
+                           <Badge 
                             className={`text-xs px-4 py-1.5 ${
                               booking.status === 'pending' ? 'bg-amber-100 text-amber-800 border-amber-300' :
-                              booking.status === 'confirmed' ? 'bg-green-100 text-green-800 border-green-300' : ''
+                              booking.status === 'confirmed' ? 'bg-green-100 text-green-800 border-green-300' :
+                              booking.status === 'cancelled_by_master' || booking.status === 'canceled_by_master' ? 'bg-red-100 text-red-800 border-red-300' :
+                              booking.status === 'cancelled_by_client' || booking.status === 'canceled_by_client' ? 'bg-red-100 text-red-800 border-red-300' :
+                              booking.status === 'cancelled_system' || booking.status === 'canceled_system' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                              booking.status === 'completed' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                              'bg-gray-100 text-gray-800 border-gray-300'
                             }`}
                           >
-                            {t[booking.status as keyof typeof t] || booking.status}
+                            {booking.status === 'confirmed' ? 'Apstiprināta' :
+                             booking.status === 'pending' ? 'Gaida apstiprinājumu' :
+                             booking.status === 'cancelled_by_master' || booking.status === 'canceled_by_master' ? 'Atcelta meistara dēļ' :
+                             booking.status === 'cancelled_by_client' || booking.status === 'canceled_by_client' ? 'Atcelta klienta dēļ' :
+                             booking.status === 'cancelled_system' || booking.status === 'canceled_system' ? 'Atcelta automātiski' :
+                             booking.status === 'completed' ? 'Pabeigta' :
+                             t[booking.status as keyof typeof t] || booking.status}
                           </Badge>
                         </div>
                       </div>
@@ -282,11 +289,20 @@ const ClientBookings = () => {
                               </div>
 
                               {/* Status Badge on the Right */}
-                              <Badge 
-                                variant="secondary"
-                                className="text-xs px-3 py-1 flex-shrink-0"
+                               <Badge 
+                                className={`text-xs px-3 py-1 flex-shrink-0 ${
+                                  booking.status === 'completed' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                  booking.status === 'cancelled_by_master' || booking.status === 'canceled_by_master' ? 'bg-red-100 text-red-800 border-red-300' :
+                                  booking.status === 'cancelled_by_client' || booking.status === 'canceled_by_client' ? 'bg-red-100 text-red-800 border-red-300' :
+                                  booking.status === 'cancelled_system' || booking.status === 'canceled_system' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                                  'bg-gray-100 text-gray-800 border-gray-300'
+                                }`}
                               >
-                                {t[booking.status as keyof typeof t] || booking.status}
+                                {booking.status === 'completed' ? 'Pabeigta' :
+                                 booking.status === 'cancelled_by_master' || booking.status === 'canceled_by_master' ? 'Atcelta meistara dēļ' :
+                                 booking.status === 'cancelled_by_client' || booking.status === 'canceled_by_client' ? 'Atcelta klienta dēļ' :
+                                 booking.status === 'cancelled_system' || booking.status === 'canceled_system' ? 'Atcelta automātiski' :
+                                 t[booking.status as keyof typeof t] || booking.status}
                               </Badge>
                             </div>
                             

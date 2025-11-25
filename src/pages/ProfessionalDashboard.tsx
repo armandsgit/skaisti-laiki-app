@@ -637,13 +637,24 @@ const ProfessionalDashboard = () => {
     }
   };
 
-  const handleBookingAction = async (bookingId: string, status: 'pending' | 'confirmed' | 'completed' | 'canceled') => {
+  const handleBookingAction = async (bookingId: string, status: 'pending' | 'confirmed' | 'completed' | 'canceled' | 'cancelled_by_master' | 'cancelled_by_client' | 'cancelled_system') => {
     // Get booking details for email
     const booking = bookings.find(b => b.id === bookingId);
     
+    const updateData: any = { status };
+    
+    // Add cancellation tracking for cancellation statuses
+    if (status === 'cancelled_by_master' || status === 'cancelled_by_client' || status === 'cancelled_system') {
+      updateData.cancelled_by = user?.id;
+      updateData.cancelled_at = new Date().toISOString();
+      updateData.cancellation_reason = status === 'cancelled_by_master' ? 'Atcelta meistara dēļ' : 
+                                       status === 'cancelled_by_client' ? 'Atcelta klienta dēļ' : 
+                                       'Atcelta automātiski';
+    }
+    
     const { error } = await supabase
       .from('bookings')
-      .update({ status })
+      .update(updateData)
       .eq('id', bookingId);
     
     if (!error) {
@@ -1212,9 +1223,9 @@ const ProfessionalDashboard = () => {
                               </Button>
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => handleBookingAction(booking.id, 'canceled')}
-                                className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10"
+                                 variant="outline"
+                                 onClick={() => handleBookingAction(booking.id, 'cancelled_by_master')}
+                                 className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10"
                               >
                                 <XCircle className="w-4 h-4 mr-1 stroke-[2]" />
                                 Atcelt
@@ -1297,7 +1308,7 @@ const ProfessionalDashboard = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleBookingAction(booking.id, 'canceled')}
+                              onClick={() => handleBookingAction(booking.id, 'cancelled_by_master')}
                               className="border-destructive/30 text-destructive hover:bg-destructive/10"
                             >
                               <XCircle className="w-4 h-4 mr-1 stroke-[2]" />
