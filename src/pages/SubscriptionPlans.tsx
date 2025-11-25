@@ -82,47 +82,113 @@ const plans = [
 
 // Plan hierarchy for comparison
 const planHierarchy = {
-  'free': 0,
-  'starteris': 1,
-  'pro': 2,
-  'bizness': 3
+  'free': 1,
+  'starteris': 2,
+  'pro': 3,
+  'bizness': 4
 };
 
-// Features lost when downgrading to each plan
-const planDowngradeWarnings: Record<string, { features: string[]; credits: string }> = {
-  'free': {
-    credits: 'pašreizējie 200 kredīti tiks atiestatīti uz 0',
-    features: [
-      'E-pasta automātiku - automātiskie rezervāciju apstiprināšumi un atgādinājumi',
-      'Statistiku - detalizēta analītika par rezervācijām un ieņēmumiem',
-      'Pakalpojumu limits - maksimums 5 pakalpojumi (bija 15+)',
-      'Galerijas limits - maksimums 3 bildes (bija 10+)',
-      'Kalendāra pieejamība - tikai 7 dienas (bija 30+ dienas)',
-      'Papildus meistarus - paliks tikai 1 meistars',
-      'Esošos e-pasta kredītus - pašreizējie 200 kredīti tiks atiestatīti uz 0'
-    ]
+// Plan features and limits
+const PLAN_LIMITS = {
+  free: {
+    services: 1,
+    masters: 1,
+    gallery: 3,
+    calendar_days: 7,
+    email_credits: 0,
+    email_automation: false,
+    statistics: false,
+    sms: false,
+    api: false
   },
-  'starteris': {
-    credits: 'pašreizējie 1000 kredīti tiks atiestatīti uz 200',
-    features: [
-      'SMS integrāciju - automātiskie SMS paziņojumi',
-      'Pilnu statistiku - detalizēta analītika par rezervācijām',
-      'Pakalpojumu limits - maksimums 5 pakalpojumi (bija neierobežoti)',
-      'Galerijas limits - maksimums 5 bildes (bija 10)',
-      'Meistaru limits - maksimums 3 meistari (bija 10)',
-      'Esošos e-pasta kredītus - pašreizējie 1000 kredīti tiks atiestatīti uz 200'
-    ]
+  starteris: {
+    services: 5,
+    masters: 3,
+    gallery: 5,
+    calendar_days: 30,
+    email_credits: 200,
+    email_automation: true,
+    statistics: false,
+    sms: false,
+    api: false
   },
-  'pro': {
-    credits: 'pašreizējie 5000 kredīti tiks atiestatīti uz 1000',
-    features: [
-      'API piekļuvi - iespēju integrēt citas sistēmas',
-      'VIP atbalstu 24/7 - prioritāru klientu apkalpošanu',
-      'Mārketinga rīkus - papildus reklāmas iespējas',
-      'Meistaru limits - maksimums 10 meistari (bija neierobežoti)',
-      'Esošos e-pasta kredītus - pašreizējie 5000 kredīti tiks atiestatīti uz 1000'
-    ]
+  pro: {
+    services: 15,
+    masters: 10,
+    gallery: 10,
+    calendar_days: 90,
+    email_credits: 1000,
+    email_automation: true,
+    statistics: true,
+    sms: true,
+    api: false
+  },
+  bizness: {
+    services: 999,
+    masters: 999,
+    gallery: 30,
+    calendar_days: 365,
+    email_credits: 5000,
+    email_automation: true,
+    statistics: true,
+    sms: true,
+    api: true
   }
+};
+
+// Generate dynamic downgrade warnings
+const getDowngradeWarnings = (fromPlan: string, toPlan: string) => {
+  const from = PLAN_LIMITS[fromPlan as keyof typeof PLAN_LIMITS];
+  const to = PLAN_LIMITS[toPlan as keyof typeof PLAN_LIMITS];
+  
+  if (!from || !to) return { features: [], credits: '' };
+  
+  const warnings: string[] = [];
+  
+  // Email automation
+  if (from.email_automation && !to.email_automation) {
+    warnings.push('E-pasta automātiku - automātiskie rezervāciju apstiprināšumi un atgādinājumi');
+  }
+  
+  // Statistics
+  if (from.statistics && !to.statistics) {
+    warnings.push('Statistiku - detalizēta analītika par rezervācijām un ieņēmumiem');
+  }
+  
+  // SMS
+  if (from.sms && !to.sms) {
+    warnings.push('SMS integrāciju - automātiskie SMS paziņojumi');
+  }
+  
+  // API
+  if (from.api && !to.api) {
+    warnings.push('API piekļuvi - iespēju integrēt citas sistēmas');
+  }
+  
+  // Services limit
+  if (from.services > to.services) {
+    warnings.push(`Pakalpojumu limitu - maksimums ${to.services} pakalpojumi (bija ${from.services === 999 ? 'neierobežoti' : from.services})`);
+  }
+  
+  // Gallery limit
+  if (from.gallery > to.gallery) {
+    warnings.push(`Galerijas limitu - maksimums ${to.gallery} bildes (bija ${from.gallery})`);
+  }
+  
+  // Calendar days
+  if (from.calendar_days > to.calendar_days) {
+    warnings.push(`Kalendāra pieejamību - tikai ${to.calendar_days} dienas (bija ${from.calendar_days}+ dienas)`);
+  }
+  
+  // Masters limit
+  if (from.masters > to.masters) {
+    warnings.push(`Meistaru limitu - maksimums ${to.masters} ${to.masters === 1 ? 'meistars' : 'meistari'} (bija ${from.masters === 999 ? 'neierobežoti' : from.masters})`);
+  }
+  
+  // Email credits
+  const creditsText = `pašreizējie ${from.email_credits} kredīti tiks atiestatīti uz ${to.email_credits}`;
+  
+  return { features: warnings, credits: creditsText };
 };
 
 export default function SubscriptionPlans() {
@@ -258,6 +324,13 @@ export default function SubscriptionPlans() {
     return fromLevel > toLevel;
   };
 
+  const isUpgrade = (fromPlan: string | null, toPlan: string) => {
+    if (!fromPlan) return false;
+    const fromLevel = planHierarchy[fromPlan as keyof typeof planHierarchy];
+    const toLevel = planHierarchy[toPlan as keyof typeof planHierarchy];
+    return toLevel > fromLevel;
+  };
+
   const handlePlanClick = (planId: string) => {
     console.log('=== PLAN CLICK DEBUG ===');
     console.log('Plan clicked:', planId);
@@ -275,19 +348,23 @@ export default function SubscriptionPlans() {
       return;
     }
     
-    // Check if it's a downgrade
-    const isDowngradeResult = isDowngrade(currentPlan, planId);
-    console.log('Is downgrade result:', isDowngradeResult);
+    // If it's an upgrade, proceed immediately without warning
+    if (isUpgrade(currentPlan, planId)) {
+      console.log('✅ Upgrade detected, proceeding without warning');
+      proceedWithStripeCheckout(planId);
+      return;
+    }
     
-    if (isDowngradeResult) {
-      console.log('✅ Opening downgrade warning modal');
+    // If it's a downgrade, show warning
+    if (isDowngrade(currentPlan, planId)) {
+      console.log('⚠️ Downgrade detected, showing warning');
       setTargetPlan(planId);
       setShowDowngradeWarning(true);
-    } else {
-      console.log('❌ Not a downgrade, proceeding with activation');
-      // If upgrade or same plan, proceed directly
-      proceedWithStripeCheckout(planId);
+      return;
     }
+    
+    // If same plan, do nothing
+    console.log('Same plan, no action');
   };
 
   const handleActivate = (planId: string) => {
@@ -492,36 +569,45 @@ export default function SubscriptionPlans() {
         <AlertDialog open={showDowngradeWarning} onOpenChange={setShowDowngradeWarning}>
           <AlertDialogContent className="max-w-lg">
             <AlertDialogHeader>
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-6 w-6 text-amber-500" />
-                <AlertDialogTitle className="text-xl">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-100">
+                  <AlertTriangle className="h-6 w-6 text-amber-600" />
+                </div>
+                <AlertDialogTitle className="text-xl font-semibold">
                   Pāriet uz {plans.find(p => p.id === targetPlan)?.name} plānu?
                 </AlertDialogTitle>
               </div>
-              <AlertDialogDescription className="text-left space-y-4">
-                <p className="font-medium text-foreground">
+              <AlertDialogDescription className="text-left space-y-4 pt-4">
+                <p className="font-medium text-base text-foreground">
                   Pārejot uz {plans.find(p => p.id === targetPlan)?.name} plānu, jūs zaudēsiet:
                 </p>
                 
-                <div className="space-y-2">
-                  {targetPlan && planDowngradeWarnings[targetPlan]?.features.map((feature, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <X className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">{feature}</span>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {targetPlan && currentPlan && getDowngradeWarnings(currentPlan, targetPlan).features.map((feature, index) => (
+                    <div key={index} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-red-100 flex-shrink-0 mt-0.5">
+                        <X className="h-3.5 w-3.5 text-red-600" />
+                      </div>
+                      <span className="text-sm text-muted-foreground leading-relaxed">{feature}</span>
                     </div>
                   ))}
                 </div>
 
-                <p className="text-sm font-medium text-amber-600 bg-amber-50 p-3 rounded-lg">
-                  Vai tiešām vēlaties turpināt?
-                </p>
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-amber-800">
+                    Vai tiešām vēlaties turpināt?
+                  </p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Jūsu dati netiks dzēsti, bet funkcionalitāte būs ierobežota līdz plāna atjaunošanai.
+                  </p>
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Atcelt</AlertDialogCancel>
+            <AlertDialogFooter className="gap-2 sm:gap-2">
+              <AlertDialogCancel className="mt-0">Atcelt</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDowngrade}
-                className="bg-destructive hover:bg-destructive/90"
+                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Jā, pāriet uz {plans.find(p => p.id === targetPlan)?.name}
               </AlertDialogAction>
