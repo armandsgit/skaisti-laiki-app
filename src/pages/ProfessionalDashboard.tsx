@@ -1668,6 +1668,35 @@ const ProfessionalDashboard = () => {
               </Dialog>
             </div>
 
+            {/* Service Limit Warning */}
+            {getPlanFeatures(profile.plan).maxServices > 0 && 
+              services.length >= getPlanFeatures(profile.plan).maxServices && (
+              <Card className="border-amber-200 bg-amber-50/50 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-amber-900">
+                        Pakalpojumu limits sasniegts
+                      </p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Jūsu pašreizējais plāns atļauj tikai {getPlanFeatures(profile.plan).maxServices} pakalpojumus. 
+                        Lai pievienotu vairāk pakalpojumu, lūdzu izvēlieties augstāka līmeņa plānu.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 border-amber-600 text-amber-700 hover:bg-amber-100"
+                        onClick={() => navigate('/abonesana')}
+                      >
+                        Skatīt plānus
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {services.length === 0 ? (
               <Card className="border-0 shadow-card">
                 <CardContent className="p-12">
