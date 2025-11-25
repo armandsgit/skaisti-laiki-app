@@ -72,6 +72,16 @@ const AdminDashboard = () => {
   );
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
 
+  // Function to load pending approvals count
+  const loadPendingCount = async () => {
+    const { count } = await supabase
+      .from('professional_profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('approved', false);
+    
+    setPendingApprovalsCount(count || 0);
+  };
+
   // Sync selectedTab with URL parameter
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -99,15 +109,6 @@ const AdminDashboard = () => {
 
   // Load pending approvals count and subscribe to realtime updates
   useEffect(() => {
-    const loadPendingCount = async () => {
-      const { count } = await supabase
-        .from('professional_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('approved', false);
-      
-      setPendingApprovalsCount(count || 0);
-    };
-
     loadPendingCount();
 
     // Subscribe to realtime changes for pending approvals
@@ -123,13 +124,8 @@ const AdminDashboard = () => {
         async (payload) => {
           console.log('Professional profiles change detected:', payload);
           
-          // Reload pending count
-          const { count } = await supabase
-            .from('professional_profiles')
-            .select('*', { count: 'exact', head: true })
-            .eq('approved', false);
-          
-          setPendingApprovalsCount(count || 0);
+          // Reload pending count immediately
+          await loadPendingCount();
 
           // Show toast notification for new pending profiles
           if (payload.eventType === 'INSERT' && payload.new.approved === false) {
@@ -334,9 +330,12 @@ const AdminDashboard = () => {
       setDeleteModalOpen(false);
       setSelectedProfessional(null);
       
-      // Reload data
+      // Reload data and pending count
       console.log("Reloading data...");
-      await loadData();
+      await Promise.all([
+        loadData(),
+        loadPendingCount()
+      ]);
       console.log("=== DELETE PROFESSIONAL END ===");
       
       return true;
