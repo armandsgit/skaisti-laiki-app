@@ -84,24 +84,6 @@ serve(async (req) => {
         })
         .eq('master_id', profile.id);
 
-      // Deactivate excess staff members (keep only first 1 for FREE)
-      const { data: staffMembers } = await supabase
-        .from('staff_members')
-        .select('id')
-        .eq('professional_id', profile.id)
-        .order('created_at', { ascending: true });
-
-      if (staffMembers && staffMembers.length > 1) {
-        const toDeactivate = staffMembers.slice(1).map((s: any) => s.id);
-        
-        await supabase
-          .from('staff_members')
-          .update({ is_active: false })
-          .in('id', toDeactivate);
-        
-        console.log(`Deactivated ${toDeactivate.length} excess staff members for expired subscription`);
-      }
-
       console.log(`Successfully downgraded professional ${profile.id} to FREE plan`);
       return { success: true, profileId: profile.id };
     });

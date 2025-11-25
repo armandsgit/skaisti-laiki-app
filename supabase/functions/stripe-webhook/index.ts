@@ -42,45 +42,21 @@ const PLAN_STAFF_LIMITS: Record<string, number> = {
 async function deactivateExcessStaffMembers(supabase: any, professionalId: string, newPlan: string) {
   const limit = PLAN_STAFF_LIMITS[newPlan] || 1;
   
-  // If unlimited, reactivate ALL staff members
-  if (limit === 999) {
-    await supabase
-      .from('staff_members')
-      .update({ is_active: true })
-      .eq('professional_id', professionalId)
-      .eq('is_active', false);
-    
-    console.log(`Reactivated all staff members for professional ${professionalId} (unlimited plan)`);
-    return;
-  }
+  // If unlimited, no need to deactivate
+  if (limit === 999) return;
 
-  // Get all staff members (active and inactive) ordered by creation date
+  // Get all active staff members ordered by creation date
   const { data: staffMembers } = await supabase
     .from('staff_members')
-    .select('id, is_active')
+    .select('id')
     .eq('professional_id', professionalId)
+    .eq('is_active', true)
     .order('created_at', { ascending: true });
 
-  if (!staffMembers || staffMembers.length === 0) return;
-
-  // Reactivate first N staff members up to the limit
-  const toActivate = staffMembers.slice(0, limit)
-    .filter((s: any) => !s.is_active)
-    .map((s: any) => s.id);
-  
-  if (toActivate.length > 0) {
-    await supabase
-      .from('staff_members')
-      .update({ is_active: true })
-      .in('id', toActivate);
-    
-    console.log(`Reactivated ${toActivate.length} staff members for professional ${professionalId}`);
-  }
+  if (!staffMembers || staffMembers.length <= limit) return;
 
   // Deactivate staff members beyond the limit
-  const toDeactivate = staffMembers.slice(limit)
-    .filter((s: any) => s.is_active)
-    .map((s: any) => s.id);
+  const toDeactivate = staffMembers.slice(limit).map((s: any) => s.id);
   
   if (toDeactivate.length > 0) {
     await supabase
