@@ -483,9 +483,9 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
               return (
                 <div
                   key={staff.id}
-                  className={`flex items-center gap-3 p-3 border-2 rounded-lg transition-all ${
+                  className={`flex items-center gap-3 p-3 border-2 rounded-lg transition-all relative group ${
                     isOverLimit 
-                      ? 'opacity-40 pointer-events-none cursor-not-allowed bg-muted/20 border-border/30'
+                      ? 'opacity-40 cursor-not-allowed bg-muted/20 border-border/30'
                       : `cursor-pointer ${
                           isSelected
                             ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
@@ -493,7 +493,16 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                         }`
                   }`}
                   onClick={() => !isOverLimit && onSelectStaffMember?.(staff.id)}
+                  title={isOverLimit ? 'Pieejams tikai Starter/Pro/Bizness plānos' : ''}
                 >
+                {isOverLimit && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-muted border rounded-lg">
+                      <Lock className="w-4 h-4" />
+                      <span className="text-xs font-medium">Uzlabojiet plānu</span>
+                    </div>
+                  </div>
+                )}
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={staff.avatar || undefined} />
                   <AvatarFallback>
