@@ -19,6 +19,7 @@ import MapView from "./pages/MapView";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
 import Abonesana from "./pages/Abonesana";
 import MaksaIzdevusies from "./pages/MaksaIzdevusies";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
@@ -40,6 +41,14 @@ const App = () => (
           >
             <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route 
+              path="/onboarding" 
+              element={
+                <ProtectedRoute requiredRole="PROFESSIONAL">
+                  <Onboarding />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/" 
               element={
