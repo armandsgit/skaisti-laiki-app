@@ -38,9 +38,15 @@ const ProfessionalProfile = () => {
     if (id) {
       loadProfessional();
       loadServices();
-      loadStaffMembers();
     }
   }, [id]);
+
+  // Load staff members after professional data is available (for plan filtering)
+  useEffect(() => {
+    if (professional) {
+      loadStaffMembers();
+    }
+  }, [professional]);
 
   const loadProfessional = async () => {
     const { data } = await supabase
@@ -66,7 +72,7 @@ const ProfessionalProfile = () => {
   };
 
   const loadStaffMembers = async () => {
-    const { data } = await supabase
+    const { data: staffData } = await supabase
       .from('staff_members')
       .select('*')
       .eq('professional_id', id)
@@ -74,7 +80,21 @@ const ProfessionalProfile = () => {
       .eq('show_on_profile', true)
       .order('created_at');
     
-    setStaffMembers(data || []);
+    // Filter by plan limit - only show allowed number of masters to clients
+    if (staffData && professional) {
+      const { getPlanFeatures } = await import('@/lib/plan-features');
+      const planFeatures = getPlanFeatures(professional.plan);
+      const limit = planFeatures.maxStaffMembers;
+      
+      // Apply plan limit: show only first X masters
+      const limitedStaff = limit === -1 || limit === 999 
+        ? staffData 
+        : staffData.slice(0, limit);
+      
+      setStaffMembers(limitedStaff);
+    } else {
+      setStaffMembers(staffData || []);
+    }
   };
 
   const handleBooking = async (formData: BookingFormData) => {

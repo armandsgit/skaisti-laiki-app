@@ -267,8 +267,21 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
 
       console.log('🔵 Active staff members:', allStaff?.map(s => ({ id: s.id, name: s.name })));
 
-      if (!allStaff || allStaff.length === 0) {
-        console.log('❌ No active staff found');
+      // Step 3.5: Apply plan-based limit - only show allowed number of masters to clients
+      let limitedStaff = allStaff || [];
+      if (limitedStaff.length > 0) {
+        const limit = planFeatures.maxStaffMembers;
+        if (limit !== -1 && limit !== 999) {
+          // Sort by creation date and take only first X masters
+          limitedStaff = limitedStaff
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+            .slice(0, limit);
+          console.log(`🔵 Applied plan limit: ${limit} masters, filtered from ${allStaff.length} to ${limitedStaff.length}`);
+        }
+      }
+
+      if (!limitedStaff || limitedStaff.length === 0) {
+        console.log('❌ No staff available within plan limit');
         setAvailableStaff([]);
         setStaffTimeSlots({});
         setLoadingSlots(false);
@@ -279,7 +292,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       const staffWithSchedules: any[] = [];
       const staffSlotsMap: Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>> = {};
 
-      for (const staffMember of allStaff) {
+      for (const staffMember of limitedStaff) {
         console.log(`🔵 Processing staff: ${staffMember.name} (${staffMember.id})`);
         
         // Check for schedule exceptions first
