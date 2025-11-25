@@ -248,33 +248,78 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       for (const staffMember of allStaff) {
         console.log(`🔵 Processing staff: ${staffMember.name} (${staffMember.id})`);
         
-        // Fetch schedules for this staff member on this day
-        const { data: schedules, error: scheduleError } = await supabase
-          .from('professional_schedules')
+        // Check for schedule exceptions first
+        const { data: exception, error: exceptionError } = await supabase
+          .from('schedule_exceptions')
           .select('*')
           .eq('professional_id', professionalId)
           .eq('staff_member_id', staffMember.id)
-          .eq('day_of_week', dayOfWeek)
-          .eq('is_active', true);
+          .eq('exception_date', dateStr)
+          .maybeSingle();
 
-        if (scheduleError) {
-          console.error('❌ Error loading schedules:', scheduleError);
+        if (exceptionError) {
+          console.error('❌ Error loading exceptions:', exceptionError);
+        }
+
+        console.log(`  🔍 Exception for ${dateStr}:`, exception);
+
+        // If exception is closed, skip this staff member
+        if (exception && exception.is_closed) {
+          console.log(`  ❌ Day is closed for ${staffMember.name}`);
           continue;
         }
 
-        console.log(`  📅 Found ${schedules?.length || 0} schedules for ${staffMember.name}`);
-        console.log(`  📅 Schedules:`, schedules?.map(s => ({
-          start: s.start_time,
-          end: s.end_time,
-          services: s.available_services
-        })));
+        let relevantSchedules: any[] = [];
 
-        // Filter schedules that include this specific service
-        const relevantSchedules = (schedules || []).filter(schedule => {
-          const hasService = (schedule.available_services || []).includes(formData.serviceId);
-          console.log(`    🔍 Schedule ${schedule.start_time}-${schedule.end_time}: includes service? ${hasService}`);
-          return hasService;
-        });
+        // If there's an exception with special schedule, use those time ranges
+        if (exception && !exception.is_closed && exception.time_ranges) {
+          console.log(`  ✨ Using exception schedule for ${staffMember.name}`);
+          const exceptionTimeRanges = exception.time_ranges as any[];
+          
+          // Convert exception time ranges to schedule format
+          relevantSchedules = exceptionTimeRanges.map(range => ({
+            start_time: range.start,
+            end_time: range.end,
+            available_services: [formData.serviceId], // All services available during exception
+            is_active: true
+          }));
+          
+          console.log(`  📅 Exception schedules:`, relevantSchedules.map(s => ({
+            start: s.start_time,
+            end: s.end_time
+          })));
+        } else {
+          // No exception, use regular weekly schedule
+          console.log(`  📅 Using regular schedule for ${staffMember.name}`);
+          
+          // Fetch schedules for this staff member on this day
+          const { data: schedules, error: scheduleError } = await supabase
+            .from('professional_schedules')
+            .select('*')
+            .eq('professional_id', professionalId)
+            .eq('staff_member_id', staffMember.id)
+            .eq('day_of_week', dayOfWeek)
+            .eq('is_active', true);
+
+          if (scheduleError) {
+            console.error('❌ Error loading schedules:', scheduleError);
+            continue;
+          }
+
+          console.log(`  📅 Found ${schedules?.length || 0} schedules for ${staffMember.name}`);
+          console.log(`  📅 Schedules:`, schedules?.map(s => ({
+            start: s.start_time,
+            end: s.end_time,
+            services: s.available_services
+          })));
+
+          // Filter schedules that include this specific service
+          relevantSchedules = (schedules || []).filter(schedule => {
+            const hasService = (schedule.available_services || []).includes(formData.serviceId);
+            console.log(`    🔍 Schedule ${schedule.start_time}-${schedule.end_time}: includes service? ${hasService}`);
+            return hasService;
+          });
+        }
 
         console.log(`  ✅ Relevant schedules: ${relevantSchedules.length}`);
 

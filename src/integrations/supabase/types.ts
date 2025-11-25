@@ -565,6 +565,54 @@ export type Database = {
           },
         ]
       }
+      schedule_exceptions: {
+        Row: {
+          created_at: string
+          exception_date: string
+          id: string
+          is_closed: boolean
+          professional_id: string
+          staff_member_id: string | null
+          time_ranges: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exception_date: string
+          id?: string
+          is_closed?: boolean
+          professional_id: string
+          staff_member_id?: string | null
+          time_ranges?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exception_date?: string
+          id?: string
+          is_closed?: boolean
+          professional_id?: string
+          staff_member_id?: string | null
+          time_ranges?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_exceptions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_exceptions_staff_member_id_fkey"
+            columns: ["staff_member_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           created_at: string
