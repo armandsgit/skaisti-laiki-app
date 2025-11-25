@@ -60,6 +60,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          auto_cancelled_by_exception: boolean | null
           booking_date: string
           booking_end_time: string
           booking_time: string
@@ -74,6 +75,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_cancelled_by_exception?: boolean | null
           booking_date: string
           booking_end_time: string
           booking_time: string
@@ -88,6 +90,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_cancelled_by_exception?: boolean | null
           booking_date?: string
           booking_end_time?: string
           booking_time?: string
@@ -339,6 +342,7 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_end_date: string | null
+          subscription_expires_at: string | null
           subscription_last_changed: string | null
           subscription_status: string | null
           total_reviews: number | null
@@ -365,6 +369,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_end_date?: string | null
+          subscription_expires_at?: string | null
           subscription_last_changed?: string | null
           subscription_status?: string | null
           total_reviews?: number | null
@@ -391,6 +396,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_end_date?: string | null
+          subscription_expires_at?: string | null
           subscription_last_changed?: string | null
           subscription_status?: string | null
           total_reviews?: number | null
