@@ -284,7 +284,7 @@ const ClientDashboard = () => {
                             <div className="flex items-center gap-1.5">
                               <Star className="h-[18px] w-[18px] fill-foreground stroke-foreground" />
                               <span className="text-[16px] font-semibold text-foreground">
-                                {prof.rating ? prof.rating.toFixed(1) : '5.0'}
+                                {prof.rating ? prof.rating.toFixed(1) : '0.0'}
                               </span>
                               <span className="text-[15px] text-muted-foreground">
                                 ({prof.total_reviews || 0})
@@ -339,7 +339,7 @@ const ClientDashboard = () => {
                           <div className="flex items-center gap-1.5">
                             <Star className="h-[18px] w-[18px] fill-foreground stroke-foreground" />
                             <span className="text-[16px] font-semibold text-foreground">
-                              {prof.rating ? prof.rating.toFixed(1) : '5.0'}
+                              {prof.rating ? prof.rating.toFixed(1) : '0.0'}
                             </span>
                             <span className="text-[15px] text-muted-foreground">
                               ({prof.total_reviews || 0})

@@ -187,13 +187,11 @@ const ProfessionalProfile = () => {
 
             {/* Rating & Location */}
             <div className="flex items-center justify-center gap-8 text-base">
-              {(professional.rating > 0 || professional.total_reviews > 0) && (
-                <div className="flex items-center gap-2">
-                  <Star className="w-5 h-5 fill-accent text-accent" />
-                  <span className="font-semibold text-foreground">{professional.rating?.toFixed(1) || '0.0'}</span>
-                  <span className="text-muted-foreground">({professional.total_reviews || 0})</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 fill-accent text-accent" />
+                <span className="font-semibold text-foreground">{professional.rating?.toFixed(1) || '0.0'}</span>
+                <span className="text-muted-foreground">({professional.total_reviews || 0})</span>
+              </div>
               {professional.city && (
                 <>
                   <span className="text-muted-foreground/30">•</span>
