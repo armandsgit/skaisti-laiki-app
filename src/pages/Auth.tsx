@@ -22,10 +22,7 @@ const Auth = () => {
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerName, setRegisterName] = useState('');
   const [registerRole, setRegisterRole] = useState<'CLIENT' | 'PROFESSIONAL'>('CLIENT');
-  const [registerAddress, setRegisterAddress] = useState('');
   const [registerCategory, setRegisterCategory] = useState('');
-  const [registerCity, setRegisterCity] = useState('');
-  const [geocoding, setGeocoding] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
 
@@ -90,50 +87,10 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    if (registerRole === 'PROFESSIONAL') {
-      if (!registerAddress || !registerCity) {
-        toast.error('Lūdzu aizpildiet visus obligātos laukus');
-        setLoading(false);
-        return;
-      }
-    }
-    
-    let latitude = null;
-    let longitude = null;
-    
-    if (registerRole === 'PROFESSIONAL' && registerAddress) {
-      setGeocoding(true);
-      toast.loading('Notiek adreses noteikšana...');
-      
-      try {
-        const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('geocode-address', {
-          body: { address: registerAddress }
-        });
-
-        setGeocoding(false);
-        toast.dismiss();
-        
-        if (geocodeError || !geocodeData) {
-          toast.error('Nederīga adrese. Lūdzu pārbaudiet ievadīto informāciju.');
-          setLoading(false);
-          return;
-        }
-        
-        if (geocodeData.error) {
-          toast.error(geocodeData.error);
-          setLoading(false);
-          return;
-        }
-        
-        latitude = geocodeData.latitude;
-        longitude = geocodeData.longitude;
-      } catch (err) {
-        setGeocoding(false);
-        toast.dismiss();
-        toast.error('Kļūda adreses noteikšanā. Lūdzu mēģiniet vēlreiz.');
-        setLoading(false);
-        return;
-      }
+    if (registerRole === 'PROFESSIONAL' && !registerCategory) {
+      toast.error('Lūdzu izvēlieties kategoriju');
+      setLoading(false);
+      return;
     }
     
     const { error, data } = await signUp(registerEmail, registerPassword, registerName, registerRole);
@@ -154,11 +111,7 @@ const Auth = () => {
           const { error: profileError } = await supabase
             .from('professional_profiles')
             .update({
-              address: registerAddress,
-              latitude,
-              longitude,
               category: registerCategory as any,
-              city: registerCity,
               approved: false
             })
             .eq('user_id', data.user.id);
@@ -169,24 +122,24 @@ const Auth = () => {
         } else {
           const { error: profileError } = await supabase
             .from('professional_profiles')
-            .insert({
+            .insert([{
               user_id: data.user.id,
-              address: registerAddress,
-              latitude,
-              longitude,
               category: registerCategory as any,
-              city: registerCity,
+              city: '',
               approved: false
-            });
+            }]);
           
           if (profileError) {
             console.error('Profile create error:', profileError);
           }
         }
+        
+        toast.success(t.registerSuccess);
+        navigate('/onboarding');
+      } else {
+        toast.success(t.registerSuccess);
+        navigate('/');
       }
-      
-      toast.success(t.registerSuccess);
-      navigate('/');
     }
     
     setLoading(false);
@@ -317,71 +270,34 @@ const Auth = () => {
                 </div>
                 
                 {registerRole === 'PROFESSIONAL' && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-category" className="text-sm font-medium">Kategorija *</Label>
-                      <select
-                        id="register-category"
-                        className="w-full h-12 px-4 rounded-2xl border bg-background text-foreground text-base"
-                        value={registerCategory}
-                        onChange={(e) => setRegisterCategory(e.target.value)}
-                        required
-                      >
-                        {categories.length === 0 ? (
-                          <option value="">Ielādē kategorijas...</option>
-                        ) : (
-                          categories.map((category) => (
-                            <option key={category} value={category}>
-                              {category}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="register-city" className="text-sm font-medium">Pilsēta *</Label>
-                      <Input
-                        id="register-city"
-                        type="text"
-                        placeholder="Piemēram: Rīga"
-                        value={registerCity}
-                        onChange={(e) => setRegisterCity(e.target.value)}
-                        required
-                        className="h-12 bg-background border rounded-2xl text-base"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="register-address" className="text-sm font-medium">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-primary" />
-                          Adrese *
-                        </div>
-                      </Label>
-                      <Input
-                        id="register-address"
-                        type="text"
-                        placeholder="Piemēram: Brīvības iela 1, Rīga"
-                        value={registerAddress}
-                        onChange={(e) => setRegisterAddress(e.target.value)}
-                        disabled={geocoding}
-                        required
-                        className="h-12 bg-background border rounded-2xl text-base"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Ievadiet savu darba vietas adresi
-                      </p>
-                    </div>
-                  </>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-category" className="text-sm font-medium">Kategorija *</Label>
+                    <select
+                      id="register-category"
+                      className="w-full h-12 px-4 rounded-2xl border bg-background text-foreground text-base"
+                      value={registerCategory}
+                      onChange={(e) => setRegisterCategory(e.target.value)}
+                      required
+                    >
+                      {categories.length === 0 ? (
+                        <option value="">Ielādē kategorijas...</option>
+                      ) : (
+                        categories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
                 )}
                 
                 <Button 
                   type="submit" 
                   className="w-full h-12 bg-black text-white hover:opacity-90 transition-opacity font-semibold rounded-2xl shadow-soft mt-6 text-base"
-                  disabled={loading || geocoding}
+                  disabled={loading}
                 >
-                  {loading || geocoding ? t.loading : t.createAccount}
+                  {loading ? t.loading : t.createAccount}
                 </Button>
               </form>
             </TabsContent>
