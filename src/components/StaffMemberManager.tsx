@@ -85,11 +85,11 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
 
   const loadStaffMembers = async () => {
     try {
+      // Load ALL staff members, including inactive ones (to show locked state)
       const { data: staffData, error } = await supabase
         .from('staff_members')
         .select('*, show_on_profile')
         .eq('professional_id', professionalId)
-        .eq('is_active', true)
         .order('created_at');
 
       if (error) throw error;
@@ -140,7 +140,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     }
 
     // Check limit when adding new staff
-    if (!editingStaff && !canAddStaffMemberByPlan(currentPlan, staffMembers.length)) {
+    if (!editingStaff && !canAddStaffMemberByPlan(currentPlan, staffMembers.filter(s => s.is_active).length)) {
       toast.error(`Jūsu plāns atļauj tikai ${staffLimit} meistarus. Uzlabojiet abonementu, lai pievienotu vairāk.`);
       return;
     }
@@ -284,7 +284,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
     );
   }
 
-  const canAddMore = canAddStaffMemberByPlan(currentPlan, staffMembers.length);
+  const canAddMore = canAddStaffMemberByPlan(currentPlan, staffMembers.filter(s => s.is_active).length);
 
   return (
     <Card>
@@ -294,7 +294,7 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
             <User className="w-5 h-5" />
             Meistari
             <span className="text-xs text-muted-foreground font-normal">
-              ({staffMembers.length}/{staffLimit === 999 ? '∞' : staffLimit})
+              ({staffMembers.filter(s => s.is_active).length}/{staffLimit === 999 ? '∞' : staffLimit})
             </span>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -479,7 +479,8 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
             )}
             {staffMembers.map((staff, index) => {
               const isSelected = selectedStaffMemberId === staff.id;
-              const isOverLimit = index >= staffLimit;
+              const isInactive = !staff.is_active;
+              const isOverLimit = index >= staffLimit || isInactive;
               return (
                 <div
                   key={staff.id}
@@ -493,13 +494,16 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                         }`
                   }`}
                   onClick={() => !isOverLimit && onSelectStaffMember?.(staff.id)}
-                  title={isOverLimit ? 'Pieejams tikai Starter/Pro/Bizness plānos' : ''}
+                  title={isOverLimit ? 'Šis meistars ir paslēpts, jo Jūsu pašreizējais plāns atļauj tikai ' + staffLimit + ' ' + (staffLimit === 1 ? 'meistaru' : 'meistarus') : ''}
                 >
                 {isOverLimit && (
                   <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-muted border rounded-lg">
+                    <div className="flex flex-col items-center gap-1 px-3 py-2 bg-muted border rounded-lg text-center">
                       <Lock className="w-4 h-4" />
-                      <span className="text-xs font-medium">Uzlabojiet plānu</span>
+                      <span className="text-xs font-medium">Paslēpts</span>
+                      <a href="/abonesana" className="text-[10px] text-primary underline" onClick={(e) => e.stopPropagation()}>
+                        Uzlabot plānu
+                      </a>
                     </div>
                   </div>
                 )}
