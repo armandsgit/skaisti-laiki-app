@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Trash2, User, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Trash2, User, Mail, Phone, LogOut } from 'lucide-react';
 import DeleteAccountModal from '@/components/DeleteAccountModal';
 import { toast } from 'sonner';
 
@@ -112,15 +112,19 @@ export default function ClientSettings() {
     <div className="min-h-screen bg-gradient-to-br from-background via-primary-soft to-secondary pb-24">
       <header className="bg-card/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-            className="mb-2"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Atpakaļ
-          </Button>
+          <div className="flex items-center justify-between mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Atpakaļ
+            </Button>
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="w-5 h-5 stroke-[1.5]" />
+            </Button>
+          </div>
           <h1 className="text-2xl font-bold">Profila iestatījumi</h1>
         </div>
       </header>

@@ -30,12 +30,11 @@ const plans = [
     features: [
       'Rezervāciju e-pasti',
       'Apstiprinājumi',
-      'Atgādinājumi',
-      '200 e-pasta kredīti/mēn',
+      'Līdz 3 meistariem',
     ],
     icon: Mail,
     recommended: false,
-    stripePrice: 'price_1SWmMTRtOhWJgeVeCxB9RCxm', // ← Paste your Starteris Price ID here
+    stripePrice: 'price_1SWmMTRtOhWJgeVeCxB9RCxm',
   },
   {
     id: 'pro',
@@ -44,15 +43,13 @@ const plans = [
     emailCredits: 1000,
     description: 'Profesionāliem meistariem',
     features: [
-      'Rezervāciju e-pasti',
-      'Atgādinājumi',
-      'SMS integrācijas pieejamība',
-      '1000 e-pasta kredīti/mēn',
-      'Prioritāte meklēšanā',
+      'Visi e-pasti',
+      'SMS integrācija',
+      'Līdz 10 meistariem',
     ],
     icon: Zap,
     recommended: true,
-    stripePrice: 'price_1SWmMtRtOhWJgeVeiKK0m0YL', // ← Paste your Pro Price ID here
+    stripePrice: 'price_1SWmMtRtOhWJgeVeiKK0m0YL',
   },
   {
     id: 'bizness',
@@ -62,15 +59,12 @@ const plans = [
     description: 'Biznesa risinājums',
     features: [
       'Visi e-pasti',
-      'SMS',
-      'Prioritārais atbalsts',
-      '5000 e-pasta kredīti/mēn',
-      'Analītikas rīki',
       'API piekļuve',
+      'Neierobežoti meistari',
     ],
     icon: Award,
     recommended: false,
-    stripePrice: 'price_1SWmNCRtOhWJgeVekHZDvwzP', // ← Paste your Bizness Price ID here
+    stripePrice: 'price_1SWmNCRtOhWJgeVekHZDvwzP',
   },
 ];
 
@@ -288,21 +282,17 @@ export default function Abonesana() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
-                <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-sm text-muted-foreground">Pamata profils</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-sm text-muted-foreground">Līdz 3 pakalpojumiem</span>
-                </li>
                 <li className="flex items-center gap-2 opacity-50">
                   <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-sm text-muted-foreground line-through">E-pasta automātika</span>
+                  <span className="text-sm text-muted-foreground line-through">Automātiskie e-pasti</span>
                 </li>
                 <li className="flex items-center gap-2 opacity-50">
                   <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <span className="text-sm text-muted-foreground line-through">Statistika</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground font-semibold">1 meistars</span>
                 </li>
               </ul>
             </CardContent>
@@ -366,7 +356,7 @@ export default function Abonesana() {
                     ))}
                   </ul>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col gap-2">
                   <Button
                     className="w-full"
                     variant={plan.recommended ? 'default' : 'outline'}
@@ -379,6 +369,16 @@ export default function Abonesana() {
                         ? 'Apstrādā...' 
                         : 'Abonēt'}
                   </Button>
+                  {currentPlan === plan.id && hasActiveSubscription && (
+                    <Button
+                      className="w-full"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/billing')}
+                    >
+                      Pārvaldīt
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             );
@@ -415,6 +415,10 @@ export default function Abonesana() {
                 <li className="flex items-start gap-2">
                   <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
                   <span><strong>Papildus pakalpojumus</strong> - maksimums 3 pakalpojumi</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <span><strong>Papildus meistarus</strong> - paliks tikai 1 meistars</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
