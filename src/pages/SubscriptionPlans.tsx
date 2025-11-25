@@ -286,22 +286,27 @@ export default function SubscriptionPlans() {
     } else {
       console.log('❌ Not a downgrade, proceeding with activation');
       // If upgrade or same plan, proceed directly
-      handleActivate(planId);
+      proceedWithStripeCheckout(planId);
     }
+  };
+
+  const handleActivate = (planId: string) => {
+    handlePlanClick(planId);
   };
 
   const handleConfirmDowngrade = () => {
     if (targetPlan) {
       setShowDowngradeWarning(false);
-      handleActivate(targetPlan);
+      const planToActivate = targetPlan;
       setTargetPlan(null);
+      
+      // Now actually proceed with the activation
+      setLoading(planToActivate);
+      proceedWithStripeCheckout(planToActivate);
     }
   };
 
-  const handleActivate = async (planId: string) => {
-    console.log('🚀 === SUBSCRIPTION ACTIVATION START ===');
-    console.log('Plan ID:', planId);
-    setLoading(planId);
+  const proceedWithStripeCheckout = async (planId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       console.log('✅ User authenticated:', user?.id);
@@ -464,12 +469,7 @@ export default function SubscriptionPlans() {
                     className="w-full"
                     variant="outline"
                     disabled={loadingPlan || currentPlan === 'free'}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert(`Klikšķis uz FREE plānu. currentPlan: ${currentPlan}`);
-                      console.log('FREE plan button clicked');
-                      handlePlanClick(plan.id);
-                    }}
+                    onClick={() => handleActivate(plan.id)}
                   >
                     {loadingPlan ? 'Ielādē...' : currentPlan === 'free' ? 'Pašreizējais plāns' : 'Pāriet uz FREE'}
                   </Button>
@@ -477,12 +477,7 @@ export default function SubscriptionPlans() {
                   <Button
                     className="w-full"
                     variant={plan.recommended ? 'default' : 'outline'}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert(`Klikšķis uz ${plan.name} plānu. currentPlan: ${currentPlan}, planId: ${plan.id}`);
-                      console.log(`${plan.name} button clicked, plan ID: ${plan.id}`);
-                      handlePlanClick(plan.id);
-                    }}
+                    onClick={() => handleActivate(plan.id)}
                     disabled={loadingPlan || loading !== null || currentPlan === plan.id}
                   >
                     {loadingPlan ? 'Ielādē...' : loading === plan.id ? 'Aktivizē...' : currentPlan === plan.id ? 'Pašreizējais plāns' : 'Aktivizēt'}
