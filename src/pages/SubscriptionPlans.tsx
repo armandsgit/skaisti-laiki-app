@@ -153,8 +153,15 @@ export default function SubscriptionPlans() {
           .eq('user_id', user.id)
           .single();
 
-        console.log('Current plan from DB:', profile?.plan);
-        setCurrentPlan(profile?.plan || 'free');
+      console.log('Current plan from DB:', profile?.plan);
+      
+      if (profile?.plan) {
+        console.log('✅ Setting current plan to:', profile.plan);
+        setCurrentPlan(profile.plan);
+      } else {
+        console.log('⚠️ No plan found, defaulting to free');
+        setCurrentPlan('free');
+      }
       } catch (error) {
         console.error('Error fetching current plan:', error);
         setCurrentPlan('free');
@@ -249,15 +256,22 @@ export default function SubscriptionPlans() {
   };
 
   const handlePlanClick = (planId: string) => {
-    console.log('Plan clicked:', planId, 'Current plan:', currentPlan);
+    console.log('=== PLAN CLICK DEBUG ===');
+    console.log('Plan clicked:', planId);
+    console.log('Current plan:', currentPlan);
+    console.log('Loading plan:', loadingPlan);
     
     // Check if it's a downgrade
-    if (isDowngrade(currentPlan, planId)) {
-      console.log('Opening downgrade warning modal');
+    const isDowngradeResult = isDowngrade(currentPlan, planId);
+    console.log('Is downgrade result:', isDowngradeResult);
+    
+    if (isDowngradeResult) {
+      console.log('✅ Opening downgrade warning modal');
+      alert(`DEBUG: Downgrade detected from ${currentPlan} to ${planId}`); // Temporary debug
       setTargetPlan(planId);
       setShowDowngradeWarning(true);
     } else {
-      console.log('Not a downgrade, proceeding with activation');
+      console.log('❌ Not a downgrade, proceeding with activation');
       // If upgrade or same plan, proceed directly
       handleActivate(planId);
     }
