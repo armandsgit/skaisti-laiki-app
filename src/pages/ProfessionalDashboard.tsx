@@ -1689,12 +1689,6 @@ const ProfessionalDashboard = () => {
               <>
                 {/* Owner's own schedule */}
                 <div className="mb-8">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold">Tavs darba grafiks</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Iestatiet savu personīgo darba laiku
-                    </p>
-                  </div>
                   <WorkScheduleManager professionalId={profile.id} staffMemberId={null} />
                 </div>
 
