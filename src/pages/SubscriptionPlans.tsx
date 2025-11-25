@@ -464,7 +464,9 @@ export default function SubscriptionPlans() {
                     className="w-full"
                     variant="outline"
                     disabled={loadingPlan || currentPlan === 'free'}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alert(`Klikšķis uz FREE plānu. currentPlan: ${currentPlan}`);
                       console.log('FREE plan button clicked');
                       handlePlanClick(plan.id);
                     }}
@@ -475,7 +477,9 @@ export default function SubscriptionPlans() {
                   <Button
                     className="w-full"
                     variant={plan.recommended ? 'default' : 'outline'}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alert(`Klikšķis uz ${plan.name} plānu. currentPlan: ${currentPlan}, planId: ${plan.id}`);
                       console.log(`${plan.name} button clicked, plan ID: ${plan.id}`);
                       handlePlanClick(plan.id);
                     }}
