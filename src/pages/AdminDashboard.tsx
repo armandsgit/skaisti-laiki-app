@@ -70,6 +70,7 @@ const AdminDashboard = () => {
   const [selectedTab, setSelectedTab] = useState<"home" | "pending" | "professionals" | "clients" | "bookings" | "categories">(
     "home",
   );
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
 
   // Sync selectedTab with URL parameter
   useEffect(() => {
@@ -94,6 +95,63 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Load pending approvals count and subscribe to realtime updates
+  useEffect(() => {
+    const loadPendingCount = async () => {
+      const { count } = await supabase
+        .from('professional_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('approved', false);
+      
+      setPendingApprovalsCount(count || 0);
+    };
+
+    loadPendingCount();
+
+    // Subscribe to realtime changes for pending approvals
+    const channel = supabase
+      .channel('pending-approvals')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'professional_profiles'
+        },
+        async (payload) => {
+          console.log('Professional profiles change detected:', payload);
+          
+          // Reload pending count
+          const { count } = await supabase
+            .from('professional_profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('approved', false);
+          
+          setPendingApprovalsCount(count || 0);
+
+          // Show toast notification for new pending profiles
+          if (payload.eventType === 'INSERT' && payload.new.approved === false) {
+            const profileData = payload.new as any;
+            toast.info('Jauns meistars gaida apstiprinājumu!', {
+              description: `Pārbaudi ${profileData.city} kategorijā`,
+              action: {
+                label: 'Skatīt',
+                onClick: () => navigate('/admin?tab=pending')
+              }
+            });
+          }
+
+          // Reload full data to update the UI
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadData = async () => {
