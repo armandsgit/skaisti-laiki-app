@@ -91,12 +91,21 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [availableStaff, setAvailableStaff] = useState<any[]>([]);
   const [staffTimeSlots, setStaffTimeSlots] = useState<Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>>>({});
+  const [scheduleExceptions, setScheduleExceptions] = useState<Array<{ exception_date: string; is_closed: boolean; time_ranges: any }>>([]);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
   // Calculate max date based on professional's plan
   const planFeatures = getPlanFeatures(professionalPlan);
   const maxDate = planFeatures.calendarDaysVisible === -1 
     ? undefined 
     : addDays(new Date(), planFeatures.calendarDaysVisible);
+
+  // Load schedule exceptions when modal opens or month changes
+  useEffect(() => {
+    if (isOpen && professionalId) {
+      loadScheduleExceptions(currentMonth);
+    }
+  }, [isOpen, professionalId, currentMonth]);
 
   useEffect(() => {
     if (isOpen) {
@@ -116,6 +125,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       setFormData({});
       setAvailableStaff([]);
       setStaffTimeSlots({});
+      setScheduleExceptions([]);
     }
   }, [isOpen, initialServiceId]);
 
@@ -165,6 +175,30 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       supabase.removeChannel(channel);
     };
   }, [formData.date, professionalId]);
+
+  const loadScheduleExceptions = async (month: Date) => {
+    try {
+      const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+      const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      
+      const startDateStr = startOfMonth.toISOString().split('T')[0];
+      const endDateStr = endOfMonth.toISOString().split('T')[0];
+
+      const { data, error } = await supabase
+        .from('schedule_exceptions')
+        .select('exception_date, is_closed, time_ranges')
+        .eq('professional_id', professionalId)
+        .gte('exception_date', startDateStr)
+        .lte('exception_date', endDateStr);
+
+      if (error) throw error;
+      
+      console.log('📅 Loaded schedule exceptions:', data);
+      setScheduleExceptions(data || []);
+    } catch (error) {
+      console.error('❌ Error loading schedule exceptions:', error);
+    }
+  };
 
   const loadStaffAndTimeSlots = async (date: Date) => {
     setLoadingSlots(true);
@@ -560,17 +594,54 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                     mode="single"
                     selected={formData.date}
                     onSelect={(date) => setFormData({ ...formData, date, time: undefined, staffMemberId: undefined })}
+                    onMonthChange={(month) => setCurrentMonth(month)}
                     disabled={(date) => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
                       
                       if (date < today) return true;
                       if (maxDate && date > maxDate) return true;
+                      
+                      // Check if date is in closed exceptions
+                      const dateStr = date.toISOString().split('T')[0];
+                      const exception = scheduleExceptions.find(e => e.exception_date === dateStr);
+                      if (exception?.is_closed) return true;
+                      
                       return false;
+                    }}
+                    modifiers={{
+                      closed: (date) => {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const exception = scheduleExceptions.find(e => e.exception_date === dateStr);
+                        return exception?.is_closed || false;
+                      },
+                      specialSchedule: (date) => {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const exception = scheduleExceptions.find(e => e.exception_date === dateStr);
+                        return !exception?.is_closed && !!exception?.time_ranges;
+                      }
+                    }}
+                    modifiersClassNames={{
+                      closed: 'bg-muted/50 text-muted-foreground line-through opacity-40 cursor-not-allowed',
+                      specialSchedule: 'bg-primary/10 border-primary/30 font-semibold'
                     }}
                     className={cn("pointer-events-auto")}
                   />
                 </div>
+              </div>
+              <div className="mt-3 text-xs text-muted-foreground space-y-1">
+                {scheduleExceptions.some(e => e.is_closed) && (
+                  <p className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-muted/50 border border-border"></span>
+                    <span>Slēgts</span>
+                  </p>
+                )}
+                {scheduleExceptions.some(e => !e.is_closed && e.time_ranges) && (
+                  <p className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-primary/10 border border-primary/30"></span>
+                    <span>Speciāls darba laiks</span>
+                  </p>
+                )}
               </div>
               {maxDate && planFeatures.calendarDaysVisible !== -1 && (
                 <p className="text-xs text-muted-foreground mt-2 text-center">
