@@ -131,16 +131,21 @@ export default function SubscriptionPlans() {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState<string>('free');
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState(true);
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
   const [targetPlan, setTargetPlan] = useState<string | null>(null);
 
   // Fetch current user's plan
   useEffect(() => {
     const fetchCurrentPlan = async () => {
+      setLoadingPlan(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          setLoadingPlan(false);
+          return;
+        }
 
         const { data: profile } = await supabase
           .from('professional_profiles')
@@ -148,11 +153,13 @@ export default function SubscriptionPlans() {
           .eq('user_id', user.id)
           .single();
 
-        if (profile?.plan) {
-          setCurrentPlan(profile.plan);
-        }
+        console.log('Current plan from DB:', profile?.plan);
+        setCurrentPlan(profile?.plan || 'free');
       } catch (error) {
         console.error('Error fetching current plan:', error);
+        setCurrentPlan('free');
+      } finally {
+        setLoadingPlan(false);
       }
     };
 
@@ -233,16 +240,24 @@ export default function SubscriptionPlans() {
     verifySubscription();
   }, [searchParams, navigate, toast]);
 
-  const isDowngrade = (fromPlan: string, toPlan: string) => {
-    return planHierarchy[fromPlan as keyof typeof planHierarchy] > planHierarchy[toPlan as keyof typeof planHierarchy];
+  const isDowngrade = (fromPlan: string | null, toPlan: string) => {
+    if (!fromPlan) return false;
+    const fromLevel = planHierarchy[fromPlan as keyof typeof planHierarchy];
+    const toLevel = planHierarchy[toPlan as keyof typeof planHierarchy];
+    console.log('Checking downgrade:', { fromPlan, toPlan, fromLevel, toLevel, isDowngrade: fromLevel > toLevel });
+    return fromLevel > toLevel;
   };
 
   const handlePlanClick = (planId: string) => {
+    console.log('Plan clicked:', planId, 'Current plan:', currentPlan);
+    
     // Check if it's a downgrade
     if (isDowngrade(currentPlan, planId)) {
+      console.log('Opening downgrade warning modal');
       setTargetPlan(planId);
       setShowDowngradeWarning(true);
     } else {
+      console.log('Not a downgrade, proceeding with activation');
       // If upgrade or same plan, proceed directly
       handleActivate(planId);
     }
@@ -421,19 +436,19 @@ export default function SubscriptionPlans() {
                   <Button
                     className="w-full"
                     variant="outline"
-                    disabled={currentPlan === 'free'}
+                    disabled={loadingPlan || currentPlan === 'free'}
                     onClick={() => handlePlanClick(plan.id)}
                   >
-                    {currentPlan === 'free' ? 'Pašreizējais plāns' : 'Pāriet uz FREE'}
+                    {loadingPlan ? 'Ielādē...' : currentPlan === 'free' ? 'Pašreizējais plāns' : 'Pāriet uz FREE'}
                   </Button>
                 ) : (
                   <Button
                     className="w-full"
                     variant={plan.recommended ? 'default' : 'outline'}
                     onClick={() => handlePlanClick(plan.id)}
-                    disabled={loading !== null || currentPlan === plan.id}
+                    disabled={loadingPlan || loading !== null || currentPlan === plan.id}
                   >
-                    {loading === plan.id ? 'Aktivizē...' : currentPlan === plan.id ? 'Pašreizējais plāns' : 'Aktivizēt'}
+                    {loadingPlan ? 'Ielādē...' : loading === plan.id ? 'Aktivizē...' : currentPlan === plan.id ? 'Pašreizējais plāns' : 'Aktivizēt'}
                   </Button>
                 )}
               </CardFooter>
