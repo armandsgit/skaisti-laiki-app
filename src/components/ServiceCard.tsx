@@ -17,11 +17,12 @@ interface ServiceCardProps {
       position?: string;
     } | null;
   };
-  onEdit: (service: any) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (service: any) => void;
+  onDelete?: (id: string) => void;
+  disabled?: boolean;
 }
 
-export const ServiceCard = ({ service, onEdit, onDelete }: ServiceCardProps) => {
+export const ServiceCard = ({ service, onEdit, onDelete, disabled = false }: ServiceCardProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -57,23 +58,32 @@ export const ServiceCard = ({ service, onEdit, onDelete }: ServiceCardProps) => 
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(service)}
-              className="flex-1"
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Rediģēt
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDelete(service.id)}
-              className="text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            {onEdit && !disabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(service)}
+                className="flex-1"
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                Rediģēt
+              </Button>
+            )}
+            {onDelete && !disabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDelete(service.id)}
+                className="text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+            {disabled && (
+              <div className="flex-1 text-center py-2 text-xs text-muted-foreground">
+                Nav rediģējams
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

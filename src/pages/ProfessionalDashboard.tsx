@@ -1721,14 +1721,28 @@ const ProfessionalDashboard = () => {
               </Card>
             ) : (
               <div className="grid gap-3">
-                {services.map((service) => (
-                  <ServiceCard
-                    key={service.id}
-                    service={service}
-                    onEdit={handleEditService}
-                    onDelete={handleDeleteService}
-                  />
-                ))}
+                {services.map((service, index) => {
+                  const planFeatures = getPlanFeatures(profile?.plan);
+                  const isWithinLimit = planFeatures.maxServices === -1 || index < planFeatures.maxServices;
+                  
+                  return (
+                    <div key={service.id} className={!isWithinLimit ? 'opacity-40' : ''}>
+                      {!isWithinLimit && (
+                        <div className="mb-2 px-3 py-1.5 bg-muted rounded-lg border border-border">
+                          <p className="text-xs text-muted-foreground font-medium">
+                            Nepieejams pašreizējā plānā
+                          </p>
+                        </div>
+                      )}
+                      <ServiceCard
+                        service={service}
+                        onEdit={isWithinLimit ? handleEditService : undefined}
+                        onDelete={isWithinLimit ? handleDeleteService : undefined}
+                        disabled={!isWithinLimit}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>

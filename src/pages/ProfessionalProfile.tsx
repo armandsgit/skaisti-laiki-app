@@ -68,7 +68,21 @@ const ProfessionalProfile = () => {
       .select('*')
       .eq('professional_id', id);
     
-    setServices(data || []);
+    // Filter by plan limit for public display
+    if (data && professional) {
+      const { getPlanFeatures } = await import('@/lib/plan-features');
+      const planFeatures = getPlanFeatures(professional.plan);
+      const limit = planFeatures.maxServices;
+      
+      // Apply plan limit: show only first X services
+      const limitedServices = limit === -1 || limit === 999 
+        ? data 
+        : data.slice(0, limit);
+      
+      setServices(limitedServices);
+    } else {
+      setServices(data || []);
+    }
   };
 
   const loadStaffMembers = async () => {
@@ -238,30 +252,39 @@ const ProfessionalProfile = () => {
         )}
 
         {/* Gallery Carousel - Fresha style */}
-        {professional.gallery && professional.gallery.length > 0 && (
-          <Card className="border border-border/50 rounded-2xl overflow-hidden">
-            <CardContent className="p-6">
-              <h3 className="font-bold text-lg mb-4">Galerija</h3>
-              <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
-                <div className="flex gap-4">
-                  {professional.gallery.map((imageUrl: string, index: number) => (
-                    <div
-                      key={index}
-                      className="flex-[0_0_85%] min-w-0 relative aspect-[4/3] rounded-2xl overflow-hidden"
-                    >
-                      <img
-                        src={imageUrl}
-                        alt={`Galerijas attēls ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  ))}
+        {professional.gallery && professional.gallery.length > 0 && (() => {
+          const { getPlanFeatures } = require('@/lib/plan-features');
+          const planFeatures = getPlanFeatures(professional.plan);
+          const galleryLimit = planFeatures.maxGalleryPhotos;
+          const displayGallery = galleryLimit === -1 || galleryLimit === 999 
+            ? professional.gallery 
+            : professional.gallery.slice(0, galleryLimit);
+          
+          return displayGallery.length > 0 && (
+            <Card className="border border-border/50 rounded-2xl overflow-hidden">
+              <CardContent className="p-6">
+                <h3 className="font-bold text-lg mb-4">Galerija</h3>
+                <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
+                  <div className="flex gap-4">
+                    {displayGallery.map((imageUrl: string, index: number) => (
+                      <div
+                        key={index}
+                        className="flex-[0_0_85%] min-w-0 relative aspect-[4/3] rounded-2xl overflow-hidden"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Galerijas attēls ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Staff Members / Team */}
         {staffMembers.length > 0 && (
