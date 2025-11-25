@@ -521,9 +521,11 @@ export default function ProfessionalSettings() {
                     <p className="text-sm">{profile.bio}</p>
                   </div>
                 )}
-                {profile.latitude && profile.longitude && (
-                  <div className="w-full">
-                    <p className="text-sm text-muted-foreground mb-2">Atrašanās vieta</p>
+                
+                {/* Location - Always show section */}
+                <div className="w-full">
+                  <p className="text-sm text-muted-foreground mb-2">Atrašanās vieta</p>
+                  {profile.latitude && profile.longitude ? (
                     <div className="w-full max-w-full">
                       <LocationMap 
                         latitude={profile.latitude} 
@@ -531,8 +533,17 @@ export default function ProfessionalSettings() {
                         professionalName={userProfile?.name}
                       />
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full p-8 rounded-2xl border-2 border-dashed border-border bg-muted/30 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Nav iestatīta atrašanās vieta
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Noklikšķiniet uz "Labot", lai pievienotu adresi
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
