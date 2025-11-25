@@ -156,7 +156,7 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
                   <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
                     <span className="text-amber-500 text-sm">⭐</span>
                     <span className="text-gray-800 font-bold text-sm">
-                      {master.rating || '5.0'}
+                      {master.rating || '0.0'}
                     </span>
                   </div>
                   {master.category && (
