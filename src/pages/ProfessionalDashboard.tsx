@@ -391,8 +391,15 @@ const ProfessionalDashboard = () => {
       const earnings = completed.reduce((sum, b) => sum + (b.services?.price || 0), 0);
       
       const today = new Date().toISOString().split('T')[0];
-      const todayBookings = data.filter(b => b.booking_date === today);
-      const todayCompleted = todayBookings.filter(b => b.status === 'completed');
+      // Count only active bookings scheduled for today (pending or confirmed)
+      const todayBookings = data.filter(b => 
+        b.booking_date === today && 
+        (b.status === 'pending' || b.status === 'confirmed')
+      );
+      const todayCompleted = data.filter(b => 
+        b.booking_date === today && 
+        b.status === 'completed'
+      );
       const todayEarnings = todayCompleted.reduce((sum, b) => sum + (b.services?.price || 0), 0);
       
       const monthStart = startOfMonth(new Date()).toISOString().split('T')[0];
