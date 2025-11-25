@@ -164,10 +164,10 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
         
         markerEl.innerHTML = `
           <div class="marker-container">
-            <div class="marker-badge">
-              <span class="marker-rating">${displayRating}</span>
+            <div class="marker-badge" style="background: #000000; border: 2px solid #FFFFFF; border-radius: 100px; padding: 5px 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; min-width: 48px;">
+              <span class="marker-rating" style="font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #FFFFFF; line-height: 1;">${displayRating}</span>
             </div>
-            <div class="marker-pointer"></div>
+            <div class="marker-pointer" style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #000000; margin-top: -2px;"></div>
           </div>
         `;
         markerEl.dataset.masterId = master.id;
