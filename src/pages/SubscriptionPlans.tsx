@@ -142,7 +142,9 @@ export default function SubscriptionPlans() {
       setLoadingPlan(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
+        console.log('🔍 Fetching plan for user:', user?.id);
         if (!user) {
+          console.log('❌ No user logged in');
           setLoadingPlan(false);
           return;
         }
@@ -153,20 +155,21 @@ export default function SubscriptionPlans() {
           .eq('user_id', user.id)
           .single();
 
-      console.log('Current plan from DB:', profile?.plan);
-      
-      if (profile?.plan) {
-        console.log('✅ Setting current plan to:', profile.plan);
-        setCurrentPlan(profile.plan);
-      } else {
-        console.log('⚠️ No plan found, defaulting to free');
-        setCurrentPlan('free');
-      }
+        console.log('📊 Current plan from DB:', profile?.plan);
+        
+        if (profile?.plan) {
+          console.log('✅ Setting current plan to:', profile.plan);
+          setCurrentPlan(profile.plan);
+        } else {
+          console.log('⚠️ No plan found, defaulting to free');
+          setCurrentPlan('free');
+        }
       } catch (error) {
-        console.error('Error fetching current plan:', error);
+        console.error('❌ Error fetching current plan:', error);
         setCurrentPlan('free');
       } finally {
         setLoadingPlan(false);
+        console.log('✅ Plan loading complete');
       }
     };
 
@@ -451,7 +454,10 @@ export default function SubscriptionPlans() {
                     className="w-full"
                     variant="outline"
                     disabled={loadingPlan || currentPlan === 'free'}
-                    onClick={() => handlePlanClick(plan.id)}
+                    onClick={() => {
+                      console.log('FREE plan button clicked');
+                      handlePlanClick(plan.id);
+                    }}
                   >
                     {loadingPlan ? 'Ielādē...' : currentPlan === 'free' ? 'Pašreizējais plāns' : 'Pāriet uz FREE'}
                   </Button>
@@ -459,7 +465,10 @@ export default function SubscriptionPlans() {
                   <Button
                     className="w-full"
                     variant={plan.recommended ? 'default' : 'outline'}
-                    onClick={() => handlePlanClick(plan.id)}
+                    onClick={() => {
+                      console.log(`${plan.name} button clicked, plan ID: ${plan.id}`);
+                      handlePlanClick(plan.id);
+                    }}
                     disabled={loadingPlan || loading !== null || currentPlan === plan.id}
                   >
                     {loadingPlan ? 'Ielādē...' : loading === plan.id ? 'Aktivizē...' : currentPlan === plan.id ? 'Pašreizējais plāns' : 'Aktivizēt'}
