@@ -385,6 +385,7 @@ const ProfessionalProfile = () => {
         services={services}
         professionalId={id || ''}
         professionalName={professional?.profiles?.name || ''}
+        professionalPlan={professional?.plan}
         onSubmit={handleBooking}
         initialServiceId={selectedServiceId}
       />

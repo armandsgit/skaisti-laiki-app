@@ -17,6 +17,7 @@ import { CityAutocomplete } from '@/components/CityAutocomplete';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import { toast } from 'sonner';
 import { ArrowLeft, Edit, XCircle, Sparkles, LogOut, CreditCard } from 'lucide-react';
+import { getPlanFeatures } from '@/lib/plan-features';
 
 export default function ProfessionalSettings() {
   const { user, signOut } = useAuth();
@@ -199,6 +200,21 @@ export default function ProfessionalSettings() {
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0 || !user?.id) return;
     
+    // Check gallery photo limit based on plan
+    const planFeatures = getPlanFeatures(profile?.plan);
+    const currentGallery = profile?.gallery || [];
+    
+    // -1 means unlimited
+    if (planFeatures.maxGalleryPhotos !== -1 && currentGallery.length >= planFeatures.maxGalleryPhotos) {
+      toast.error(`Jūsu plāns atļauj tikai ${planFeatures.maxGalleryPhotos} galerijas bildes. Lūdzu, izvēlieties augstāka līmeņa plānu.`, {
+        action: {
+          label: 'Skatīt plānus',
+          onClick: () => navigate('/abonesana')
+        }
+      });
+      return;
+    }
+    
     const file = event.target.files[0];
     const fileExt = file.name.split('.').pop();
     const fileName = `${user.id}/${Date.now()}.${fileExt}`;
@@ -216,7 +232,6 @@ export default function ProfessionalSettings() {
         .from('gallery')
         .getPublicUrl(fileName);
       
-      const currentGallery = profile?.gallery || [];
       const { error: updateError } = await supabase
         .from('professional_profiles')
         .update({ gallery: [...currentGallery, publicUrl] })
@@ -554,7 +569,13 @@ export default function ProfessionalSettings() {
             <Card className="border-0 shadow-card">
               <CardHeader>
                 <CardTitle>Foto galerija</CardTitle>
-                <CardDescription>Pievienojiet bildes savai galerijai</CardDescription>
+                <CardDescription>
+                  {profile.gallery?.length || 0} / {
+                    getPlanFeatures(profile.plan).maxGalleryPhotos === -1 
+                      ? '∞' 
+                      : getPlanFeatures(profile.plan).maxGalleryPhotos
+                  } bildes izmantotās
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-3 mb-4">
@@ -580,9 +601,18 @@ export default function ProfessionalSettings() {
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
-                  disabled={uploadingImage}
+                  disabled={uploadingImage || (
+                    getPlanFeatures(profile.plan).maxGalleryPhotos !== -1 && 
+                    (profile.gallery?.length || 0) >= getPlanFeatures(profile.plan).maxGalleryPhotos
+                  )}
                 />
                 {uploadingImage && <p className="text-sm text-muted-foreground mt-2">Augšupielādē...</p>}
+                {getPlanFeatures(profile.plan).maxGalleryPhotos !== -1 && 
+                  (profile.gallery?.length || 0) >= getPlanFeatures(profile.plan).maxGalleryPhotos && (
+                  <p className="text-sm text-amber-600 mt-2">
+                    Esat sasniedzis galerijas limits. Izvēlieties augstāka līmeņa plānu, lai pievienotu vairāk bilžu.
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
