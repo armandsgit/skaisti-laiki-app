@@ -40,9 +40,13 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
   const [timeRanges, setTimeRanges] = useState<TimeRange[]>([{ start: "09:00", end: "17:00" }]);
   const [editingException, setEditingException] = useState<ScheduleException | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<string>('free');
+  const [monthlyExceptionCount, setMonthlyExceptionCount] = useState<number>(0);
+  const [exceptionLimit, setExceptionLimit] = useState<number>(3);
 
   useEffect(() => {
     loadExceptions();
+    loadPlanLimits();
   }, [professionalId, staffMemberId]);
 
   const loadExceptions = async () => {
@@ -67,6 +71,21 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
         ...item,
         time_ranges: (item.time_ranges as any) as TimeRange[] | null
       })));
+      
+      // Count exceptions for current month
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const endOfMonth = new Date(startOfMonth);
+      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+      
+      const monthlyExceptions = (data || []).filter(exc => {
+        const excDate = new Date(exc.exception_date);
+        return excDate >= startOfMonth && excDate < endOfMonth;
+      });
+      
+      setMonthlyExceptionCount(monthlyExceptions.length);
     } catch (error) {
       console.error("Error loading exceptions:", error);
       toast.error("Kļūda ielādējot izņēmumus");
@@ -74,8 +93,45 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
       setIsLoading(false);
     }
   };
+  
+  const loadPlanLimits = async () => {
+    try {
+      const { data: profileData } = await supabase
+        .from('professional_profiles')
+        .select('plan')
+        .eq('id', professionalId)
+        .single();
+      
+      if (profileData) {
+        const plan = profileData.plan || 'free';
+        setCurrentPlan(plan);
+        
+        // Set exception limits based on plan
+        const limits: Record<string, number> = {
+          free: 3,
+          starteris: 10,
+          pro: 30,
+          bizness: -1 // unlimited
+        };
+        setExceptionLimit(limits[plan] || 3);
+      }
+    } catch (error) {
+      console.error('Error loading plan limits:', error);
+    }
+  };
 
   const handleOpenDialog = (exception?: ScheduleException) => {
+    // Check if user can add more exceptions (only when creating new, not editing)
+    if (!exception && exceptionLimit !== -1 && monthlyExceptionCount >= exceptionLimit) {
+      toast.error(`Jūsu plāns atļauj tikai ${exceptionLimit} izņēmumu dienas mēnesī`, {
+        action: {
+          label: 'Uzlabot plānu',
+          onClick: () => window.location.href = '/abonesana'
+        }
+      });
+      return;
+    }
+    
     if (exception) {
       setEditingException(exception);
       setSelectedDate(new Date(exception.exception_date));
@@ -225,11 +281,19 @@ export function ScheduleExceptionsManager({ professionalId, staffMemberId }: Sch
     <Card className="border-0 shadow-card">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-h4 font-heading">Izņēmumu dienas</CardTitle>
+          <div>
+            <CardTitle className="text-h4 font-heading">Izņēmumu dienas</CardTitle>
+            {exceptionLimit !== -1 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Šajā mēnesī izmantoti: {monthlyExceptionCount}/{exceptionLimit}
+              </p>
+            )}
+          </div>
           <Button
             onClick={() => handleOpenDialog()}
             size="sm"
             className="gap-2"
+            disabled={exceptionLimit !== -1 && monthlyExceptionCount >= exceptionLimit}
           >
             <Plus className="w-4 h-4" />
             Pievienot izņēmumu

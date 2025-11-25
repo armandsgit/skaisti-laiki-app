@@ -297,23 +297,23 @@ export function requireActiveSubscription(
 
 export const planLimits = {
   free: {
-    maxServices: 1,
+    maxServices: 3,
     maxStaffMembers: 1,
     maxPhotos: 3,
     emailCreditsIncluded: 0,
     priority: 3
   },
   starteris: {
-    maxServices: 5,
+    maxServices: 10,
     maxStaffMembers: 3,
     maxPhotos: 10,
     emailCreditsIncluded: 200,
     priority: 2
   },
   pro: {
-    maxServices: 20,
+    maxServices: 25,
     maxStaffMembers: 10,
-    maxPhotos: 50,
+    maxPhotos: 30,
     emailCreditsIncluded: 1000,
     priority: 1
   },
@@ -327,7 +327,7 @@ export const planLimits = {
 };
 
 export function canAddService(plan: string, currentCount: number): boolean {
-  const limit = planLimits[plan as keyof typeof planLimits]?.maxServices || 1;
+  const limit = planLimits[plan as keyof typeof planLimits]?.maxServices || 3;
   return limit === -1 || currentCount < limit;
 }
 
