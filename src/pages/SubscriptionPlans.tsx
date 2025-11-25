@@ -4,8 +4,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check } from 'lucide-react';
+import { Check, X, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const plans = [
   {
@@ -70,12 +80,84 @@ const plans = [
   },
 ];
 
+// Plan hierarchy for comparison
+const planHierarchy = {
+  'free': 0,
+  'starteris': 1,
+  'pro': 2,
+  'bizness': 3
+};
+
+// Features lost when downgrading to each plan
+const planDowngradeWarnings: Record<string, { features: string[]; credits: string }> = {
+  'free': {
+    credits: 'pašreizējie 200 kredīti tiks atiestatīti uz 0',
+    features: [
+      'E-pasta automātiku - automātiskie rezervāciju apstiprināšumi un atgādinājumi',
+      'Statistiku - detalizēta analītika par rezervācijām un ieņēmumiem',
+      'Pakalpojumu limits - maksimums 5 pakalpojumi (bija 15+)',
+      'Galerijas limits - maksimums 3 bildes (bija 10+)',
+      'Kalendāra pieejamība - tikai 7 dienas (bija 30+ dienas)',
+      'Papildus meistarus - paliks tikai 1 meistars',
+      'Esošos e-pasta kredītus - pašreizējie 200 kredīti tiks atiestatīti uz 0'
+    ]
+  },
+  'starteris': {
+    credits: 'pašreizējie 1000 kredīti tiks atiestatīti uz 200',
+    features: [
+      'SMS integrāciju - automātiskie SMS paziņojumi',
+      'Pilnu statistiku - detalizēta analītika par rezervācijām',
+      'Pakalpojumu limits - maksimums 5 pakalpojumi (bija neierobežoti)',
+      'Galerijas limits - maksimums 5 bildes (bija 10)',
+      'Meistaru limits - maksimums 3 meistari (bija 10)',
+      'Esošos e-pasta kredītus - pašreizējie 1000 kredīti tiks atiestatīti uz 200'
+    ]
+  },
+  'pro': {
+    credits: 'pašreizējie 5000 kredīti tiks atiestatīti uz 1000',
+    features: [
+      'API piekļuvi - iespēju integrēt citas sistēmas',
+      'VIP atbalstu 24/7 - prioritāru klientu apkalpošanu',
+      'Mārketinga rīkus - papildus reklāmas iespējas',
+      'Meistaru limits - maksimums 10 meistari (bija neierobežoti)',
+      'Esošos e-pasta kredītus - pašreizējie 5000 kredīti tiks atiestatīti uz 1000'
+    ]
+  }
+};
+
 export default function SubscriptionPlans() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<string>('free');
+  const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
+  const [targetPlan, setTargetPlan] = useState<string | null>(null);
+
+  // Fetch current user's plan
+  useEffect(() => {
+    const fetchCurrentPlan = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from('professional_profiles')
+          .select('plan')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile?.plan) {
+          setCurrentPlan(profile.plan);
+        }
+      } catch (error) {
+        console.error('Error fetching current plan:', error);
+      }
+    };
+
+    fetchCurrentPlan();
+  }, []);
 
   useEffect(() => {
     const verifySubscription = async () => {
@@ -150,6 +232,29 @@ export default function SubscriptionPlans() {
 
     verifySubscription();
   }, [searchParams, navigate, toast]);
+
+  const isDowngrade = (fromPlan: string, toPlan: string) => {
+    return planHierarchy[fromPlan as keyof typeof planHierarchy] > planHierarchy[toPlan as keyof typeof planHierarchy];
+  };
+
+  const handlePlanClick = (planId: string) => {
+    // Check if it's a downgrade
+    if (isDowngrade(currentPlan, planId)) {
+      setTargetPlan(planId);
+      setShowDowngradeWarning(true);
+    } else {
+      // If upgrade or same plan, proceed directly
+      handleActivate(planId);
+    }
+  };
+
+  const handleConfirmDowngrade = () => {
+    if (targetPlan) {
+      setShowDowngradeWarning(false);
+      handleActivate(targetPlan);
+      setTargetPlan(null);
+    }
+  };
 
   const handleActivate = async (planId: string) => {
     console.log('🚀 === SUBSCRIPTION ACTIVATION START ===');
@@ -316,24 +421,66 @@ export default function SubscriptionPlans() {
                   <Button
                     className="w-full"
                     variant="outline"
-                    disabled
+                    disabled={currentPlan === 'free'}
+                    onClick={() => handlePlanClick(plan.id)}
                   >
-                    Pašreizējais plāns
+                    {currentPlan === 'free' ? 'Pašreizējais plāns' : 'Pāriet uz FREE'}
                   </Button>
                 ) : (
                   <Button
                     className="w-full"
                     variant={plan.recommended ? 'default' : 'outline'}
-                    onClick={() => handleActivate(plan.id)}
-                    disabled={loading !== null}
+                    onClick={() => handlePlanClick(plan.id)}
+                    disabled={loading !== null || currentPlan === plan.id}
                   >
-                    {loading === plan.id ? 'Aktivizē...' : 'Aktivizēt'}
+                    {loading === plan.id ? 'Aktivizē...' : currentPlan === plan.id ? 'Pašreizējais plāns' : 'Aktivizēt'}
                   </Button>
                 )}
               </CardFooter>
             </Card>
           ))}
         </div>
+
+        {/* Downgrade Warning Modal */}
+        <AlertDialog open={showDowngradeWarning} onOpenChange={setShowDowngradeWarning}>
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-6 w-6 text-amber-500" />
+                <AlertDialogTitle className="text-xl">
+                  Pāriet uz {plans.find(p => p.id === targetPlan)?.name} plānu?
+                </AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="text-left space-y-4">
+                <p className="font-medium text-foreground">
+                  Pārejot uz {plans.find(p => p.id === targetPlan)?.name} plānu, jūs zaudēsiet:
+                </p>
+                
+                <div className="space-y-2">
+                  {targetPlan && planDowngradeWarnings[targetPlan]?.features.map((feature, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <X className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-muted-foreground">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-sm font-medium text-amber-600 bg-amber-50 p-3 rounded-lg">
+                  Vai tiešām vēlaties turpināt?
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Atcelt</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDowngrade}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Jā, pāriet uz {plans.find(p => p.id === targetPlan)?.name}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
