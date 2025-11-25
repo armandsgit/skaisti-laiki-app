@@ -135,7 +135,7 @@ const Auth = () => {
         }
         
         toast.success(t.registerSuccess);
-        navigate('/onboarding');
+        navigate('/onboarding/profile-photo');
       } else {
         toast.success(t.registerSuccess);
         navigate('/');
