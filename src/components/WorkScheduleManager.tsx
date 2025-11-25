@@ -78,16 +78,54 @@ const WorkScheduleManager = ({ professionalId, staffMemberId }: WorkScheduleMana
         if (servicesError) throw servicesError;
         setServices(servicesData || []);
       } else {
-        // For professional without staff member, load all services
-        const { data, error } = await supabase
+        // For professional owner, get their staff member ID and load services via master_services
+        const { data: ownerStaff, error: staffError } = await supabase
+          .from('staff_members')
+          .select('id')
+          .eq('professional_id', professionalId)
+          .eq('position', 'Īpašnieks')
+          .maybeSingle();
+
+        if (staffError) throw staffError;
+
+        if (!ownerStaff) {
+          // Fallback: load all services without staff_member_id
+          const { data, error } = await supabase
+            .from('services')
+            .select('*')
+            .eq('professional_id', professionalId)
+            .is('staff_member_id', null)
+            .order('name');
+
+          if (error) throw error;
+          setServices(data || []);
+          return;
+        }
+
+        // Load services assigned to owner via master_services
+        const { data: masterServices, error: msError } = await supabase
+          .from('master_services')
+          .select('service_id')
+          .eq('staff_member_id', ownerStaff.id);
+
+        if (msError) throw msError;
+
+        const serviceIds = masterServices?.map(ms => ms.service_id) || [];
+
+        if (serviceIds.length === 0) {
+          setServices([]);
+          return;
+        }
+
+        const { data: servicesData, error: servicesError } = await supabase
           .from('services')
           .select('*')
           .eq('professional_id', professionalId)
-          .is('staff_member_id', null)
+          .in('id', serviceIds)
           .order('name');
 
-        if (error) throw error;
-        setServices(data || []);
+        if (servicesError) throw servicesError;
+        setServices(servicesData || []);
       }
     } catch (error) {
       console.error('Error loading services:', error);
