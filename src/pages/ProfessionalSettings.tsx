@@ -509,10 +509,6 @@ export default function ProfessionalSettings() {
                   <p className="text-sm text-muted-foreground">Pilsēta</p>
                   <p className="font-semibold">{profile.city}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Reitings</p>
-                  <p className="font-semibold">{profile.rating?.toFixed(1) || '0.0'} ({profile.total_reviews || 0} atsauksmes)</p>
-                </div>
                 {profile.address && (
                   <div>
                     <p className="text-sm text-muted-foreground">Adrese</p>
