@@ -264,13 +264,23 @@ export default function SubscriptionPlans() {
     console.log('Current plan:', currentPlan);
     console.log('Loading plan:', loadingPlan);
     
+    // Don't proceed if plan is still loading
+    if (loadingPlan || !currentPlan) {
+      console.log('❌ Plan still loading or not set, blocking action');
+      toast({
+        title: 'Lūdzu uzgaidi',
+        description: 'Ielādē pašreizējo plānu...',
+        variant: 'default',
+      });
+      return;
+    }
+    
     // Check if it's a downgrade
     const isDowngradeResult = isDowngrade(currentPlan, planId);
     console.log('Is downgrade result:', isDowngradeResult);
     
     if (isDowngradeResult) {
       console.log('✅ Opening downgrade warning modal');
-      alert(`DEBUG: Downgrade detected from ${currentPlan} to ${planId}`); // Temporary debug
       setTargetPlan(planId);
       setShowDowngradeWarning(true);
     } else {
