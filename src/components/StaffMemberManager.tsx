@@ -483,9 +483,9 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
               return (
                 <div
                   key={staff.id}
-                  className={`flex items-center gap-3 p-3 border-2 rounded-lg transition-all relative group ${
+                  className={`flex items-center gap-3 p-3 border-2 rounded-lg transition-all relative ${
                     isOverLimit 
-                      ? 'opacity-40 cursor-not-allowed bg-muted/20 border-border/30'
+                      ? 'opacity-40 bg-muted/20 border-border/30'
                       : `cursor-pointer ${
                           isSelected
                             ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
@@ -523,29 +523,35 @@ const StaffMemberManager = ({ professionalId, onSelectStaffMember, selectedStaff
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEdit(staff);
-                    }}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(staff.id);
-                    }}
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                {isOverLimit ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-medium">Nepieejams pašreizējā plānā</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(staff);
+                      }}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(staff.id);
+                      }}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             );
             })}
