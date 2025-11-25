@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { serviceSchema } from '@/lib/validation';
 import SubscriptionStatusIndicator from '@/components/SubscriptionStatusIndicator';
 import WorkScheduleManager from '@/components/WorkScheduleManager';
+import { ScheduleExceptionsManager } from '@/components/ScheduleExceptionsManager';
 import StaffMemberManager from '@/components/StaffMemberManager';
 import { DashboardStats } from '@/components/DashboardStats';
 import { UpcomingBookingCard } from '@/components/UpcomingBookingCard';
@@ -1739,7 +1740,7 @@ const ProfessionalDashboard = () => {
             />
 
             {selectedStaffMember && (
-              <div className="mt-6">
+              <div className="mt-6 space-y-4">
                 <Button
                   variant="outline"
                   onClick={() => setSelectedStaffMember(null)}
@@ -1748,6 +1749,10 @@ const ProfessionalDashboard = () => {
                   ← Atpakaļ
                 </Button>
                 <WorkScheduleManager
+                  professionalId={profile.id}
+                  staffMemberId={selectedStaffMember}
+                />
+                <ScheduleExceptionsManager
                   professionalId={profile.id}
                   staffMemberId={selectedStaffMember}
                 />
