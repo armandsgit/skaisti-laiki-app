@@ -165,99 +165,116 @@ serve(async (req) => {
     if (event.type === 'customer.subscription.updated') {
       const subscription = event.data.object as Stripe.Subscription;
       
-      console.log(`Subscription updated - status: ${subscription.status}`);
+      console.log(`Subscription updated - status: ${subscription.status}, customer: ${subscription.customer}`);
 
-      const { data: professional } = await supabase
+      // Try to find professional by subscription_id first, then by customer_id
+      let { data: professional } = await supabase
         .from('professional_profiles')
         .select('id')
         .eq('stripe_subscription_id', subscription.id)
-        .single();
+        .maybeSingle();
 
-      if (professional) {
-        // If subscription is canceled, downgrade to free immediately
-        if (subscription.status === 'canceled') {
-          console.log(`Subscription canceled - downgrading professional ${professional.id} to FREE`);
-          
-          await supabase
-            .from('professional_profiles')
-            .update({
-              plan: 'free',
-              subscription_status: 'inactive',
-              subscription_end_date: null,
-              stripe_subscription_id: null,
-              subscription_last_changed: new Date().toISOString(),
-            })
-            .eq('id', professional.id);
+      // Fallback to customer_id if subscription_id lookup fails
+      if (!professional) {
+        const result = await supabase
+          .from('professional_profiles')
+          .select('id')
+          .eq('stripe_customer_id', subscription.customer as string)
+          .maybeSingle();
+        professional = result.data;
+      }
 
-          // Reset email credits to 0
+      if (!professional) {
+        console.error(`Professional not found for subscription ${subscription.id} or customer ${subscription.customer}`);
+        return new Response(JSON.stringify({ error: 'Professional not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // If subscription is canceled, downgrade to free immediately
+      if (subscription.status === 'canceled') {
+        console.log(`Subscription canceled - downgrading professional ${professional.id} to FREE`);
+        
+        await supabase
+          .from('professional_profiles')
+          .update({
+            plan: 'free',
+            subscription_status: 'inactive',
+            subscription_end_date: null,
+            stripe_subscription_id: null,
+            subscription_last_changed: new Date().toISOString(),
+          })
+          .eq('id', professional.id);
+
+        // Reset email credits to 0
+        await supabase
+          .from('email_credits')
+          .update({
+            credits: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('master_id', professional.id);
+
+        // Close subscription history
+        await supabase
+          .from('subscription_history')
+          .update({ ended_at: new Date().toISOString() })
+          .eq('professional_id', professional.id)
+          .eq('stripe_subscription_id', subscription.id)
+          .is('ended_at', null);
+
+        console.log(`Professional ${professional.id} downgraded to FREE - all data preserved, limits enforced by UI`);
+      } else {
+        // Handle regular plan updates (active, past_due, etc.)
+        const priceId = subscription.items.data[0].price.id;
+        const plan = PRICE_ID_TO_PLAN[priceId] || 'free';
+        const credits = PLAN_CREDITS[plan] || 0;
+
+        console.log(`Subscription updated to ${plan} plan (price: ${priceId}, status: ${subscription.status})`);
+
+        await supabase
+          .from('professional_profiles')
+          .update({
+            plan: plan,
+            subscription_status: subscription.status === 'active' ? 'active' : subscription.status,
+            subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+            subscription_last_changed: new Date().toISOString(),
+          })
+          .eq('id', professional.id);
+
+        // Replace email credits with new plan allocation (unless past_due)
+        if (subscription.status !== 'past_due') {
           await supabase
             .from('email_credits')
-            .update({
-              credits: 0,
+            .upsert({
+              master_id: professional.id,
+              credits: credits,
               updated_at: new Date().toISOString()
-            })
-            .eq('master_id', professional.id);
-
-          // Close subscription history
-          await supabase
-            .from('subscription_history')
-            .update({ ended_at: new Date().toISOString() })
-            .eq('professional_id', professional.id)
-            .eq('stripe_subscription_id', subscription.id)
-            .is('ended_at', null);
-
-          console.log(`Professional ${professional.id} downgraded to FREE plan due to cancellation`);
-        } else {
-          // Handle regular plan updates (active, past_due, etc.)
-          const priceId = subscription.items.data[0].price.id;
-          const plan = PRICE_ID_TO_PLAN[priceId] || 'free';
-          const credits = PLAN_CREDITS[plan] || 0;
-
-          console.log(`Subscription updated to ${plan} plan (price: ${priceId}, status: ${subscription.status})`);
-
-          await supabase
-            .from('professional_profiles')
-            .update({
-              plan: plan,
-              subscription_status: subscription.status === 'active' ? 'active' : subscription.status,
-              subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
-              subscription_last_changed: new Date().toISOString(),
-            })
-            .eq('id', professional.id);
-
-          // Replace email credits with new plan allocation (unless past_due)
-          if (subscription.status !== 'past_due') {
-            await supabase
-              .from('email_credits')
-              .upsert({
-                master_id: professional.id,
-                credits: credits,
-                updated_at: new Date().toISOString()
-              });
-          }
-
-          // Plan limits enforced by UI only - no staff deactivation on plan change
-
-          // Close old subscription history and create new one
-          await supabase
-            .from('subscription_history')
-            .update({ ended_at: new Date().toISOString() })
-            .eq('professional_id', professional.id)
-            .eq('stripe_subscription_id', subscription.id)
-            .is('ended_at', null);
-
-          await supabase
-            .from('subscription_history')
-            .insert({
-              professional_id: professional.id,
-              plan: plan,
-              status: subscription.status,
-              stripe_subscription_id: subscription.id,
-              started_at: new Date().toISOString(),
             });
-
-          console.log(`Updated to ${plan} plan with ${credits} credits (status: ${subscription.status})`);
         }
+
+        // Plan limits enforced by UI only - no staff deactivation on plan change
+
+        // Close old subscription history and create new one
+        await supabase
+          .from('subscription_history')
+          .update({ ended_at: new Date().toISOString() })
+          .eq('professional_id', professional.id)
+          .eq('stripe_subscription_id', subscription.id)
+          .is('ended_at', null);
+
+        await supabase
+          .from('subscription_history')
+          .insert({
+            professional_id: professional.id,
+            plan: plan,
+            status: subscription.status,
+            stripe_subscription_id: subscription.id,
+            started_at: new Date().toISOString(),
+          });
+
+        console.log(`Updated to ${plan} plan with ${credits} credits (status: ${subscription.status})`);
       }
     }
 
@@ -312,48 +329,63 @@ serve(async (req) => {
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
 
-      console.log('Subscription cancelled:', subscription.id);
+      console.log(`Subscription deleted: ${subscription.id}, customer: ${subscription.customer}`);
 
-      const { data: professional } = await supabase
+      // Try to find professional by subscription_id first, then by customer_id
+      let { data: professional } = await supabase
         .from('professional_profiles')
         .select('id')
         .eq('stripe_subscription_id', subscription.id)
-        .single();
+        .maybeSingle();
 
-      if (professional) {
-        // Downgrade to FREE
-        await supabase
+      // Fallback to customer_id if subscription_id lookup fails
+      if (!professional) {
+        const result = await supabase
           .from('professional_profiles')
-          .update({
-            plan: 'free',
-            subscription_status: 'inactive',
-            subscription_end_date: null,
-            stripe_subscription_id: null,
-            subscription_last_changed: new Date().toISOString(),
-          })
-          .eq('id', professional.id);
-
-        // Reset email credits to 0
-        await supabase
-          .from('email_credits')
-          .update({
-            credits: 0,
-            updated_at: new Date().toISOString()
-          })
-          .eq('master_id', professional.id);
-
-        // Plan limits enforced by UI only - no staff deactivation on cancellation
-
-        // Close subscription history
-        await supabase
-          .from('subscription_history')
-          .update({ ended_at: new Date().toISOString() })
-          .eq('professional_id', professional.id)
-          .eq('stripe_subscription_id', subscription.id)
-          .is('ended_at', null);
-
-        console.log(`Downgraded professional ${professional.id} to FREE plan`);
+          .select('id')
+          .eq('stripe_customer_id', subscription.customer as string)
+          .maybeSingle();
+        professional = result.data;
       }
+
+      if (!professional) {
+        console.error(`Professional not found for subscription ${subscription.id} or customer ${subscription.customer}`);
+        return new Response(JSON.stringify({ error: 'Professional not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Downgrade to FREE - preserve ALL data
+      await supabase
+        .from('professional_profiles')
+        .update({
+          plan: 'free',
+          subscription_status: 'inactive',
+          subscription_end_date: null,
+          stripe_subscription_id: null,
+          subscription_last_changed: new Date().toISOString(),
+        })
+        .eq('id', professional.id);
+
+      // Reset email credits to 0
+      await supabase
+        .from('email_credits')
+        .update({
+          credits: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('master_id', professional.id);
+
+      // Close subscription history
+      await supabase
+        .from('subscription_history')
+        .update({ ended_at: new Date().toISOString() })
+        .eq('professional_id', professional.id)
+        .eq('stripe_subscription_id', subscription.id)
+        .is('ended_at', null);
+
+      console.log(`Professional ${professional.id} downgraded to FREE - all masters/services/data preserved, limits enforced by UI`);
     }
 
     // Handle invoice.payment_failed
@@ -363,11 +395,22 @@ serve(async (req) => {
       if (invoice.subscription) {
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
 
-        const { data: professional } = await supabase
+        // Try to find professional by subscription_id first, then by customer_id
+        let { data: professional } = await supabase
           .from('professional_profiles')
           .select('id')
           .eq('stripe_subscription_id', subscription.id)
-          .single();
+          .maybeSingle();
+
+        // Fallback to customer_id if subscription_id lookup fails
+        if (!professional) {
+          const result = await supabase
+            .from('professional_profiles')
+            .select('id')
+            .eq('stripe_customer_id', subscription.customer as string)
+            .maybeSingle();
+          professional = result.data;
+        }
 
         if (professional) {
           await supabase
@@ -377,7 +420,9 @@ serve(async (req) => {
             })
             .eq('id', professional.id);
 
-          console.log(`Payment failed for professional ${professional.id}`);
+          console.log(`Payment failed for professional ${professional.id} - status set to past_due`);
+        } else {
+          console.error(`Professional not found for subscription ${subscription.id} or customer ${subscription.customer}`);
         }
       }
     }
