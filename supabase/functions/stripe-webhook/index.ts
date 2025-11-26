@@ -93,6 +93,7 @@ async function downgradeProfessionalToFree(
       subscription_end_date: null,
       stripe_subscription_id: null,
       subscription_last_changed: new Date().toISOString(),
+      is_cancelled: false, // Reset cancellation flag
     })
     .eq('id', professionalId);
 
@@ -140,6 +141,7 @@ async function updateProfessionalSubscription(
       subscription_status: subscriptionStatus,
       subscription_end_date: subscriptionEndDate,
       subscription_last_changed: new Date().toISOString(),
+      is_cancelled: false, // Reset cancellation flag on active update
     })
     .eq('id', professionalId);
 
@@ -378,7 +380,7 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = subscription.customer as string;
 
-      console.log(`🔄 Subscription updated - status: ${subscription.status}`);
+      console.log(`🔄 Subscription updated - status: ${subscription.status}, cancel_at_period_end: ${subscription.cancel_at_period_end}`);
 
       const professional = await findProfessional(supabase, subscription.id, customerId);
       
@@ -390,9 +392,31 @@ serve(async (req) => {
         });
       }
 
-      // Check if subscription is canceled or scheduled for cancellation
-      if (subscription.status === 'canceled' || subscription.cancel_at_period_end) {
-        console.log(`⚠️ Subscription canceled or scheduled for cancellation`);
+      // CASE A: User cancelled subscription but it's still active until period end
+      if (subscription.cancel_at_period_end && subscription.status === 'active') {
+        console.log(`⏳ Subscription cancelled but active until period end`);
+        const endDate = safeTimestampToISO(subscription.current_period_end);
+        
+        // Keep current plan active, just mark as cancelled
+        await supabase
+          .from('professional_profiles')
+          .update({
+            is_cancelled: true,
+            subscription_end_date: endDate,
+            subscription_last_changed: new Date().toISOString(),
+          })
+          .eq('id', professional.id);
+
+        console.log(`✅ Marked as cancelled, remains active until ${endDate}`);
+        return new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // CASE B: Subscription fully canceled
+      if (subscription.status === 'canceled') {
+        console.log(`🗑️ Subscription fully canceled - downgrading to FREE`);
         await downgradeProfessionalToFree(supabase, professional.id, subscription.id);
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
@@ -400,21 +424,36 @@ serve(async (req) => {
         });
       }
 
-      // Handle active subscription updates
+      // CASE C: Payment failed - mark as past_due but DON'T downgrade
+      if (subscription.status === 'past_due') {
+        console.log(`⚠️ Payment past due - keeping plan active`);
+        await supabase
+          .from('professional_profiles')
+          .update({
+            subscription_status: 'past_due',
+          })
+          .eq('id', professional.id);
+
+        return new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // CASE D: Active subscription (upgrade/downgrade/renewal)
       const priceId = subscription.items?.data?.[0]?.price?.id;
       const plan = (priceId && PRICE_ID_TO_PLAN[priceId]) || 'free';
       const endDate = safeTimestampToISO(subscription.current_period_end);
 
-      // Update subscription (replace credits for plan changes, not past_due)
-      const shouldReplaceCredits = subscription.status !== 'past_due';
+      // Update subscription (replace credits for plan changes)
       await updateProfessionalSubscription(
         supabase,
         professional.id,
         plan,
-        subscription.status === 'active' ? 'active' : subscription.status,
+        'active',
         endDate,
         subscription.id,
-        shouldReplaceCredits
+        true // Replace credits on active plan change
       );
 
       return new Response(JSON.stringify({ received: true }), {

@@ -11,6 +11,7 @@ interface SubscriptionBannerProps {
   plan: string | null;
   subscriptionEndDate: string | null;
   emailCredits: number;
+  isCancelled?: boolean;
 }
 
 export const SubscriptionBanner = ({
@@ -18,6 +19,7 @@ export const SubscriptionBanner = ({
   plan,
   subscriptionEndDate,
   emailCredits,
+  isCancelled = false,
 }: SubscriptionBannerProps) => {
   const navigate = useNavigate();
   const hasActiveSubscription = subscriptionStatus === 'active';
@@ -42,6 +44,21 @@ export const SubscriptionBanner = ({
       return 'Nav pieejams';
     }
   };
+
+  const calculateRemainingDays = (endDate: string | null) => {
+    if (!endDate) return 0;
+    try {
+      const end = new Date(endDate);
+      const now = new Date();
+      const diffTime = end.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(0, diffDays);
+    } catch {
+      return 0;
+    }
+  };
+
+  const remainingDays = calculateRemainingDays(subscriptionEndDate);
 
   // Show warning banner for past_due status
   if (isPastDue) {
@@ -91,6 +108,60 @@ export const SubscriptionBanner = ({
     );
   }
 
+  // Show cancelled banner (subscription active until period end)
+  if (hasActiveSubscription && isCancelled) {
+    const isNearExpiry = remainingDays < 5;
+    return (
+      <Card className={`mb-6 border-amber-500/50 ${isNearExpiry ? 'bg-amber-50/50 dark:bg-amber-950/20' : 'bg-card'} shadow-card`}>
+        <CardContent className="p-5">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className={`p-2.5 rounded-xl ${isNearExpiry ? 'bg-amber-500' : 'bg-amber-500/20'}`}>
+                <AlertCircle className={`w-5 h-5 ${isNearExpiry ? 'text-white' : 'text-amber-600'} stroke-[2]`} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  Jūsu abonements: {getPlanDisplayName(plan)} plāns
+                </h3>
+                <p className={`text-sm ${isNearExpiry ? 'text-amber-700 dark:text-amber-400 font-medium' : 'text-muted-foreground'} mb-2`}>
+                  {isNearExpiry && '⚠️ '} Abonements beigsies: {formatNextBillingDate(subscriptionEndDate)}
+                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant={isNearExpiry ? "destructive" : "secondary"} className="text-xs font-medium">
+                    Atlikušās dienas: {remainingDays}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs font-medium">
+                    E-pasta kredīti: {emailCredits}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate('/abonesana')}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Atjaunot abonementu
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/billing')}
+                className="gap-2"
+              >
+                <CreditCard className="w-4 h-4" />
+                Rēķini
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (hasActiveSubscription) {
     return (
       <Card className="mb-6 border-border/50 bg-card shadow-card">
@@ -102,14 +173,19 @@ export const SubscriptionBanner = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground mb-1">
-                  Jūsu plāns: {getPlanDisplayName(plan)}
+                  Jūsu abonements: {getPlanDisplayName(plan)} plāns
                 </h3>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Aktīvs. Nākamā maksa: {formatNextBillingDate(subscriptionEndDate)}
+                  Nākamais maksājums: {formatNextBillingDate(subscriptionEndDate)}
                 </p>
-                <Badge variant="secondary" className="text-xs font-medium">
-                  Atlikušais e-pasta apjoms: {emailCredits} kredīti
-                </Badge>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    Atlikušās dienas: {remainingDays}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs font-medium">
+                    E-pasta kredīti: {emailCredits}
+                  </Badge>
+                </div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
