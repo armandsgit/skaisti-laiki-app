@@ -100,16 +100,76 @@ export default function Abonesana() {
     loadCurrentPlan();
   }, []);
 
+  // Real-time subscription to professional_profiles changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('subscription-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'professional_profiles',
+        },
+        (payload) => {
+          console.log('Subscription changed:', payload);
+          // Force immediate refresh
+          loadCurrentPlan();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Detect return from Stripe and force immediate refresh
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionSuccess = urlParams.get('session_success');
+    const subscriptionUpdated = urlParams.get('subscription_updated');
+    
+    if (sessionSuccess === 'true' || subscriptionUpdated === 'true') {
+      console.log('Returned from Stripe, forcing refresh...');
+      
+      // Immediate refresh
+      loadCurrentPlan();
+      
+      // Retry after 2 seconds to catch delayed webhook updates
+      setTimeout(() => {
+        loadCurrentPlan();
+      }, 2000);
+      
+      // Final retry after 4 seconds
+      setTimeout(() => {
+        loadCurrentPlan();
+      }, 4000);
+      
+      // Show success message
+      toast({
+        title: 'Abonements atjaunināts',
+        description: 'Jūsu plāns tika veiksmīgi mainīts!',
+      });
+      
+      // Clean up URL
+      window.history.replaceState({}, '', '/abonesana');
+    }
+  }, []);
+
   const loadCurrentPlan = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Force fresh fetch without cache
       const { data: profile } = await supabase
         .from('professional_profiles')
         .select('id, plan, subscription_status, stripe_subscription_id')
         .eq('user_id', user.id)
         .single();
+
+      console.log('Fetched fresh plan data:', profile);
 
       if (profile) {
         // Fix inconsistent state: if subscription is "active" but no Stripe ID, reset to inactive

@@ -20,6 +20,30 @@ export default function Billing() {
     loadBillingData();
   }, []);
 
+  // Real-time subscription to professional_profiles changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('billing-subscription-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'professional_profiles',
+        },
+        (payload) => {
+          console.log('Billing data changed:', payload);
+          // Force immediate refresh
+          loadBillingData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const loadBillingData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -28,12 +52,14 @@ export default function Billing() {
         return;
       }
 
-      // Get professional profile
+      // Get professional profile - force fresh fetch
       const { data: profile } = await supabase
         .from('professional_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+      console.log('Fetched fresh billing data:', profile);
 
       if (profile) {
         setProfessionalData(profile);

@@ -115,12 +115,17 @@ const ProfessionalDashboard = () => {
         toast.success('Abonēšanas plāns veiksmīgi aktivizēts!');
       }
       
-      // Force reload profile and credits after webhook processes
+      // Force immediate reload
       const reloadData = async () => {
-        // Wait for webhook to process (increased to 3 seconds)
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // First immediate reload
+        await loadProfile();
         
-        // Reload profile
+        // Retry after 2 seconds
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await loadProfile();
+        
+        // Final retry after 4 seconds to catch delayed webhooks
+        await new Promise(resolve => setTimeout(resolve, 2000));
         await loadProfile();
         
         // Force reload email credits
@@ -141,6 +146,34 @@ const ProfessionalDashboard = () => {
       navigate('/professional', { replace: true });
     }
   }, [searchParams, user?.id]);
+
+  // Real-time subscription to professional_profiles changes
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const channel = supabase
+      .channel('dashboard-subscription-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'professional_profiles',
+          filter: `id=eq.${profile.id}`
+        },
+        (payload) => {
+          console.log('Dashboard: Subscription changed:', payload);
+          // Force immediate refresh
+          loadProfile();
+          loadEmailCredits();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
 
   // Handle tab query parameter and refresh data when returning to dashboard
   useEffect(() => {
@@ -246,11 +279,14 @@ const ProfessionalDashboard = () => {
       avatar: userData?.avatar || ''
     });
     
+    // Force fresh fetch without cache
     const { data, error } = await supabase
       .from('professional_profiles')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
+
+    console.log('Dashboard: Fetched fresh profile data:', data);
     
     if (!data && !error) {
       const { data: newProfile } = await supabase
