@@ -10,7 +10,7 @@ interface SubscriptionBannerProps {
   plan: string | null;
   subscriptionEndDate: string | null;
   emailCredits: number;
-  isCancelled?: boolean;
+  subscriptionWillRenew: boolean;
 }
 
 export const SubscriptionBanner = ({
@@ -18,7 +18,7 @@ export const SubscriptionBanner = ({
   plan,
   subscriptionEndDate,
   emailCredits,
-  isCancelled = false,
+  subscriptionWillRenew,
 }: SubscriptionBannerProps) => {
   const navigate = useNavigate();
   
@@ -27,8 +27,8 @@ export const SubscriptionBanner = ({
   
   // Determine subscription state
   const pastDue = isPastDue(subscriptionStatus);
-  const cancelledButActive = isActiveCancelled(subscriptionStatus, isCancelled);
-  const fullyActive = isFullyActive(subscriptionStatus, isCancelled);
+  const cancelledButActive = isActiveCancelled(subscriptionStatus, subscriptionWillRenew);
+  const fullyActive = isFullyActive(subscriptionStatus, subscriptionWillRenew);
   const hasNoPlan = plan === 'free' || !subscriptionStatus || subscriptionStatus === 'inactive';
 
   // Show warning banner for past_due status (payment failed)

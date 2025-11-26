@@ -90,6 +90,7 @@ async function downgradeProfessionalToFree(
     .update({
       plan: 'free',
       subscription_status: 'inactive',
+      subscription_will_renew: false,
       subscription_end_date: null,
       stripe_subscription_id: null,
       subscription_last_changed: new Date().toISOString(),
@@ -311,10 +312,12 @@ serve(async (req) => {
             .update({
               plan: plan,
               subscription_status: 'active',
+              subscription_will_renew: true,
               subscription_end_date: endDate,
               stripe_subscription_id: subscriptionId,
               stripe_customer_id: session.customer as string,
               subscription_last_changed: new Date().toISOString(),
+              is_cancelled: false,
             })
             .eq('id', professionalId);
 
@@ -400,19 +403,20 @@ serve(async (req) => {
       if (subscription.cancel_at_period_end && subscription.status === 'active') {
         console.log(`⏳ Subscription cancelled but active until period end`);
         
-        // Keep current plan active, mark as canceled_at_period_end
+        // Keep current plan active, set will_renew = false
         await supabase
           .from('professional_profiles')
           .update({
             plan: plan,
-            subscription_status: 'canceled_at_period_end',
+            subscription_status: 'canceled',
+            subscription_will_renew: false,
             is_cancelled: true,
             subscription_end_date: endDate,
             subscription_last_changed: new Date().toISOString(),
           })
           .eq('id', professional.id);
 
-        console.log(`✅ Marked as canceled_at_period_end, remains active until ${endDate}`);
+        console.log(`✅ Marked as canceled, will_renew=false, remains ${plan} until ${endDate}`);
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -451,19 +455,20 @@ serve(async (req) => {
       if (!subscription.cancel_at_period_end && subscription.status === 'active') {
         console.log(`✅ Subscription active - reactivated, renewed, or upgraded`);
 
-        // Update subscription to active
+        // Update subscription to active with will_renew = true
         await supabase
           .from('professional_profiles')
           .update({
             plan: plan,
             subscription_status: 'active',
+            subscription_will_renew: true,
             is_cancelled: false,
             subscription_end_date: endDate,
             subscription_last_changed: new Date().toISOString(),
           })
           .eq('id', professional.id);
 
-        console.log(`✅ Subscription updated to active: ${plan} until ${endDate}`);
+        console.log(`✅ Subscription updated to active: ${plan} until ${endDate}, will_renew=true`);
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -501,16 +506,35 @@ serve(async (req) => {
             .maybeSingle();
 
           if (professional) {
-            // Update status and add credits (not replace)
-            await updateProfessionalSubscription(
-              supabase,
-              professional.id,
-              plan,
-              'active',
-              endDate,
-              subscriptionId,
-              false // Add credits, don't replace
-            );
+            // Update status and add credits (not replace), set will_renew = true
+            await supabase
+              .from('professional_profiles')
+              .update({
+                plan: plan,
+                subscription_status: 'active',
+                subscription_will_renew: true,
+                subscription_end_date: endDate,
+                subscription_last_changed: new Date().toISOString(),
+              })
+              .eq('id', professional.id);
+
+            // Add credits for renewal
+            const credits = PLAN_CREDITS[plan] || 0;
+            const { data: currentCredits } = await supabase
+              .from('email_credits')
+              .select('credits')
+              .eq('master_id', professional.id)
+              .maybeSingle();
+
+            await supabase
+              .from('email_credits')
+              .upsert({
+                master_id: professional.id,
+                credits: (currentCredits?.credits || 0) + credits,
+                updated_at: new Date().toISOString()
+              });
+
+            console.log(`💰 Renewal successful: ${plan}, will_renew=true, +${credits} credits`);
           }
         } catch (error) {
           console.error('Error processing invoice.paid:', error);

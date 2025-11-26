@@ -54,9 +54,10 @@ export function getPlanDisplayName(planCode: string | null): string {
 
 /**
  * Check if subscription is in cancelled state but still active
+ * Uses subscription_will_renew flag for accurate detection
  */
-export function isActiveCancelled(status: string | null, isCancelled: boolean): boolean {
-  return (status === 'active' && isCancelled === true) || status === 'canceled_at_period_end';
+export function isActiveCancelled(status: string | null, willRenew: boolean | null): boolean {
+  return (status === 'active' || status === 'canceled') && willRenew === false;
 }
 
 /**
@@ -68,7 +69,8 @@ export function isPastDue(status: string | null): boolean {
 
 /**
  * Check if subscription is fully active (not cancelled, not past due)
+ * Uses subscription_will_renew flag for accurate detection
  */
-export function isFullyActive(status: string | null, isCancelled: boolean): boolean {
-  return status === 'active' && isCancelled === false;
+export function isFullyActive(status: string | null, willRenew: boolean | null): boolean {
+  return status === 'active' && willRenew === true;
 }
