@@ -89,7 +89,7 @@ async function downgradeProfessionalToFree(
     .from('professional_profiles')
     .update({
       plan: 'free',
-      subscription_status: 'inactive',
+      subscription_status: 'expired',
       subscription_end_date: null,
       stripe_subscription_id: null,
       subscription_last_changed: new Date().toISOString(),
@@ -401,6 +401,7 @@ serve(async (req) => {
         await supabase
           .from('professional_profiles')
           .update({
+            subscription_status: 'canceled_at_period_end',
             is_cancelled: true,
             subscription_end_date: endDate,
             subscription_last_changed: new Date().toISOString(),
@@ -440,22 +441,32 @@ serve(async (req) => {
         });
       }
 
-      // CASE D: Active subscription (upgrade/downgrade/renewal)
-      const priceId = subscription.items?.data?.[0]?.price?.id;
-      const plan = (priceId && PRICE_ID_TO_PLAN[priceId]) || 'free';
-      const endDate = safeTimestampToISO(subscription.current_period_end);
+      // CASE D: Subscription reactivated (cancel_at_period_end = false and status = active)
+      if (!subscription.cancel_at_period_end && subscription.status === 'active') {
+        console.log(`✅ Subscription reactivated or upgraded`);
+        const priceId = subscription.items?.data?.[0]?.price?.id;
+        const plan = (priceId && PRICE_ID_TO_PLAN[priceId]) || 'free';
+        const endDate = safeTimestampToISO(subscription.current_period_end);
 
-      // Update subscription (replace credits for plan changes)
-      await updateProfessionalSubscription(
-        supabase,
-        professional.id,
-        plan,
-        'active',
-        endDate,
-        subscription.id,
-        true // Replace credits on active plan change
-      );
+        // Update subscription (replace credits for plan changes)
+        await updateProfessionalSubscription(
+          supabase,
+          professional.id,
+          plan,
+          'active',
+          endDate,
+          subscription.id,
+          true // Replace credits on active plan change
+        );
 
+        return new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // CASE E: Other status changes - log and ignore
+      console.log(`⚠️ Unhandled subscription status: ${subscription.status}`);
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
