@@ -98,7 +98,7 @@ export const SubscriptionBanner = ({
                   Abonements beigsies: {formatSubscriptionDate(subscriptionEndDate)}
                 </p>
                 <p className="text-sm text-muted-foreground mb-2">
-                  {getPlanDisplayName(plan)} plāna funkcijas pieejamas līdz {formatSubscriptionDate(subscriptionEndDate)}
+                  {getPlanDisplayName(plan)} plāns būs aktīvs līdz perioda beigām — līdz {formatSubscriptionDate(subscriptionEndDate)}
                 </p>
                 <p className="text-sm text-amber-700 dark:text-amber-400 font-medium mb-2">
                   Pēc termiņa beigām jūsu konts automātiski tiks pārslegts uz Free plānu

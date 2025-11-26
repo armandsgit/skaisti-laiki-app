@@ -56,7 +56,7 @@ export function getPlanDisplayName(planCode: string | null): string {
  * Check if subscription is in cancelled state but still active
  */
 export function isActiveCancelled(status: string | null, isCancelled: boolean): boolean {
-  return status === 'active' && isCancelled === true;
+  return (status === 'active' && isCancelled === true) || status === 'canceled_at_period_end';
 }
 
 /**
