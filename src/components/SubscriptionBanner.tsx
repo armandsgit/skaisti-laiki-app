@@ -21,6 +21,7 @@ export const SubscriptionBanner = ({
 }: SubscriptionBannerProps) => {
   const navigate = useNavigate();
   const hasActiveSubscription = subscriptionStatus === 'active';
+  const isPastDue = subscriptionStatus === 'past_due';
 
   const getPlanDisplayName = (planCode: string | null) => {
     if (!planCode) return 'Nav plāna';
@@ -41,6 +42,54 @@ export const SubscriptionBanner = ({
       return 'Nav pieejams';
     }
   };
+
+  // Show warning banner for past_due status
+  if (isPastDue) {
+    return (
+      <Card className="mb-6 border-destructive bg-destructive/5 shadow-card">
+        <CardContent className="p-5">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-destructive/10">
+                <AlertCircle className="w-5 h-5 text-destructive stroke-[2]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-destructive mb-1">
+                  Maksājums neizdevās
+                </h3>
+                <p className="text-sm text-foreground/70 mb-2">
+                  Jūsu pēdējais maksājums nav veiksmīgs. Lūdzu atjaunojiet maksājuma informāciju, lai saglabātu plānu: {getPlanDisplayName(plan)}
+                </p>
+                <Badge variant="destructive" className="text-xs font-medium">
+                  Ierobežotas funkcijas līdz maksājuma atrisināšanai
+                </Badge>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => navigate('/billing')}
+                className="gap-2"
+              >
+                <CreditCard className="w-4 h-4" />
+                Atjaunot maksājumu
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/abonesana')}
+                className="gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Mainīt plānu
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (hasActiveSubscription) {
     return (

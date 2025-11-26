@@ -164,11 +164,8 @@ serve(async (req) => {
     // Handle subscription.updated (plan changes, status changes)
     if (event.type === 'customer.subscription.updated') {
       const subscription = event.data.object as Stripe.Subscription;
-      const priceId = subscription.items.data[0].price.id;
-      const plan = PRICE_ID_TO_PLAN[priceId] || 'free';
-      const credits = PLAN_CREDITS[plan] || 0;
-
-      console.log(`Subscription updated to ${plan} plan (price: ${priceId})`);
+      
+      console.log(`Subscription updated - status: ${subscription.status}`);
 
       const { data: professional } = await supabase
         .from('professional_profiles')
@@ -177,46 +174,90 @@ serve(async (req) => {
         .single();
 
       if (professional) {
-        await supabase
-          .from('professional_profiles')
-          .update({
-            plan: plan,
-            subscription_status: subscription.status === 'active' ? 'active' : 'inactive',
-            subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
-            subscription_last_changed: new Date().toISOString(),
-          })
-          .eq('id', professional.id);
+        // If subscription is canceled, downgrade to free immediately
+        if (subscription.status === 'canceled') {
+          console.log(`Subscription canceled - downgrading professional ${professional.id} to FREE`);
+          
+          await supabase
+            .from('professional_profiles')
+            .update({
+              plan: 'free',
+              subscription_status: 'inactive',
+              subscription_end_date: null,
+              stripe_subscription_id: null,
+              subscription_last_changed: new Date().toISOString(),
+            })
+            .eq('id', professional.id);
 
-        // Replace email credits with new plan allocation
-        await supabase
-          .from('email_credits')
-          .upsert({
-            master_id: professional.id,
-            credits: credits,
-            updated_at: new Date().toISOString()
-          });
+          // Reset email credits to 0
+          await supabase
+            .from('email_credits')
+            .update({
+              credits: 0,
+              updated_at: new Date().toISOString()
+            })
+            .eq('master_id', professional.id);
 
-        // Plan limits enforced by UI only - no staff deactivation on plan change
+          // Close subscription history
+          await supabase
+            .from('subscription_history')
+            .update({ ended_at: new Date().toISOString() })
+            .eq('professional_id', professional.id)
+            .eq('stripe_subscription_id', subscription.id)
+            .is('ended_at', null);
 
-        // Close old subscription history and create new one
-        await supabase
-          .from('subscription_history')
-          .update({ ended_at: new Date().toISOString() })
-          .eq('professional_id', professional.id)
-          .eq('stripe_subscription_id', subscription.id)
-          .is('ended_at', null);
+          console.log(`Professional ${professional.id} downgraded to FREE plan due to cancellation`);
+        } else {
+          // Handle regular plan updates (active, past_due, etc.)
+          const priceId = subscription.items.data[0].price.id;
+          const plan = PRICE_ID_TO_PLAN[priceId] || 'free';
+          const credits = PLAN_CREDITS[plan] || 0;
 
-        await supabase
-          .from('subscription_history')
-          .insert({
-            professional_id: professional.id,
-            plan: plan,
-            status: subscription.status,
-            stripe_subscription_id: subscription.id,
-            started_at: new Date().toISOString(),
-          });
+          console.log(`Subscription updated to ${plan} plan (price: ${priceId}, status: ${subscription.status})`);
 
-        console.log(`Updated to ${plan} plan with ${credits} credits`);
+          await supabase
+            .from('professional_profiles')
+            .update({
+              plan: plan,
+              subscription_status: subscription.status === 'active' ? 'active' : subscription.status,
+              subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+              subscription_last_changed: new Date().toISOString(),
+            })
+            .eq('id', professional.id);
+
+          // Replace email credits with new plan allocation (unless past_due)
+          if (subscription.status !== 'past_due') {
+            await supabase
+              .from('email_credits')
+              .upsert({
+                master_id: professional.id,
+                credits: credits,
+                updated_at: new Date().toISOString()
+              });
+          }
+
+          // Plan limits enforced by UI only - no staff deactivation on plan change
+
+          // Close old subscription history and create new one
+          await supabase
+            .from('subscription_history')
+            .update({ ended_at: new Date().toISOString() })
+            .eq('professional_id', professional.id)
+            .eq('stripe_subscription_id', subscription.id)
+            .is('ended_at', null);
+
+          await supabase
+            .from('subscription_history')
+            .insert({
+              professional_id: professional.id,
+              plan: plan,
+              status: subscription.status,
+              stripe_subscription_id: subscription.id,
+              started_at: new Date().toISOString(),
+            });
+
+          console.log(`Updated to ${plan} plan with ${credits} credits (status: ${subscription.status})`);
+        }
       }
     }
 
