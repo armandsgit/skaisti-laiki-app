@@ -393,18 +393,57 @@ const ProfessionalDashboard = () => {
   };
 
   const loadSubscriptionStatus = async () => {
-    if (!profile?.stripe_subscription_id) {
-      // No Stripe subscription = free plan
-      setSubscriptionStatus({
-        planMode: 'expired',
-        currentPlan: 'free',
-        subscriptionStatus: 'inactive',
-        subscriptionEndDate: null,
-        subscriptionWillRenew: false,
-        daysRemaining: 0,
-      });
-      return;
-    }
+    // Step 1: Compute optimistic state from Supabase profile (instant render)
+    const computeOptimisticStatus = () => {
+      if (!profile?.stripe_subscription_id) {
+        return {
+          planMode: 'expired' as const,
+          currentPlan: 'free',
+          subscriptionStatus: 'inactive',
+          subscriptionEndDate: null,
+          subscriptionWillRenew: false,
+          daysRemaining: 0,
+        };
+      }
+
+      const now = new Date();
+      const endDate = profile.subscription_end_date ? new Date(profile.subscription_end_date) : null;
+      const daysRemaining = endDate ? Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0;
+
+      let planMode: 'renewing' | 'active_until_period_end' | 'expired';
+      let currentPlan = profile.plan || 'free';
+      let willRenew = profile.subscription_will_renew ?? false;
+
+      if (profile.subscription_status === 'active') {
+        planMode = willRenew ? 'renewing' : 'active_until_period_end';
+      } else if (profile.subscription_status === 'canceled') {
+        if (endDate && now < endDate) {
+          planMode = 'active_until_period_end';
+        } else {
+          planMode = 'expired';
+          currentPlan = 'free';
+        }
+      } else {
+        planMode = 'expired';
+        currentPlan = 'free';
+      }
+
+      return {
+        planMode,
+        currentPlan,
+        subscriptionStatus: profile.subscription_status || 'inactive',
+        subscriptionEndDate: profile.subscription_end_date,
+        subscriptionWillRenew: willRenew,
+        daysRemaining,
+      };
+    };
+
+    // Render optimistic state immediately
+    const optimisticStatus = computeOptimisticStatus();
+    setSubscriptionStatus(optimisticStatus);
+
+    // Step 2: Fetch real data from Stripe in background
+    if (!profile?.stripe_subscription_id) return;
 
     try {
       const { data, error } = await supabase.functions.invoke('get-subscription-status', {
@@ -414,18 +453,38 @@ const ProfessionalDashboard = () => {
       if (error) throw error;
 
       console.log('Loaded subscription status from Stripe:', data);
+      
+      // Step 3: Update UI with Stripe data (silent update)
       setSubscriptionStatus(data);
+
+      // Step 4: Sync back to Supabase if data differs
+      const needsUpdate = 
+        data.currentPlan !== profile.plan ||
+        data.subscriptionStatus !== profile.subscription_status ||
+        data.subscriptionWillRenew !== profile.subscription_will_renew ||
+        data.subscriptionEndDate !== profile.subscription_end_date;
+
+      if (needsUpdate) {
+        console.log('Syncing Stripe data to Supabase...');
+        const { error: updateError } = await supabase
+          .from('professional_profiles')
+          .update({
+            plan: data.currentPlan,
+            subscription_status: data.subscriptionStatus,
+            subscription_will_renew: data.subscriptionWillRenew,
+            subscription_end_date: data.subscriptionEndDate,
+          })
+          .eq('id', profile.id);
+
+        if (updateError) {
+          console.error('Error syncing subscription to Supabase:', updateError);
+        } else {
+          console.log('Subscription synced to Supabase successfully');
+        }
+      }
     } catch (error) {
-      console.error('Error loading subscription status:', error);
-      // Fallback to free plan on error
-      setSubscriptionStatus({
-        planMode: 'expired',
-        currentPlan: 'free',
-        subscriptionStatus: 'inactive',
-        subscriptionEndDate: null,
-        subscriptionWillRenew: false,
-        daysRemaining: 0,
-      });
+      console.error('Error loading subscription status from Stripe:', error);
+      // Keep optimistic state on error
     }
   };
 
