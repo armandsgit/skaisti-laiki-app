@@ -67,9 +67,16 @@ serve(async (req) => {
       });
     }
 
-    // Cancel Stripe subscription
-    console.log('Canceling subscription:', profile.stripe_subscription_id);
-    await stripe.subscriptions.cancel(profile.stripe_subscription_id);
+    // Cancel Stripe subscription if it exists
+    console.log('Attempting to cancel subscription:', profile.stripe_subscription_id);
+    try {
+      await stripe.subscriptions.cancel(profile.stripe_subscription_id);
+      console.log('Successfully cancelled Stripe subscription');
+    } catch (stripeError: any) {
+      // If subscription doesn't exist in Stripe, just log and continue with database update
+      console.log('Stripe cancellation failed (subscription may already be cancelled):', stripeError.message);
+      // Don't throw error - still proceed with database downgrade
+    }
 
     // Update professional profile to FREE
     const { error: updateError } = await supabase
