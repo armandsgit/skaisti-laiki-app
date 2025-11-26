@@ -25,14 +25,29 @@ export const SubscriptionBanner = ({
   // Calculate remaining days
   const remainingDays = daysLeft(subscriptionEndDate);
   
-  // Determine subscription state
-  const pastDue = isPastDue(subscriptionStatus);
-  const cancelledButActive = isActiveCancelled(subscriptionStatus, subscriptionWillRenew);
-  const fullyActive = isFullyActive(subscriptionStatus, subscriptionWillRenew);
-  const hasNoPlan = plan === 'free' || !subscriptionStatus || subscriptionStatus === 'inactive';
+  // RULE 3: Subscription already ended or inactive
+  const isExpiredOrInactive = 
+    subscriptionStatus === 'inactive' || 
+    (subscriptionEndDate && new Date(subscriptionEndDate) < new Date());
+  
+  // RULE 1: Renewing subscription (active)
+  const isRenewing = subscriptionWillRenew === true && !isExpiredOrInactive;
+  
+  // RULE 2: Canceled at period-end (still active until end date)
+  const isCanceledPending = 
+    subscriptionWillRenew === false && 
+    !isExpiredOrInactive &&
+    subscriptionEndDate &&
+    new Date(subscriptionEndDate) > new Date();
+  
+  // Payment failed state (past_due)
+  const isPastDue = subscriptionStatus === 'past_due';
+  
+  // Determine actual display plan (ignore 'free' if canceled pending)
+  const displayPlan = isCanceledPending && plan !== 'free' ? plan : plan;
 
   // Show warning banner for past_due status (payment failed)
-  if (pastDue) {
+  if (isPastDue) {
     return (
       <Card className="mb-6 border-destructive bg-destructive/5 shadow-card">
         <CardContent className="p-5">
@@ -79,8 +94,8 @@ export const SubscriptionBanner = ({
     );
   }
 
-  // Show cancelled banner (subscription cancelled but active until period end)
-  if (cancelledButActive) {
+  // RULE 2: Canceled at period-end (subscription cancelled but active until period end)
+  if (isCanceledPending) {
     const isNearExpiry = remainingDays < 5;
     return (
       <Card className={`mb-6 border-amber-500/50 ${isNearExpiry ? 'bg-amber-50/50 dark:bg-amber-950/20' : 'bg-card'} shadow-card`}>
@@ -92,13 +107,10 @@ export const SubscriptionBanner = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground mb-1">
-                  Jūsu abonements: {getPlanDisplayName(plan)}
+                  Jūsu abonements: {getPlanDisplayName(displayPlan)}
                 </h3>
                 <p className="text-sm text-foreground/70 mb-2">
                   Abonements beigsies: {formatSubscriptionDate(subscriptionEndDate)}
-                </p>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {getPlanDisplayName(plan)} plāns būs aktīvs līdz perioda beigām — līdz {formatSubscriptionDate(subscriptionEndDate)}
                 </p>
                 <p className="text-sm text-amber-700 dark:text-amber-400 font-medium mb-2">
                   Pēc termiņa beigām jūsu konts automātiski tiks pārslegts uz Free plānu
@@ -139,8 +151,8 @@ export const SubscriptionBanner = ({
     );
   }
 
-  // Show active subscription banner
-  if (fullyActive) {
+  // RULE 1: Show active renewing subscription banner
+  if (isRenewing) {
     return (
       <Card className="mb-6 border-border/50 bg-card shadow-card">
         <CardContent className="p-5">
@@ -151,13 +163,13 @@ export const SubscriptionBanner = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground mb-1">
-                  Jūsu abonements: {getPlanDisplayName(plan)} plāns
+                  Jūsu abonements: {getPlanDisplayName(displayPlan)} plāns
                 </h3>
                 <p className="text-sm text-muted-foreground mb-2">
                   📅 Nākamais maksājums: {formatSubscriptionDate(subscriptionEndDate)}
                 </p>
                 <p className="text-sm text-amber-600 dark:text-amber-400 font-medium mb-2">
-                  ❗ Automātiski atjaunojas katru mēnesi
+                  🔄 Automātiski atjaunojas katru mēnesi
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary" className="text-xs font-medium">
@@ -195,7 +207,7 @@ export const SubscriptionBanner = ({
     );
   }
 
-  // Show free/no plan banner
+  // RULE 3: Show free/inactive plan banner
   return (
     <Card className="mb-6 border-border/50 bg-card shadow-card">
       <CardContent className="p-5">
@@ -206,7 +218,7 @@ export const SubscriptionBanner = ({
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-foreground mb-1">
-                Jūsu abonements: {getPlanDisplayName(plan)}
+                Jūsu abonements: Bezmaksas
               </h3>
               <p className="text-sm text-muted-foreground mb-2">
                 Nākamā maksa: Nav
