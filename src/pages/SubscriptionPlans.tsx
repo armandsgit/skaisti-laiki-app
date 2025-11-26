@@ -410,7 +410,7 @@ export default function SubscriptionPlans() {
       // Get professional profile
       const { data: profile } = await supabase
         .from('professional_profiles')
-        .select('id')
+        .select('id, stripe_subscription_id')
         .eq('user_id', user.id)
         .single();
 
@@ -425,6 +425,66 @@ export default function SubscriptionPlans() {
         return;
       }
 
+      // SPECIAL HANDLING FOR FREE PLAN DOWNGRADE
+      if (planId === 'free') {
+        console.log('🔄 Downgrading to FREE plan - calling cancel-subscription...');
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast({
+            title: 'Kļūda',
+            description: 'Nav autentificēts',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const { data, error } = await supabase.functions.invoke('cancel-subscription', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
+
+        console.log('📦 Cancel subscription response:', { data, error });
+
+        if (error) {
+          console.error('❌ Cancel subscription error:', error);
+          toast({
+            title: 'Kļūda',
+            description: 'Neizdevās atcelt abonementu',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (data?.success) {
+          console.log('✅ Subscription cancelled successfully');
+          toast({
+            title: 'Veiksmīgi!',
+            description: data.message || 'Abonements tiks atcelts perioda beigās',
+          });
+          
+          // Refresh current plan
+          const { data: updatedProfile } = await supabase
+            .from('professional_profiles')
+            .select('plan')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (updatedProfile?.plan) {
+            setCurrentPlan(updatedProfile.plan);
+          }
+          
+          // Redirect to professional dashboard after a short delay
+          setTimeout(() => {
+            navigate('/professional');
+          }, 1500);
+        }
+        
+        return;
+      }
+
+      // PAID PLAN HANDLING - Go through Stripe Checkout
       // Map plan to Stripe price IDs
       const stripePriceIds: Record<string, string> = {
         starteris: 'price_1SWmMTRtOhWJgeVeCxB9RCxm',
