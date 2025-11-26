@@ -73,7 +73,7 @@ serve(async (req) => {
           .from('professional_profiles')
           .update({
             plan: 'free',
-            subscription_status: 'expired',
+            subscription_status: 'inactive',
             subscription_end_date: null,
             stripe_subscription_id: null,
             is_cancelled: false,
@@ -120,7 +120,7 @@ serve(async (req) => {
           })
           .eq('id', profile.id);
 
-        console.log(`✅ Subscription ${profile.stripe_subscription_id} marked for cancellation at period end`);
+        console.log(`✅ Subscription ${profile.stripe_subscription_id} marked for cancellation at period end: ${periodEnd}`);
 
         return new Response(
           JSON.stringify({
@@ -151,7 +151,7 @@ serve(async (req) => {
           .from('professional_profiles')
           .update({
             plan: 'free',
-            subscription_status: 'expired',
+            subscription_status: 'inactive',
             subscription_end_date: null,
             stripe_subscription_id: null,
             is_cancelled: false,
