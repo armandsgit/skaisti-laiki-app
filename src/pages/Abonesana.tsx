@@ -165,7 +165,7 @@ export default function Abonesana() {
       // Force fresh fetch without cache
       const { data: profile } = await supabase
         .from('professional_profiles')
-        .select('id, plan, subscription_status, stripe_subscription_id')
+        .select('id, plan, subscription_status, subscription_end_date, stripe_subscription_id, is_cancelled')
         .eq('user_id', user.id)
         .single();
 
@@ -226,17 +226,18 @@ export default function Abonesana() {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('downgrade-to-free', {
+      // Use cancel-subscription function to mark cancellation at period end
+      const { data, error } = await supabase.functions.invoke('cancel-subscription', {
         headers: {
           Authorization: `Bearer ${session.access_token}`
         }
       });
 
       if (error) {
-        console.error('Downgrade error:', error);
+        console.error('Cancellation error:', error);
         toast({
           title: 'Kļūda',
-          description: 'Neizdevās pāriet uz FREE plānu',
+          description: 'Neizdevās atcelt abonementu',
           variant: 'destructive',
         });
         setLoading(null);
@@ -244,8 +245,8 @@ export default function Abonesana() {
       }
 
       toast({
-        title: 'Veiksmīgi!',
-        description: 'Jūsu abonements tika atcelts. Tagad izmantojat FREE plānu.',
+        title: 'Abonements atcelts',
+        description: `Jūsu abonements paliks aktīvs līdz: ${data.periodEnd ? new Date(data.periodEnd).toLocaleDateString('lv-LV') : 'perioda beigām'}. Pēc tam tas automātiski pāries uz Free plānu.`,
       });
 
       // Reload current plan
@@ -712,8 +713,10 @@ export default function Abonesana() {
                   </>
                 )}
               </ul>
-              <p className="text-warning font-medium mt-4">
-                Vai tiešām vēlaties turpināt?
+              <p className="text-sm text-muted-foreground mt-4">
+                {pendingTargetPlan === 'free' 
+                  ? 'Jūsu abonements paliks aktīvs līdz pašreizējā perioda beigām. Pēc tam tas automātiski pāries uz Free plānu un visi ierobežojumi stāsies spēkā.'
+                  : 'Vai tiešām vēlaties samazināt savu plānu? Daži ierobežojumi stāsies spēkā nekavējoties.'}
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -726,7 +729,7 @@ export default function Abonesana() {
               onClick={handleConfirmDowngrade}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Jā, pāriet uz {pendingTargetPlan === 'free' ? 'FREE' : plans.find(p => p.id === pendingTargetPlan)?.name}
+              {pendingTargetPlan === 'free' ? 'Atcelt abonementu' : `Jā, pāriet uz ${plans.find(p => p.id === pendingTargetPlan)?.name}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

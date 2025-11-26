@@ -349,6 +349,7 @@ export type Database = {
           gallery: string[] | null
           id: string
           is_blocked: boolean | null
+          is_cancelled: boolean | null
           is_verified: boolean | null
           last_active: string | null
           latitude: number | null
@@ -376,6 +377,7 @@ export type Database = {
           gallery?: string[] | null
           id?: string
           is_blocked?: boolean | null
+          is_cancelled?: boolean | null
           is_verified?: boolean | null
           last_active?: string | null
           latitude?: number | null
@@ -403,6 +405,7 @@ export type Database = {
           gallery?: string[] | null
           id?: string
           is_blocked?: boolean | null
+          is_cancelled?: boolean | null
           is_verified?: boolean | null
           last_active?: string | null
           latitude?: number | null
