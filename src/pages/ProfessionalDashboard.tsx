@@ -55,6 +55,7 @@ const ProfessionalDashboard = () => {
     monthlyEarnings: 0
   });
   const [emailCredits, setEmailCredits] = useState(0);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
   const [emailStats, setEmailStats] = useState({
     sentToday: 0,
     sentThisMonth: 0,
@@ -117,7 +118,7 @@ const ProfessionalDashboard = () => {
       
       // Force immediate reload
       const reloadData = async () => {
-        // First immediate reload
+        // Force immediate reload
         await loadProfile();
         
         // Retry after 2 seconds
@@ -127,6 +128,9 @@ const ProfessionalDashboard = () => {
         // Final retry after 4 seconds to catch delayed webhooks
         await new Promise(resolve => setTimeout(resolve, 2000));
         await loadProfile();
+        
+        // Force reload subscription status from Stripe
+        await loadSubscriptionStatus();
         
         // Force reload email credits
         if (profile?.id) {
@@ -163,9 +167,10 @@ const ProfessionalDashboard = () => {
         },
         (payload) => {
           console.log('Dashboard: Subscription changed:', payload);
-          // Force immediate refresh
+          // Force immediate refresh from Stripe
           loadProfile();
           loadEmailCredits();
+          loadSubscriptionStatus();
         }
       )
       .subscribe();
@@ -200,6 +205,7 @@ const ProfessionalDashboard = () => {
       loadBookings();
       loadStaffMembers();
       loadEmailCredits();
+      loadSubscriptionStatus();
     }
   }, [profile]);
 
@@ -383,6 +389,43 @@ const ProfessionalDashboard = () => {
       setEmailStats({ sentToday, sentThisMonth, sent30Days });
     } else {
       setEmailStats({ sentToday: 0, sentThisMonth: 0, sent30Days: 0 });
+    }
+  };
+
+  const loadSubscriptionStatus = async () => {
+    if (!profile?.stripe_subscription_id) {
+      // No Stripe subscription = free plan
+      setSubscriptionStatus({
+        planMode: 'expired',
+        currentPlan: 'free',
+        subscriptionStatus: 'inactive',
+        subscriptionEndDate: null,
+        subscriptionWillRenew: false,
+        daysRemaining: 0,
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('get-subscription-status', {
+        body: { stripeSubscriptionId: profile.stripe_subscription_id }
+      });
+
+      if (error) throw error;
+
+      console.log('Loaded subscription status from Stripe:', data);
+      setSubscriptionStatus(data);
+    } catch (error) {
+      console.error('Error loading subscription status:', error);
+      // Fallback to free plan on error
+      setSubscriptionStatus({
+        planMode: 'expired',
+        currentPlan: 'free',
+        subscriptionStatus: 'inactive',
+        subscriptionEndDate: null,
+        subscriptionWillRenew: false,
+        daysRemaining: 0,
+      });
     }
   };
 
@@ -1100,13 +1143,17 @@ const ProfessionalDashboard = () => {
             )}
 
             {/* Subscription Status Banner */}
-            <SubscriptionBanner
-              subscriptionStatus={profile.subscription_status}
-              plan={profile.plan}
-              subscriptionEndDate={profile.subscription_end_date}
-              emailCredits={emailCredits}
-              subscriptionWillRenew={profile.subscription_will_renew ?? true}
-            />
+            {subscriptionStatus && (
+              <SubscriptionBanner
+                planMode={subscriptionStatus.planMode}
+                currentPlan={subscriptionStatus.currentPlan}
+                subscriptionStatus={subscriptionStatus.subscriptionStatus}
+                subscriptionEndDate={subscriptionStatus.subscriptionEndDate}
+                subscriptionWillRenew={subscriptionStatus.subscriptionWillRenew}
+                daysRemaining={subscriptionStatus.daysRemaining}
+                emailCredits={emailCredits}
+              />
+            )}
 
             {/* KPI Stats - Show for all plans */}
             <DashboardStats
