@@ -61,52 +61,111 @@ serve(async (req) => {
       );
     }
 
-    // Cancel subscription at period end using Stripe
+    // First, retrieve the subscription to check its status
     try {
-      const subscription = await stripe.subscriptions.update(
-        profile.stripe_subscription_id,
-        { cancel_at_period_end: true }
-      );
+      const subscription = await stripe.subscriptions.retrieve(profile.stripe_subscription_id);
 
-      // Update database to mark as cancelled
-      const periodEnd = subscription.current_period_end
-        ? new Date(subscription.current_period_end * 1000).toISOString()
-        : profile.subscription_end_date;
-
-      await supabase
-        .from('professional_profiles')
-        .update({
-          is_cancelled: true,
-          subscription_end_date: periodEnd,
-          subscription_last_changed: new Date().toISOString(),
-        })
-        .eq('id', profile.id);
-
-      console.log(`✅ Subscription ${profile.stripe_subscription_id} marked for cancellation at period end`);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Subscription will be cancelled at period end',
-          periodEnd: periodEnd,
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } catch (stripeError: any) {
-      console.error('Stripe cancellation error:', stripeError);
-      
-      // If the subscription doesn't exist in Stripe, still update our database
-      if (stripeError.code === 'resource_missing') {
+      // If subscription is already canceled, just update database
+      if (subscription.status === 'canceled') {
+        console.log(`⚠️ Subscription already canceled, updating database to FREE`);
+        
         await supabase
           .from('professional_profiles')
           .update({
             plan: 'free',
-            subscription_status: 'inactive',
+            subscription_status: 'expired',
             subscription_end_date: null,
             stripe_subscription_id: null,
             is_cancelled: false,
           })
           .eq('id', profile.id);
+
+        // Reset email credits
+        await supabase
+          .from('email_credits')
+          .update({
+            credits: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('master_id', profile.id);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Subscription already canceled, downgraded to FREE',
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // If subscription is active, cancel it at period end
+      if (subscription.status === 'active') {
+        const updatedSubscription = await stripe.subscriptions.update(
+          profile.stripe_subscription_id,
+          { cancel_at_period_end: true }
+        );
+
+        // Update database to mark as cancelled
+        const periodEnd = updatedSubscription.current_period_end
+          ? new Date(updatedSubscription.current_period_end * 1000).toISOString()
+          : profile.subscription_end_date;
+
+        await supabase
+          .from('professional_profiles')
+          .update({
+            subscription_status: 'canceled_at_period_end',
+            is_cancelled: true,
+            subscription_end_date: periodEnd,
+            subscription_last_changed: new Date().toISOString(),
+          })
+          .eq('id', profile.id);
+
+        console.log(`✅ Subscription ${profile.stripe_subscription_id} marked for cancellation at period end`);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Subscription will be cancelled at period end',
+            periodEnd: periodEnd,
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // For any other status (past_due, unpaid, etc.)
+      return new Response(
+        JSON.stringify({
+          error: `Cannot cancel subscription with status: ${subscription.status}`,
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (stripeError: any) {
+      console.error('Stripe error:', stripeError);
+      
+      // If the subscription doesn't exist in Stripe, downgrade to FREE
+      if (stripeError.code === 'resource_missing' || stripeError.type === 'invalid_request_error') {
+        console.log(`⚠️ Subscription not found in Stripe, downgrading to FREE`);
+        
+        await supabase
+          .from('professional_profiles')
+          .update({
+            plan: 'free',
+            subscription_status: 'expired',
+            subscription_end_date: null,
+            stripe_subscription_id: null,
+            is_cancelled: false,
+          })
+          .eq('id', profile.id);
+
+        // Reset email credits
+        await supabase
+          .from('email_credits')
+          .update({
+            credits: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('master_id', profile.id);
 
         return new Response(
           JSON.stringify({
