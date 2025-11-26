@@ -11,6 +11,7 @@ export interface SubscriptionData {
   plan: string;
   subscription_status: string;
   subscription_end_date: string | null;
+  subscription_will_renew: boolean;
   stripe_subscription_id: string | null;
   stripe_customer_id: string | null;
 }
@@ -37,7 +38,7 @@ export async function getUserSubscription(userId: string): Promise<SubscriptionD
   try {
     const { data: profile, error } = await supabase
       .from('professional_profiles')
-      .select('plan, subscription_status, subscription_end_date, stripe_subscription_id, stripe_customer_id')
+      .select('plan, subscription_status, subscription_end_date, subscription_will_renew, stripe_subscription_id, stripe_customer_id')
       .eq('user_id', userId)
       .single();
 
@@ -61,6 +62,7 @@ export async function updateUserSubscription(
     plan: string;
     subscription_status: string;
     subscription_end_date: string | null;
+    subscription_will_renew?: boolean;
     stripe_subscription_id?: string | null;
   }
 ): Promise<boolean> {
@@ -71,6 +73,9 @@ export async function updateUserSubscription(
         plan: data.plan,
         subscription_status: data.subscription_status,
         subscription_end_date: data.subscription_end_date,
+        ...(data.subscription_will_renew !== undefined && {
+          subscription_will_renew: data.subscription_will_renew
+        }),
         ...(data.stripe_subscription_id !== undefined && {
           stripe_subscription_id: data.stripe_subscription_id
         }),
@@ -174,6 +179,7 @@ export async function downgradeToFree(professionalId: string): Promise<boolean> 
       plan: 'free',
       subscription_status: 'inactive',
       subscription_end_date: null,
+      subscription_will_renew: false,
       stripe_subscription_id: null,
     });
 

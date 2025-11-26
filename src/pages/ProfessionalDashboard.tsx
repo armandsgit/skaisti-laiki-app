@@ -1105,7 +1105,7 @@ const ProfessionalDashboard = () => {
               plan={profile.plan}
               subscriptionEndDate={profile.subscription_end_date}
               emailCredits={emailCredits}
-              isCancelled={profile.is_cancelled || false}
+              subscriptionWillRenew={profile.subscription_will_renew ?? true}
             />
 
             {/* KPI Stats - Show for all plans */}

@@ -105,22 +105,33 @@ serve(async (req) => {
           { cancel_at_period_end: true }
         );
 
-        // Update database to mark as cancelled
+        // Get current plan from database
+        const { data: currentProfile } = await supabase
+          .from('professional_profiles')
+          .select('plan')
+          .eq('id', profile.id)
+          .single();
+
         const periodEnd = updatedSubscription.current_period_end
           ? new Date(updatedSubscription.current_period_end * 1000).toISOString()
           : profile.subscription_end_date;
 
+        // CRITICAL: Keep current paid plan, set will_renew = false
+        // Plan will only change to 'free' when webhook customer.subscription.deleted fires
         await supabase
           .from('professional_profiles')
           .update({
-            subscription_status: 'canceled_at_period_end',
+            subscription_status: 'canceled',
+            subscription_will_renew: false,
             is_cancelled: true,
             subscription_end_date: periodEnd,
             subscription_last_changed: new Date().toISOString(),
+            // DO NOT change plan here - keep current paid plan
           })
           .eq('id', profile.id);
 
-        console.log(`✅ Subscription ${profile.stripe_subscription_id} marked for cancellation at period end: ${periodEnd}`);
+        console.log(`✅ Subscription ${profile.stripe_subscription_id} will cancel at period end: ${periodEnd}`);
+        console.log(`📌 Plan remains: ${currentProfile?.plan}, will_renew: false`);
 
         return new Response(
           JSON.stringify({

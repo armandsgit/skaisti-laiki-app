@@ -362,6 +362,7 @@ export type Database = {
           subscription_expires_at: string | null
           subscription_last_changed: string | null
           subscription_status: string | null
+          subscription_will_renew: boolean | null
           total_reviews: number | null
           updated_at: string
           user_id: string
@@ -390,6 +391,7 @@ export type Database = {
           subscription_expires_at?: string | null
           subscription_last_changed?: string | null
           subscription_status?: string | null
+          subscription_will_renew?: boolean | null
           total_reviews?: number | null
           updated_at?: string
           user_id: string
@@ -418,6 +420,7 @@ export type Database = {
           subscription_expires_at?: string | null
           subscription_last_changed?: string | null
           subscription_status?: string | null
+          subscription_will_renew?: boolean | null
           total_reviews?: number | null
           updated_at?: string
           user_id?: string
