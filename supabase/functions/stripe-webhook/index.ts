@@ -357,6 +357,7 @@ serve(async (req) => {
 
       console.log(`🗑️ Subscription deleted: ${subscription.id}`);
 
+      // 1. Find professional by stripe_customer_id or stripe_subscription_id
       const professional = await findProfessional(supabase, subscription.id, customerId);
       
       if (!professional) {
@@ -367,7 +368,51 @@ serve(async (req) => {
         });
       }
 
-      await downgradeProfessionalToFree(supabase, professional.id, subscription.id);
+      // 2. Update profile to FREE plan with expired status
+      const { error: updateError } = await supabase
+        .from('professional_profiles')
+        .update({
+          plan: 'free',
+          subscription_status: 'expired',
+          is_cancelled: false,
+          subscription_end_date: null,
+          stripe_subscription_id: null,
+          subscription_last_changed: new Date().toISOString(),
+        })
+        .eq('id', professional.id);
+
+      if (updateError) {
+        console.error('❌ Error updating professional profile:', updateError);
+      }
+
+      // 3. Reset email credits to 0 (FREE plan limits)
+      const { error: creditsError } = await supabase
+        .from('email_credits')
+        .upsert({
+          master_id: professional.id,
+          credits: 0,
+          updated_at: new Date().toISOString()
+        });
+
+      if (creditsError) {
+        console.error('❌ Error resetting email credits:', creditsError);
+      }
+
+      // 4. Close subscription history
+      await supabase
+        .from('subscription_history')
+        .update({ ended_at: new Date().toISOString() })
+        .eq('professional_id', professional.id)
+        .eq('stripe_subscription_id', subscription.id)
+        .is('ended_at', null);
+
+      console.log(`✅ Subscription deleted - downgraded to FREE`);
+      console.log(`   - Plan: free`);
+      console.log(`   - Status: expired`);
+      console.log(`   - Cancelled: false`);
+      console.log(`   - Period end: null`);
+      console.log(`   - Email credits: 0`);
+      console.log(`   - FREE limits applied (max_masters=1, max_services=5, max_gallery=3)`);
 
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
@@ -415,10 +460,46 @@ serve(async (req) => {
         });
       }
 
-      // CASE B: Subscription fully canceled
+      // CASE B: Subscription fully canceled (status changed to 'canceled')
       if (subscription.status === 'canceled') {
-        console.log(`🗑️ Subscription fully canceled - downgrading to FREE`);
-        await downgradeProfessionalToFree(supabase, professional.id, subscription.id);
+        console.log(`🗑️ Subscription status changed to canceled - downgrading to FREE`);
+        
+        // Update profile to FREE plan with expired status
+        const { error: updateError } = await supabase
+          .from('professional_profiles')
+          .update({
+            plan: 'free',
+            subscription_status: 'expired',
+            is_cancelled: false,
+            subscription_end_date: null,
+            stripe_subscription_id: null,
+            subscription_last_changed: new Date().toISOString(),
+          })
+          .eq('id', professional.id);
+
+        if (updateError) {
+          console.error('❌ Error updating professional profile:', updateError);
+        }
+
+        // Reset email credits to 0
+        await supabase
+          .from('email_credits')
+          .upsert({
+            master_id: professional.id,
+            credits: 0,
+            updated_at: new Date().toISOString()
+          });
+
+        // Close subscription history
+        await supabase
+          .from('subscription_history')
+          .update({ ended_at: new Date().toISOString() })
+          .eq('professional_id', professional.id)
+          .eq('stripe_subscription_id', subscription.id)
+          .is('ended_at', null);
+
+        console.log(`✅ Downgraded to FREE (plan=free, status=expired, credits=0)`);
+
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
