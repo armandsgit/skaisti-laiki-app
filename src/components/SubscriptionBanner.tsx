@@ -92,14 +92,20 @@ export const SubscriptionBanner = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground mb-1">
-                  🔔 Abonements beigsies: {formatSubscriptionDate(subscriptionEndDate)}
+                  Jūsu abonements: {getPlanDisplayName(plan)}
                 </h3>
-                <p className={`text-sm ${isNearExpiry ? 'text-amber-700 dark:text-amber-400 font-medium' : 'text-muted-foreground'} mb-2`}>
-                  {getPlanDisplayName(plan)} plāna funkcijas pieejamas līdz perioda beigām
+                <p className="text-sm text-foreground/70 mb-2">
+                  Abonements beigsies: {formatSubscriptionDate(subscriptionEndDate)}
+                </p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {getPlanDisplayName(plan)} plāna funkcijas pieejamas līdz {formatSubscriptionDate(subscriptionEndDate)}
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-400 font-medium mb-2">
+                  Pēc termiņa beigām jūsu konts automātiski tiks pārslegts uz Free plānu
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant={isNearExpiry ? "destructive" : "secondary"} className="text-xs font-medium">
-                    🕒 Atlikušās dienas: {remainingDays}
+                    Atlikušās dienas: {remainingDays}
                   </Badge>
                   <Badge variant="outline" className="text-xs font-medium">
                     E-pasta kredīti: {emailCredits}
