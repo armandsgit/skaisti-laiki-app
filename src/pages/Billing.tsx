@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Mail, CreditCard, Calendar, TrendingUp } from 'lucide-react';
+import { daysLeft, formatSubscriptionDate, getPlanDisplayName } from '@/lib/subscription-utils';
 
 export default function Billing() {
   const navigate = useNavigate();
@@ -118,13 +119,31 @@ export default function Billing() {
 
   const getPlanBadge = (plan: string) => {
     const colors = {
-      free: 'bg-muted',
-      starteris: 'bg-primary',
-      pro: 'bg-gradient-to-r from-primary to-accent',
-      bizness: 'bg-gradient-to-r from-amber-500 to-amber-600'
+      free: 'bg-muted text-muted-foreground',
+      starteris: 'bg-primary text-primary-foreground',
+      pro: 'bg-gradient-to-r from-primary to-accent text-white',
+      bizness: 'bg-gradient-to-r from-amber-500 to-amber-600 text-white'
     };
-    return colors[plan as keyof typeof colors] || 'bg-muted';
+    return colors[plan as keyof typeof colors] || 'bg-muted text-muted-foreground';
   };
+
+  const getStatusBadge = (status: string, isCancelled: boolean) => {
+    if (status === 'active' && !isCancelled) {
+      return <Badge variant="default" className="bg-green-500 text-white">Aktīvs</Badge>;
+    }
+    if (status === 'active' && isCancelled) {
+      return <Badge variant="secondary" className="bg-amber-500 text-white">Atcelts (līdz perioda beigām)</Badge>;
+    }
+    if (status === 'past_due') {
+      return <Badge variant="destructive">Maksājums neizdevās</Badge>;
+    }
+    if (status === 'inactive' || !status) {
+      return <Badge variant="secondary">Neaktīvs</Badge>;
+    }
+    return <Badge variant="secondary">{status}</Badge>;
+  };
+
+  const remainingDays = daysLeft(professionalData?.subscription_end_date);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -146,22 +165,30 @@ export default function Billing() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pašreizējais plāns</p>
-                <Badge className={`${getPlanBadge(professionalData?.plan || 'free')} text-white mt-1`}>
-                  {professionalData?.plan?.toUpperCase() || 'FREE'}
+                <Badge className={`${getPlanBadge(professionalData?.plan || 'free')} mt-1`}>
+                  {getPlanDisplayName(professionalData?.plan)}
                 </Badge>
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Statuss</p>
-                <Badge variant={professionalData?.subscription_status === 'active' ? 'default' : 'secondary'}>
-                  {professionalData?.subscription_status === 'active' ? 'Aktīvs' : 'Neaktīvs'}
-                </Badge>
+                <div className="mt-1">
+                  {getStatusBadge(professionalData?.subscription_status, professionalData?.is_cancelled)}
+                </div>
               </div>
             </div>
 
-            {professionalData?.subscription_end_date && (
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4" />
-                <span>Derīgs līdz: {new Date(professionalData.subscription_end_date).toLocaleDateString('lv-LV')}</span>
+            {professionalData?.subscription_end_date && professionalData?.subscription_status !== 'inactive' && (
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">📅 Derīgs līdz:</span>
+                  <span className="font-medium">{formatSubscriptionDate(professionalData.subscription_end_date)}</span>
+                </div>
+                {remainingDays > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">🕒 Atlikušās dienas:</span>
+                    <Badge variant="secondary">{remainingDays}</Badge>
+                  </div>
+                )}
               </div>
             )}
 

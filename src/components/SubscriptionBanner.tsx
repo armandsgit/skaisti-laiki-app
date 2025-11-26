@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, AlertCircle, CreditCard, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { lv } from 'date-fns/locale';
+import { daysLeft, formatSubscriptionDate, getPlanDisplayName, isActiveCancelled, isPastDue, isFullyActive } from '@/lib/subscription-utils';
 
 interface SubscriptionBannerProps {
   subscriptionStatus: string | null;
@@ -22,46 +21,18 @@ export const SubscriptionBanner = ({
   isCancelled = false,
 }: SubscriptionBannerProps) => {
   const navigate = useNavigate();
-  const hasActiveSubscription = subscriptionStatus === 'active';
-  const isPastDue = subscriptionStatus === 'past_due';
+  
+  // Calculate remaining days
+  const remainingDays = daysLeft(subscriptionEndDate);
+  
+  // Determine subscription state
+  const pastDue = isPastDue(subscriptionStatus);
+  const cancelledButActive = isActiveCancelled(subscriptionStatus, isCancelled);
+  const fullyActive = isFullyActive(subscriptionStatus, isCancelled);
+  const hasNoPlan = plan === 'free' || !subscriptionStatus || subscriptionStatus === 'inactive';
 
-  const getPlanDisplayName = (planCode: string | null) => {
-    if (!planCode) return 'Nav plāna';
-    const planMap: { [key: string]: string } = {
-      starteris: 'Starteris',
-      pro: 'Pro',
-      bizness: 'Bizness',
-      free: 'Bezmaksas'
-    };
-    return planMap[planCode.toLowerCase()] || planCode.toUpperCase();
-  };
-
-  const formatNextBillingDate = (endDate: string | null) => {
-    if (!endDate) return 'Nav noteikts';
-    try {
-      return format(new Date(endDate), 'dd.MM.yyyy', { locale: lv });
-    } catch {
-      return 'Nav pieejams';
-    }
-  };
-
-  const calculateRemainingDays = (endDate: string | null) => {
-    if (!endDate) return 0;
-    try {
-      const end = new Date(endDate);
-      const now = new Date();
-      const diffTime = end.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return Math.max(0, diffDays);
-    } catch {
-      return 0;
-    }
-  };
-
-  const remainingDays = calculateRemainingDays(subscriptionEndDate);
-
-  // Show warning banner for past_due status
-  if (isPastDue) {
+  // Show warning banner for past_due status (payment failed)
+  if (pastDue) {
     return (
       <Card className="mb-6 border-destructive bg-destructive/5 shadow-card">
         <CardContent className="p-5">
@@ -108,8 +79,8 @@ export const SubscriptionBanner = ({
     );
   }
 
-  // Show cancelled banner (subscription active until period end)
-  if (hasActiveSubscription && isCancelled) {
+  // Show cancelled banner (subscription cancelled but active until period end)
+  if (cancelledButActive) {
     const isNearExpiry = remainingDays < 5;
     return (
       <Card className={`mb-6 border-amber-500/50 ${isNearExpiry ? 'bg-amber-50/50 dark:bg-amber-950/20' : 'bg-card'} shadow-card`}>
@@ -121,14 +92,14 @@ export const SubscriptionBanner = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground mb-1">
-                  Jūsu abonements: {getPlanDisplayName(plan)} plāns
+                  🔔 Abonements beigsies: {formatSubscriptionDate(subscriptionEndDate)}
                 </h3>
                 <p className={`text-sm ${isNearExpiry ? 'text-amber-700 dark:text-amber-400 font-medium' : 'text-muted-foreground'} mb-2`}>
-                  {isNearExpiry && '⚠️ '} Abonements beigsies: {formatNextBillingDate(subscriptionEndDate)}
+                  {getPlanDisplayName(plan)} plāna funkcijas pieejamas līdz perioda beigām
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant={isNearExpiry ? "destructive" : "secondary"} className="text-xs font-medium">
-                    Atlikušās dienas: {remainingDays}
+                    🕒 Atlikušās dienas: {remainingDays}
                   </Badge>
                   <Badge variant="outline" className="text-xs font-medium">
                     E-pasta kredīti: {emailCredits}
@@ -162,7 +133,8 @@ export const SubscriptionBanner = ({
     );
   }
 
-  if (hasActiveSubscription) {
+  // Show active subscription banner
+  if (fullyActive) {
     return (
       <Card className="mb-6 border-border/50 bg-card shadow-card">
         <CardContent className="p-5">
@@ -176,7 +148,10 @@ export const SubscriptionBanner = ({
                   Jūsu abonements: {getPlanDisplayName(plan)} plāns
                 </h3>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Nākamais maksājums: {formatNextBillingDate(subscriptionEndDate)}
+                  📅 Nākamais maksājums: {formatSubscriptionDate(subscriptionEndDate)}
+                </p>
+                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium mb-2">
+                  ❗ Automātiski atjaunojas katru mēnesi
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary" className="text-xs font-medium">
@@ -214,6 +189,7 @@ export const SubscriptionBanner = ({
     );
   }
 
+  // Show free/no plan banner
   return (
     <Card className="mb-6 border-border/50 bg-card shadow-card">
       <CardContent className="p-5">
@@ -224,12 +200,10 @@ export const SubscriptionBanner = ({
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-foreground mb-1">
-                Jūsu plāns: {getPlanDisplayName(plan)}
+                Jūsu abonements: {getPlanDisplayName(plan)}
               </h3>
               <p className="text-sm text-muted-foreground mb-2">
-                {plan === 'free' 
-                  ? 'Bezmaksas plāns. Nākamā maksa: Nav' 
-                  : 'Nav aktīva plāna. Izvēlieties plānu, lai turpinātu'}
+                Nākamā maksa: Nav
               </p>
               <Badge variant="secondary" className="text-xs font-medium">
                 E-pasta kredīti: {emailCredits}
@@ -244,7 +218,7 @@ export const SubscriptionBanner = ({
               className="gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              {plan === 'free' ? 'Uzlabot plānu' : 'Izvēlēties plānu'}
+              {plan === 'free' ? 'Atjaunot abonementu' : 'Izvēlēties plānu'}
             </Button>
             <Button
               variant="outline"

@@ -89,7 +89,7 @@ async function downgradeProfessionalToFree(
     .from('professional_profiles')
     .update({
       plan: 'free',
-      subscription_status: 'expired',
+      subscription_status: 'inactive',
       subscription_end_date: null,
       stripe_subscription_id: null,
       subscription_last_changed: new Date().toISOString(),
@@ -392,15 +392,19 @@ serve(async (req) => {
         });
       }
 
+      const priceId = subscription.items?.data?.[0]?.price?.id;
+      const plan = (priceId && PRICE_ID_TO_PLAN[priceId]) || 'free';
+      const endDate = safeTimestampToISO(subscription.current_period_end);
+
       // CASE A: User cancelled subscription but it's still active until period end
       if (subscription.cancel_at_period_end && subscription.status === 'active') {
         console.log(`⏳ Subscription cancelled but active until period end`);
-        const endDate = safeTimestampToISO(subscription.current_period_end);
         
-        // Keep current plan active, just mark as cancelled
+        // Keep current plan active, mark as canceled_at_period_end
         await supabase
           .from('professional_profiles')
           .update({
+            plan: plan,
             subscription_status: 'canceled_at_period_end',
             is_cancelled: true,
             subscription_end_date: endDate,
@@ -408,14 +412,14 @@ serve(async (req) => {
           })
           .eq('id', professional.id);
 
-        console.log(`✅ Marked as cancelled, remains active until ${endDate}`);
+        console.log(`✅ Marked as canceled_at_period_end, remains active until ${endDate}`);
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // CASE B: Subscription fully canceled
+      // CASE B: Subscription fully canceled (period ended)
       if (subscription.status === 'canceled') {
         console.log(`🗑️ Subscription fully canceled - downgrading to FREE`);
         await downgradeProfessionalToFree(supabase, professional.id, subscription.id);
@@ -425,13 +429,15 @@ serve(async (req) => {
         });
       }
 
-      // CASE C: Payment failed - mark as past_due but DON'T downgrade
+      // CASE C: Payment failed - mark as past_due but keep plan
       if (subscription.status === 'past_due') {
-        console.log(`⚠️ Payment past due - keeping plan active`);
+        console.log(`⚠️ Payment past due - keeping plan active with past_due status`);
         await supabase
           .from('professional_profiles')
           .update({
             subscription_status: 'past_due',
+            subscription_end_date: endDate,
+            subscription_last_changed: new Date().toISOString(),
           })
           .eq('id', professional.id);
 
@@ -441,24 +447,23 @@ serve(async (req) => {
         });
       }
 
-      // CASE D: Subscription reactivated (cancel_at_period_end = false and status = active)
+      // CASE D: Subscription reactivated or renewed (cancel_at_period_end = false and status = active)
       if (!subscription.cancel_at_period_end && subscription.status === 'active') {
-        console.log(`✅ Subscription reactivated or upgraded`);
-        const priceId = subscription.items?.data?.[0]?.price?.id;
-        const plan = (priceId && PRICE_ID_TO_PLAN[priceId]) || 'free';
-        const endDate = safeTimestampToISO(subscription.current_period_end);
+        console.log(`✅ Subscription active - reactivated, renewed, or upgraded`);
 
-        // Update subscription (replace credits for plan changes)
-        await updateProfessionalSubscription(
-          supabase,
-          professional.id,
-          plan,
-          'active',
-          endDate,
-          subscription.id,
-          true // Replace credits on active plan change
-        );
+        // Update subscription to active
+        await supabase
+          .from('professional_profiles')
+          .update({
+            plan: plan,
+            subscription_status: 'active',
+            is_cancelled: false,
+            subscription_end_date: endDate,
+            subscription_last_changed: new Date().toISOString(),
+          })
+          .eq('id', professional.id);
 
+        console.log(`✅ Subscription updated to active: ${plan} until ${endDate}`);
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
