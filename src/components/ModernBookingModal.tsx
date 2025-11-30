@@ -376,13 +376,14 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
         }
 
         // Fetch existing bookings for this staff member on this date
+        // CRITICAL: Include 'completed' status to prevent reopening time slots after completion
         const { data: bookings, error: bookingsError } = await supabase
           .from('bookings')
           .select('booking_time, booking_end_time')
           .eq('professional_id', professionalId)
           .eq('staff_member_id', staffMember.id)
           .eq('booking_date', dateStr)
-          .in('status', ['pending', 'confirmed']);
+          .in('status', ['pending', 'confirmed', 'completed']);
 
         if (bookingsError) {
           console.error('❌ Error loading bookings:', bookingsError);
