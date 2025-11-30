@@ -157,8 +157,14 @@ const Auth = () => {
   };
 
   const handleGoogleLogin = async () => {
+    // Validate professional registration
+    if (registerRole === 'PROFESSIONAL' && !registerCategory) {
+      toast.error('Lūdzu izvēlieties kategoriju');
+      return;
+    }
+    
     setLoading(true);
-    const { error } = await signInWithGoogle();
+    const { error } = await signInWithGoogle(registerRole, registerCategory);
     
     if (error) {
       toast.error('Neizdevās autorizēties ar Google');
