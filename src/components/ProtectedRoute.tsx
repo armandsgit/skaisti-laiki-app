@@ -11,6 +11,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isApproved, setIsApproved] = useState<boolean>(true);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -26,15 +27,17 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
             .maybeSingle();
           
           setUserRole(adminRole ? 'ADMIN' : null);
+          setIsApproved(true); // Admins are always approved
         } else {
           // Citām lomām izmanto profiles tabulu
           const { data } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, approved')
             .eq('id', user.id)
             .single();
           
           setUserRole(data?.role || null);
+          setIsApproved(data?.approved ?? true);
         }
       }
       setChecking(false);
@@ -55,6 +58,11 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Check if user is not approved (and not admin)
+  if (!isApproved && userRole !== 'ADMIN') {
+    return <Navigate to="/waiting-approval" replace />;
   }
 
   if (requiredRole && userRole !== requiredRole) {
