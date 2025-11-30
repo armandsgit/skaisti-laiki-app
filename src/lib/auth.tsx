@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -35,9 +36,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        
+        // Track previous user state
+        const previousUser = user;
+        
+        // Update state
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // If user was logged in but now session is null (account deleted/invalidated)
+        if (event === 'SIGNED_OUT' && previousUser && !session) {
+          const currentPath = window.location.pathname;
+          const isManualLogout = sessionStorage.getItem('manualLogout') === 'true';
+          
+          // Clear manual logout flag
+          sessionStorage.removeItem('manualLogout');
+          
+          // Only show error and redirect if not manual logout and not already on auth page
+          if (!isManualLogout && currentPath !== '/auth') {
+            toast.error('Tavs konts ir dzēsts vai sesija beigusies.');
+            navigate('/auth');
+          }
+        }
       }
     );
 
@@ -49,7 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [user, navigate]);
 
   // Handle post-OAuth role update separately
   useEffect(() => {
@@ -232,6 +254,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Set flag to prevent "account deleted" message on manual logout
+    sessionStorage.setItem('manualLogout', 'true');
     await supabase.auth.signOut();
     navigate('/auth');
   };
