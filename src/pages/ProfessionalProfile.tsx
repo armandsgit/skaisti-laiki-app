@@ -163,10 +163,13 @@ const ProfessionalProfile = () => {
           booking_end_time: bookingEndTime,
           notes: formData.notes || '',
           status: 'pending'
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         toast.error(t.error);
+        throw error; // Re-throw to be caught by ModernBookingModal
       } else {
         setBookingDialogOpen(false);
         setSuccessModalOpen(true);

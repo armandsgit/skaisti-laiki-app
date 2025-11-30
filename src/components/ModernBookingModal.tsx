@@ -89,6 +89,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
   const [formData, setFormData] = useState<Partial<BookingFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableStaff, setAvailableStaff] = useState<any[]>([]);
   const [staffTimeSlots, setStaffTimeSlots] = useState<Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>>>({});
   const [scheduleExceptions, setScheduleExceptions] = useState<Array<{ exception_date: string; is_closed: boolean; time_ranges: any }>>([]);
@@ -566,10 +567,17 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    
     if (validateForm()) {
+      setIsSubmitting(true);
       triggerHaptic('medium');
-      onSubmit(formData as BookingFormData);
+      try {
+        await onSubmit(formData as BookingFormData);
+      } finally {
+        setIsSubmitting(false);
+      }
     } else {
       triggerHaptic('heavy');
     }
@@ -867,10 +875,10 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
             {/* Submit Button */}
             <Button
               onClick={handleSubmit}
-              disabled={!formData.date || !formData.time}
+              disabled={!formData.date || !formData.time || isSubmitting}
               className="w-full h-16 rounded-2xl text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-200 active:scale-[0.98]"
             >
-              Apstiprināt rezervāciju
+              {isSubmitting ? 'Rezervē...' : 'Apstiprināt rezervāciju'}
             </Button>
           </div>
         </div>
