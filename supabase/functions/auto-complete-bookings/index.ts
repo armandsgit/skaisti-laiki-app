@@ -67,19 +67,37 @@ serve(async (req: Request) => {
     // We work in Latvia timezone (Europe/Riga)
     const bookingsToProcess: BookingToComplete[] = [];
     
-    // Get current time in Latvia timezone
-    const latviaTimeString = now.toLocaleString('sv-SE', { timeZone: 'Europe/Riga' });
-    const latviaTime = new Date(latviaTimeString);
-    const safetyBufferTime = new Date(latviaTime.getTime() - (SAFETY_BUFFER_SECONDS * 1000));
-    
+    // Get current time in Latvia timezone with proper parsing
+    const latviaTimeString = now.toLocaleString('sv-SE', { timeZone: 'Europe/Riga' }); // "2025-12-01 00:39:27"
     console.log(`⏰ Current Latvia time: ${latviaTimeString}`);
     
+    // Parse current time components
+    const [currentDateStr, currentTimeStr] = latviaTimeString.split(' ');
+    const [currentHour, currentMinute, currentSecond] = currentTimeStr.split(':').map(Number);
+    const currentTotalSeconds = currentHour * 3600 + currentMinute * 60 + currentSecond;
+    const safetyBufferSeconds = currentTotalSeconds - SAFETY_BUFFER_SECONDS;
+    
     for (const booking of bookingsToComplete) {
-      // Parse booking end time in Latvia timezone
-      const bookingEndLatviaString = `${booking.booking_date} ${booking.booking_end_time}`;
-      const bookingEndDateTime = new Date(bookingEndLatviaString);
+      // Parse booking end time: "HH:MM:SS" or "HH:MM"
+      const endTimeParts = booking.booking_end_time.split(':');
+      const endHour = parseInt(endTimeParts[0]);
+      const endMinute = parseInt(endTimeParts[1]);
+      const endSecond = endTimeParts[2] ? parseInt(endTimeParts[2]) : 0;
+      const bookingEndSeconds = endHour * 3600 + endMinute * 60 + endSecond;
       
-      if (bookingEndDateTime <= safetyBufferTime) {
+      // Check if booking has passed (considering safety buffer)
+      let isPastDue = false;
+      
+      if (booking.booking_date < currentDateStr) {
+        // Past date - definitely past due
+        isPastDue = true;
+      } else if (booking.booking_date === currentDateStr) {
+        // Same date - check if end time has passed (with safety buffer)
+        isPastDue = bookingEndSeconds <= safetyBufferSeconds;
+      }
+      // else: future date - not past due
+      
+      if (isPastDue) {
         bookingsToProcess.push(booking);
         console.log(`✅ Booking ${booking.id} ready: ${booking.booking_date} ${booking.booking_end_time}`);
       }

@@ -147,6 +147,10 @@ const ProfessionalProfile = () => {
       const endMins = endMinutes % 60;
       const bookingEndTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
 
+      // CRITICAL: Format booking_date in Latvia timezone to match query format in ModernBookingModal
+      // Using toISOString() causes UTC conversion which shifts dates by 1 day
+      const bookingDateStr = formData.date.toLocaleDateString('sv-SE', { timeZone: 'Europe/Riga' }); // Format: YYYY-MM-DD
+      
       const { error } = await supabase
         .from('bookings')
         .insert({
@@ -154,7 +158,7 @@ const ProfessionalProfile = () => {
           professional_id: id,
           service_id: selectedService.id,
           staff_member_id: formData.staffMemberId || null,
-          booking_date: formData.date.toISOString().split('T')[0],
+          booking_date: bookingDateStr,
           booking_time: formData.time,
           booking_end_time: bookingEndTime,
           notes: formData.notes || '',
