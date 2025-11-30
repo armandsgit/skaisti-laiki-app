@@ -233,9 +233,25 @@ const AdminDashboard = () => {
   };
 
   const handleApproveProfessional = async (id: string) => {
-    const { error } = await supabase.from("professional_profiles").update({ approved: true }).eq("id", id);
+    // id is professional_profile id, need to get user_id first
+    const { data: profProfile } = await supabase
+      .from("professional_profiles")
+      .select("user_id")
+      .eq("id", id)
+      .single();
 
-    if (error) {
+    if (!profProfile) {
+      toast.error("Profils nav atrasts");
+      return;
+    }
+
+    // Update both professional_profiles and profiles
+    const [profError, profileError] = await Promise.all([
+      supabase.from("professional_profiles").update({ approved: true }).eq("id", id),
+      supabase.from("profiles").update({ approved: true }).eq("id", profProfile.user_id)
+    ]);
+
+    if (profError.error || profileError.error) {
       toast.error(t.error);
     } else {
       toast.success("Meistars apstiprināts!");
