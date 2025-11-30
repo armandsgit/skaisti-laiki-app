@@ -65,7 +65,12 @@ const ClientBookings = () => {
             ) {
               toast.error('❌ Rezervācija tika atcelta');
             } else if (oldStatus === 'confirmed' && newStatus === 'completed') {
-              toast.success('✓ Rezervācija pabeigta');
+              const completedBy = (payload.new as any).completed_by;
+              if (completedBy === 'auto') {
+                toast.success('✓ Rezervācija automātiski pabeigta');
+              } else {
+                toast.success('✓ Rezervācija pabeigta');
+              }
             }
           }
         }
@@ -92,7 +97,9 @@ const ClientBookings = () => {
           category,
           profiles!professional_profiles_user_id_fkey(name, avatar)
         ),
-        staff_members(id, name, avatar, position)
+        staff_members(id, name, avatar, position),
+        completed_by,
+        auto_completed_at
       `)
       .eq('client_id', user?.id)
       .or(`status.neq.completed,and(status.eq.completed,booking_date.gte.${thirtyDaysAgoStr})`)
@@ -219,7 +226,7 @@ const ClientBookings = () => {
                         </div>
 
                         {/* Status Badge Below Date/Time */}
-                        <div className="flex justify-center pt-1">
+                        <div className="flex flex-col items-center gap-1 pt-1">
                            <Badge 
                             className={`text-xs px-4 py-1.5 ${
                               booking.status === 'pending' ? 'bg-amber-100 text-amber-800 border-amber-300' :
@@ -239,6 +246,9 @@ const ClientBookings = () => {
                              booking.status === 'completed' ? 'Pabeigta' :
                              t[booking.status as keyof typeof t] || booking.status}
                           </Badge>
+                          {booking.status === 'completed' && booking.completed_by === 'auto' && (
+                            <span className="text-[10px] text-muted-foreground">automātiski pabeigta</span>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -294,6 +304,7 @@ const ClientBookings = () => {
                               </div>
 
                               {/* Status Badge on the Right */}
+                              <div className="flex flex-col items-end gap-1">
                                <Badge 
                                 className={`text-xs px-3 py-1 flex-shrink-0 ${
                                   booking.status === 'completed' ? 'bg-blue-100 text-blue-800 border-blue-300' :
@@ -309,6 +320,10 @@ const ClientBookings = () => {
                                  booking.status === 'cancelled_system' || booking.status === 'canceled_system' ? 'Atcelta automātiski' :
                                  t[booking.status as keyof typeof t] || booking.status}
                               </Badge>
+                              {booking.status === 'completed' && booking.completed_by === 'auto' && (
+                                <span className="text-[10px] text-muted-foreground">automātiski</span>
+                              )}
+                              </div>
                             </div>
                             
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
