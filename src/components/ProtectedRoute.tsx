@@ -46,6 +46,32 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     if (!loading) {
       checkRole();
     }
+
+    // Subscribe to real-time profile updates for current user
+    if (user) {
+      const channel = supabase
+        .channel('profile-approval-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${user.id}`
+          },
+          (payload) => {
+            // When current user's approval status changes, re-check immediately
+            if (payload.old?.approved !== payload.new?.approved) {
+              checkRole();
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user, loading, requiredRole]);
 
   if (loading || checking) {

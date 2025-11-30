@@ -270,7 +270,6 @@ const AdminDashboard = () => {
     } else {
       toast.success("Meistars apstiprināts!");
       // Realtime subscription will handle data reload automatically
-      await loadPendingCount();
     }
   };
 
