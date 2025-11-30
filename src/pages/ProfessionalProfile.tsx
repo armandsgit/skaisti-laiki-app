@@ -37,16 +37,10 @@ const ProfessionalProfile = () => {
   useEffect(() => {
     if (id) {
       loadProfessional();
-    }
-  }, [id]);
-
-  // Load services and staff members after professional data is available (for plan filtering)
-  useEffect(() => {
-    if (professional) {
       loadServices();
       loadStaffMembers();
     }
-  }, [professional, id]);
+  }, [id]);
 
   const loadProfessional = async () => {
     const { data } = await supabase
@@ -63,7 +57,7 @@ const ProfessionalProfile = () => {
   };
 
   const loadServices = async () => {
-    if (!professional) return;
+    if (!id) return;
     
     const { data } = await supabase
       .from('services')
@@ -71,7 +65,7 @@ const ProfessionalProfile = () => {
       .eq('professional_id', id);
     
     // Filter by plan limit for public display
-    if (data) {
+    if (data && professional) {
       const { getPlanFeatures } = await import('@/lib/plan-features');
       const planFeatures = getPlanFeatures(professional.plan);
       const limit = planFeatures.maxServices;
@@ -82,6 +76,8 @@ const ProfessionalProfile = () => {
         : data.slice(0, limit);
       
       setServices(limitedServices);
+    } else if (data) {
+      setServices(data);
     } else {
       setServices([]);
     }

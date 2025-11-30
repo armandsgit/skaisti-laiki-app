@@ -155,6 +155,8 @@ const ProfessionalDashboard = () => {
   useEffect(() => {
     if (!profile?.id) return;
 
+    let debounceTimer: NodeJS.Timeout;
+
     const channel = supabase
       .channel('dashboard-subscription-changes')
       .on(
@@ -165,17 +167,33 @@ const ProfessionalDashboard = () => {
           table: 'professional_profiles',
           filter: `id=eq.${profile.id}`
         },
-        (payload) => {
-          console.log('Dashboard: Subscription changed:', payload);
-          // Force immediate refresh from Stripe
-          loadProfile();
-          loadEmailCredits();
-          loadSubscriptionStatus();
+        (payload: any) => {
+          // Only react to significant changes
+          const oldData = payload.old || {};
+          const newData = payload.new || {};
+          
+          const significantChange = 
+            oldData.plan !== newData.plan ||
+            oldData.subscription_status !== newData.subscription_status ||
+            oldData.subscription_will_renew !== newData.subscription_will_renew;
+
+          if (significantChange) {
+            console.log('Dashboard: Significant subscription change detected');
+            
+            // Debounce reload (500ms)
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+              loadProfile();
+              loadEmailCredits();
+              loadSubscriptionStatus();
+            }, 500);
+          }
         }
       )
       .subscribe();
 
     return () => {
+      clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [profile?.id]);
@@ -213,9 +231,11 @@ const ProfessionalDashboard = () => {
   useEffect(() => {
     if (!profile?.id) return;
 
+    let debounceTimer: NodeJS.Timeout;
+
     // Subscribe to new bookings
     const channel = supabase
-      .channel('booking-notifications')
+      .channel('booking-notifications-dashboard')
       .on(
         'postgres_changes',
         {
@@ -224,7 +244,7 @@ const ProfessionalDashboard = () => {
           table: 'bookings',
           filter: `professional_id=eq.${profile.id}`
         },
-        async (payload) => {
+        async (payload: any) => {
           console.log('New booking received:', payload);
           
           // Fetch client info for notification
@@ -240,13 +260,17 @@ const ProfessionalDashboard = () => {
             duration: 5000,
           });
           
-          // Reload bookings
-          loadBookings();
+          // Debounce reload (300ms)
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            loadBookings();
+          }, 300);
         }
       )
       .subscribe();
 
     return () => {
+      clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [profile?.id]);
