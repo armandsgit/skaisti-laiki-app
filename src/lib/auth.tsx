@@ -84,9 +84,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Handle post-OAuth role update separately
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // Reset flag when user logs out
+      oauthProcessedRef.current = false;
+      return;
+    }
     
-    // Prevent re-processing if already handled
+    // Prevent re-processing if already handled for this user
     if (oauthProcessedRef.current) return;
 
     const pendingRole = localStorage.getItem('pendingRole') as 'CLIENT' | 'PROFESSIONAL' | null;
@@ -95,103 +99,92 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Only process if there's a pending role (OAuth registration flow)
     if (!pendingRole) return;
     
-    // Mark as processed immediately
+    // Mark as processed immediately and clear storage
     oauthProcessedRef.current = true;
-    
-    // Clear immediately to prevent re-processing
     localStorage.removeItem('pendingRole');
     localStorage.removeItem('pendingCategory');
     
-    // Defer Supabase calls using setTimeout(0) to avoid deadlocks
-    setTimeout(() => {
-      const handleAuthRole = async () => {
-        try {
-          // Check if user has ADMIN role
-          const { data: existingRoles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id);
-          
-          const hasAdminRole = existingRoles?.some(r => r.role === 'ADMIN');
-          
-          // If user is admin, don't override
-          if (hasAdminRole) {
-            navigate('/admin');
-            return;
-          }
-
-          // Update user metadata
-          await supabase.auth.updateUser({
-            data: { role: pendingRole }
-          });
-          
-          // Check if profile exists and is already approved
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('approved')
-            .eq('id', user.id)
-            .single();
-          
-          // Update profiles table with role - only set approved to false for NEW users
-          const updateData: any = { role: pendingRole };
-          if (!existingProfile || existingProfile.approved === null) {
-            // Only set approved to false if this is a new user or approval status is not set
-            updateData.approved = false;
-          }
-          
-          await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('id', user.id);
-          
-          // Check if user_role already exists
-          const hasRoleEntry = existingRoles && existingRoles.length > 0;
-          
-          if (!hasRoleEntry) {
-            // Only insert if no role exists
-            await supabase
-              .from('user_roles')
-              .insert({ user_id: user.id, role: pendingRole });
-          }
-          
-          // Create professional profile if role is PROFESSIONAL
-          if (pendingRole === 'PROFESSIONAL' && pendingCategory) {
-            const { data: existingProfProfile } = await supabase
-              .from('professional_profiles')
-              .select('id')
-              .eq('user_id', user.id)
-              .maybeSingle();
-            
-            if (!existingProfProfile) {
-              await supabase
-                .from('professional_profiles')
-                .insert([{
-                  user_id: user.id,
-                  category: pendingCategory as any,
-                  city: '',
-                  approved: false
-                }]);
-            }
-            
-            // Navigate to onboarding for professionals
-            navigate('/onboarding/profile-photo');
-          } else {
-            // Check if approved before redirecting
-            if (existingProfile?.approved === false) {
-              navigate('/waiting-approval');
-            } else {
-              // Navigate directly to client dashboard
-              navigate('/client');
-            }
-          }
-        } catch (error) {
-          console.error('Error handling auth role:', error);
+    // Defer processing to avoid blocking auth state
+    const processOAuthRole = async () => {
+      try {
+        // Check if user has ADMIN role
+        const { data: existingRoles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        const hasAdminRole = existingRoles?.some(r => r.role === 'ADMIN');
+        
+        // If user is admin, redirect directly
+        if (hasAdminRole) {
+          navigate('/admin');
+          return;
         }
-      };
-      
-      handleAuthRole();
-    }, 0);
-  }, [user, navigate]);
+
+        // Check if profile exists and is already approved
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('approved, role')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        // Update profiles table with role - only set approved to false for NEW users
+        const updateData: any = { role: pendingRole };
+        if (!existingProfile || existingProfile.approved === null) {
+          updateData.approved = false;
+        }
+        
+        await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('id', user.id);
+        
+        // Check if user_role already exists
+        const hasRoleEntry = existingRoles && existingRoles.length > 0;
+        
+        if (!hasRoleEntry) {
+          await supabase
+            .from('user_roles')
+            .insert({ user_id: user.id, role: pendingRole });
+        }
+        
+        // Create professional profile if role is PROFESSIONAL
+        if (pendingRole === 'PROFESSIONAL' && pendingCategory) {
+          const { data: existingProfProfile } = await supabase
+            .from('professional_profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (!existingProfProfile) {
+            await supabase
+              .from('professional_profiles')
+              .insert([{
+                user_id: user.id,
+                category: pendingCategory as any,
+                city: '',
+                approved: false
+              }]);
+          }
+          
+          navigate('/onboarding/profile-photo');
+        } else {
+          // Check if approved before redirecting
+          if (existingProfile?.approved === false) {
+            navigate('/waiting-approval');
+          } else {
+            navigate('/client');
+          }
+        }
+      } catch (error) {
+        console.error('Error handling auth role:', error);
+        // On error, still prevent infinite loop by keeping flag true
+      }
+    };
+    
+    // Use setTimeout to defer processing
+    setTimeout(processOAuthRole, 100);
+  }, [user?.id, navigate]); // Only depend on user.id, not the full user object
 
   const signIn = async (email: string, password: string) => {
     const { error, data } = await supabase.auth.signInWithPassword({
