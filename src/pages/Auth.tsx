@@ -86,9 +86,61 @@ const Auth = () => {
     
     if (error) {
       toast.error(t.loginError);
-    } else {
-      toast.success(t.loginSuccess);
-      navigate('/');
+      setLoading(false);
+      return;
+    }
+    
+    // Check user role and redirect directly to appropriate dashboard
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      // Check if user is ADMIN
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'ADMIN')
+        .maybeSingle();
+      
+      if (adminRole) {
+        toast.success(t.loginSuccess);
+        navigate('/admin');
+        setLoading(false);
+        return;
+      }
+      
+      // Check regular user role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, approved')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile) {
+        // Check if user needs approval
+        if (!profile.approved && profile.role !== 'ADMIN') {
+          navigate('/waiting-approval');
+          setLoading(false);
+          return;
+        }
+        
+        toast.success(t.loginSuccess);
+        
+        // Redirect based on role
+        switch (profile.role) {
+          case 'CLIENT':
+            navigate('/client');
+            break;
+          case 'PROFESSIONAL':
+            navigate('/professional');
+            break;
+          case 'ADMIN':
+            navigate('/admin');
+            break;
+          default:
+            navigate('/client');
+        }
+      }
     }
     
     setLoading(false);
