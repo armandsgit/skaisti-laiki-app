@@ -113,6 +113,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     loadPendingCount();
 
+    // Debounce timer for reload
+    let reloadTimer: NodeJS.Timeout;
+
     // Subscribe to realtime changes for pending approvals
     const channel = supabase
       .channel('pending-approvals')
@@ -124,13 +127,20 @@ const AdminDashboard = () => {
           table: 'professional_profiles'
         },
         async (payload) => {
-          console.log('Professional profiles change detected:', payload);
+          // Only process INSERT and UPDATE events where approved status changes
+          const isNewPending = payload.eventType === 'INSERT' && payload.new.approved === false;
+          const isApprovalChange = payload.eventType === 'UPDATE' && 
+            payload.old?.approved !== payload.new?.approved;
+          
+          if (!isNewPending && !isApprovalChange) {
+            return; // Ignore irrelevant updates
+          }
           
           // Reload pending count immediately
           await loadPendingCount();
 
           // Show toast notification for new pending profiles (INSERT only)
-          if (payload.eventType === 'INSERT' && payload.new.approved === false) {
+          if (isNewPending) {
             const profileData = payload.new as any;
             toast.info('Jauns meistars gaida apstiprinājumu!', {
               description: `Pārbaudi ${profileData.city} kategorijā`,
@@ -141,15 +151,19 @@ const AdminDashboard = () => {
             });
           }
 
-          // Only reload full data if not already loading
-          if (!isLoadingData) {
-            loadData();
-          }
+          // Debounce full data reload to prevent multiple rapid reloads
+          clearTimeout(reloadTimer);
+          reloadTimer = setTimeout(() => {
+            if (!isLoadingData) {
+              loadData();
+            }
+          }, 500);
         }
       )
       .subscribe();
 
     return () => {
+      clearTimeout(reloadTimer);
       supabase.removeChannel(channel);
     };
   }, [isLoadingData]);
