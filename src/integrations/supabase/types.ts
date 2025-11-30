@@ -58,9 +58,42 @@ export type Database = {
           },
         ]
       }
+      booking_events: {
+        Row: {
+          booking_id: string
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           auto_cancelled_by_exception: boolean | null
+          auto_completed_at: string | null
           booking_date: string
           booking_end_time: string
           booking_time: string
@@ -68,6 +101,7 @@ export type Database = {
           cancelled_at: string | null
           cancelled_by: string | null
           client_id: string
+          completed_by: string | null
           created_at: string
           id: string
           notes: string | null
@@ -79,6 +113,7 @@ export type Database = {
         }
         Insert: {
           auto_cancelled_by_exception?: boolean | null
+          auto_completed_at?: string | null
           booking_date: string
           booking_end_time: string
           booking_time: string
@@ -86,6 +121,7 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_by?: string | null
           client_id: string
+          completed_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -97,6 +133,7 @@ export type Database = {
         }
         Update: {
           auto_cancelled_by_exception?: boolean | null
+          auto_completed_at?: string | null
           booking_date?: string
           booking_end_time?: string
           booking_time?: string
@@ -104,6 +141,7 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_by?: string | null
           client_id?: string
+          completed_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null

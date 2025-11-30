@@ -539,7 +539,9 @@ const ProfessionalDashboard = () => {
         *,
         services(name, price),
         profiles!bookings_client_id_fkey(name, phone, email),
-        staff_members(name, avatar)
+        staff_members(name, avatar),
+        completed_by,
+        auto_completed_at
       `)
       .eq('professional_id', profile.id)
       .or(`status.neq.completed,and(status.eq.completed,booking_date.gte.${thirtyDaysAgoStr})`)
@@ -813,6 +815,10 @@ const ProfessionalDashboard = () => {
     const updateData: any = { status };
     
     // Add cancellation tracking for cancellation statuses
+    if (status === 'completed') {
+      updateData.completed_by = user?.id || null;
+    }
+    
     if (status === 'cancelled_by_master' || status === 'cancelled_by_client' || status === 'cancelled_system') {
       updateData.cancelled_by = user?.id;
       updateData.cancelled_at = new Date().toISOString();
