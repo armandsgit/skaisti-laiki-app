@@ -13,6 +13,8 @@ interface UpcomingBookingCardProps {
     status: 'pending' | 'confirmed' | 'completed' | 'canceled';
     services: { name: string; price: number };
     profiles: { name: string; phone: string; email?: string };
+    completed_by?: string | null;
+    auto_completed_at?: string | null;
   };
   onClick: () => void;
 }
@@ -55,9 +57,14 @@ export const UpcomingBookingCard = ({ booking, onClick }: UpcomingBookingCardPro
                 <p className="text-[13px] text-muted-foreground">{booking.booking_time}</p>
               </div>
             </div>
-            <Badge className={`${statusColors[booking.status]} border`}>
-              {statusLabels[booking.status]}
-            </Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge className={`${statusColors[booking.status]} border`}>
+                {statusLabels[booking.status]}
+              </Badge>
+              {booking.status === 'completed' && booking.completed_by === 'auto' && (
+                <span className="text-[10px] text-muted-foreground">automātiski</span>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
