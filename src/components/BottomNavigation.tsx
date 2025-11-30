@@ -9,6 +9,7 @@ const BottomNavigation = () => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
+  const [confirmedBookingsCount, setConfirmedBookingsCount] = useState(0);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
 
   // Load user role from both user_roles (for ADMIN) and profiles (for other roles)
@@ -46,24 +47,33 @@ const BottomNavigation = () => {
     loadUserRole();
   }, [user?.id]);
 
-  // Load pending + confirmed bookings count for clients (active bookings)
+  // Load pending and confirmed bookings count separately for clients
   useEffect(() => {
-    const loadPendingBookingsCount = async () => {
+    const loadBookingsCounts = async () => {
       if (!user?.id || userRole !== 'CLIENT') {
         setPendingBookingsCount(0);
+        setConfirmedBookingsCount(0);
         return;
       }
       
       const { supabase } = await import('@/integrations/supabase/client');
       
-      // Count both pending and confirmed bookings (active bookings that need attention)
-      const { count, error } = await supabase
+      // Count pending bookings
+      const { count: pendingCount } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
         .eq('client_id', user.id)
-        .in('status', ['pending', 'confirmed']);
+        .eq('status', 'pending');
       
-      setPendingBookingsCount(count || 0);
+      // Count confirmed bookings
+      const { count: confirmedCount } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('client_id', user.id)
+        .eq('status', 'confirmed');
+      
+      setPendingBookingsCount(pendingCount || 0);
+      setConfirmedBookingsCount(confirmedCount || 0);
 
       // Debounce timer
       let bookingTimer: NodeJS.Timeout;
@@ -91,13 +101,20 @@ const BottomNavigation = () => {
             // Debounce count reload
             clearTimeout(bookingTimer);
             bookingTimer = setTimeout(async () => {
-              const { count: newCount } = await supabase
+              const { count: newPendingCount } = await supabase
                 .from('bookings')
                 .select('*', { count: 'exact', head: true })
                 .eq('client_id', user.id)
-                .in('status', ['pending', 'confirmed']);
+                .eq('status', 'pending');
               
-              setPendingBookingsCount(newCount || 0);
+              const { count: newConfirmedCount } = await supabase
+                .from('bookings')
+                .select('*', { count: 'exact', head: true })
+                .eq('client_id', user.id)
+                .eq('status', 'confirmed');
+              
+              setPendingBookingsCount(newPendingCount || 0);
+              setConfirmedBookingsCount(newConfirmedCount || 0);
             }, 300);
           }
         )
@@ -109,7 +126,7 @@ const BottomNavigation = () => {
       };
     };
     
-    loadPendingBookingsCount();
+    loadBookingsCounts();
   }, [user?.id, userRole]);
 
   // Load pending approvals count for admins
@@ -262,7 +279,8 @@ const BottomNavigation = () => {
       label: 'Rezervācijas', 
       path: '/client/bookings', 
       isActive: location.pathname === '/client/bookings',
-      badge: pendingBookingsCount
+      badge: pendingBookingsCount > 0 ? pendingBookingsCount : (confirmedBookingsCount > 0 ? confirmedBookingsCount : 0),
+      badgeColor: pendingBookingsCount > 0 ? 'red' : 'green'
     },
     { 
       icon: User, 
@@ -278,6 +296,7 @@ const BottomNavigation = () => {
         {tabs.map((tab, index) => {
           const Icon = tab.icon;
           const showBadge = 'badge' in tab && typeof tab.badge === 'number' && tab.badge > 0;
+          const badgeColor = 'badgeColor' in tab ? tab.badgeColor : 'red';
           
           return (
             <button
@@ -299,7 +318,7 @@ const BottomNavigation = () => {
                   strokeWidth={tab.isActive ? 2.5 : 1.5}
                 />
                 {showBadge && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                  <span className={`absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1.5 ${badgeColor === 'green' ? 'bg-green-500' : 'bg-red-500'} text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg`}>
                     {tab.badge}
                   </span>
                 )}
