@@ -295,7 +295,7 @@ const Auth = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleGoogleLogin}
+                  onClick={() => signInWithGoogle()} // No role - existing user login
                   disabled={loading}
                   className="w-full h-12 border-2 hover:bg-secondary transition-all font-medium rounded-2xl text-base flex items-center justify-center gap-3"
                 >
