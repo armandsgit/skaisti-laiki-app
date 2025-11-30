@@ -118,7 +118,7 @@ const AdminDashboard = () => {
 
     // Subscribe to realtime changes for pending approvals
     const channel = supabase
-      .channel('pending-approvals')
+      .channel('pending-approvals-admin')
       .on(
         'postgres_changes',
         {
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
           // Reload pending count immediately
           await loadPendingCount();
 
-          // Show toast notification for new pending profiles (INSERT only)
+          // Show toast notification ONLY for new pending profiles (INSERT only)
           if (isNewPending) {
             const profileData = payload.new as any;
             toast.info('Jauns meistars gaida apstiprinājumu!', {
@@ -166,7 +166,7 @@ const AdminDashboard = () => {
       clearTimeout(reloadTimer);
       supabase.removeChannel(channel);
     };
-  }, [isLoadingData]);
+  }, [isLoadingData, navigate]);
 
   const loadData = async () => {
     if (isLoadingData) return; // Prevent concurrent loads
