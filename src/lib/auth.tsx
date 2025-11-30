@@ -63,6 +63,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setTimeout(() => {
         const updateRole = async () => {
           try {
+            // Check if user already has ADMIN role - don't override it
+            const { data: existingRoles } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', user.id);
+            
+            const hasAdminRole = existingRoles?.some(r => r.role === 'ADMIN');
+            
+            // Don't update if user is already an admin
+            if (hasAdminRole) {
+              localStorage.removeItem('pendingRole');
+              localStorage.removeItem('pendingCategory');
+              return;
+            }
+            
             // Update user metadata
             await supabase.auth.updateUser({
               data: { role: pendingRole }
@@ -74,15 +89,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               .update({ role: pendingRole })
               .eq('id', user.id);
             
-            // Update user_roles table
-            await supabase
-              .from('user_roles')
-              .delete()
-              .eq('user_id', user.id);
+            // Check if user_role already exists
+            const hasRoleEntry = existingRoles && existingRoles.length > 0;
             
-            await supabase
-              .from('user_roles')
-              .insert({ user_id: user.id, role: pendingRole });
+            if (!hasRoleEntry) {
+              // Only insert if no role exists
+              await supabase
+                .from('user_roles')
+                .insert({ user_id: user.id, role: pendingRole });
+            }
             
             // Create professional profile if role is PROFESSIONAL
             if (pendingRole === 'PROFESSIONAL' && pendingCategory) {
