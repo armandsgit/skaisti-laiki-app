@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const previousUserRef = useRef<User | null>(null);
+  const oauthProcessedRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -58,6 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Clear manual logout flag
           sessionStorage.removeItem('manualLogout');
           
+          // Reset OAuth processed flag on signout
+          oauthProcessedRef.current = false;
+          
           // Only show error and redirect if not manual logout and not already on auth page
           if (!isManualLogout && currentPath !== '/auth') {
             toast.error('Tavs konts ir dzēsts vai sesija beigusies.');
@@ -81,12 +85,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle post-OAuth role update separately
   useEffect(() => {
     if (!user) return;
+    
+    // Prevent re-processing if already handled
+    if (oauthProcessedRef.current) return;
 
     const pendingRole = localStorage.getItem('pendingRole') as 'CLIENT' | 'PROFESSIONAL' | null;
     const pendingCategory = localStorage.getItem('pendingCategory');
     
     // Only process if there's a pending role (OAuth registration flow)
     if (!pendingRole) return;
+    
+    // Mark as processed immediately
+    oauthProcessedRef.current = true;
     
     // Clear immediately to prevent re-processing
     localStorage.removeItem('pendingRole');
@@ -255,6 +265,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Clear any pending auth data
     localStorage.removeItem('pendingRole');
     localStorage.removeItem('pendingCategory');
+    // Reset OAuth processed flag
+    oauthProcessedRef.current = false;
     await supabase.auth.signOut();
     navigate('/auth');
   };
