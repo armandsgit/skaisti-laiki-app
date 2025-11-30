@@ -98,7 +98,7 @@ const BottomNavigation = () => {
             
             if (!isStatusChange) return;
 
-            // Debounce count reload
+            // Debounce count reload - immediately recount both pending and confirmed
             clearTimeout(bookingTimer);
             bookingTimer = setTimeout(async () => {
               const { count: newPendingCount } = await supabase
@@ -115,7 +115,7 @@ const BottomNavigation = () => {
               
               setPendingBookingsCount(newPendingCount || 0);
               setConfirmedBookingsCount(newConfirmedCount || 0);
-            }, 300);
+            }, 100);
           }
         )
         .subscribe();
