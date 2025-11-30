@@ -85,10 +85,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             data: { role: pendingRole }
           });
           
-          // Update profiles table
+          // Update profiles table with role and approved status
           await supabase
             .from('profiles')
-            .update({ role: pendingRole })
+            .update({ 
+              role: pendingRole,
+              approved: false // New users require approval
+            })
             .eq('id', user.id);
           
           // Check if user_role already exists

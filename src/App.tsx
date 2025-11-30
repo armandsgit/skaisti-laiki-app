@@ -25,6 +25,8 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
 
+import WaitingApproval from "./pages/WaitingApproval";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -170,6 +172,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route path="/waiting-approval" element={<WaitingApproval />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <BottomNavigation />

@@ -52,6 +52,7 @@ const AdminDashboard = () => {
     proPlan: 0,
     biznessPlan: 0,
     activeSubscriptions: 0,
+    pendingClients: 0,
   });
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
@@ -67,7 +68,7 @@ const AdminDashboard = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedUserType, setSelectedUserType] = useState<"professional" | "client">("professional");
   const [selectedClient, setSelectedClient] = useState<any>(null);
-  const [selectedTab, setSelectedTab] = useState<"home" | "pending" | "professionals" | "clients" | "bookings" | "categories">(
+  const [selectedTab, setSelectedTab] = useState<"home" | "pending" | "pending-clients" | "professionals" | "clients" | "bookings" | "categories">(
     "home",
   );
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
@@ -86,7 +87,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get('tab');
-    if (tab && ["pending", "professionals", "clients", "bookings", "categories"].includes(tab)) {
+    if (tab && ["pending", "pending-clients", "professionals", "clients", "bookings", "categories"].includes(tab)) {
       setSelectedTab(tab as any);
     } else {
       // No tab parameter means we're on home/dashboard
@@ -180,6 +181,8 @@ const AdminDashboard = () => {
       active: profsData.data?.filter((p) => p.subscription_status === "active").length || 0,
     };
 
+    const pendingClientsCount = clientsData.data?.filter((c) => c.approved === false).length || 0;
+
     setStats({
       totalUsers: usersData.count || 0,
       totalProfessionals: profsData.data?.length || 0,
@@ -188,6 +191,7 @@ const AdminDashboard = () => {
       proPlan: subscriptionStats.pro,
       biznessPlan: subscriptionStats.bizness,
       activeSubscriptions: subscriptionStats.active,
+      pendingClients: pendingClientsCount,
     });
 
     setProfessionals(profsData.data || []);
@@ -233,6 +237,23 @@ const AdminDashboard = () => {
     // Open delete modal to completely remove the professional
     setSelectedProfessional(professional);
     setDeleteModalOpen(true);
+  };
+
+  const handleApproveClient = async (id: string) => {
+    const { error } = await supabase.from("profiles").update({ approved: true }).eq("id", id);
+
+    if (error) {
+      toast.error(t.error);
+    } else {
+      toast.success("Klients apstiprināts!");
+      loadData();
+    }
+  };
+
+  const handleRejectClient = (client: any) => {
+    // Open delete modal to completely remove the client
+    setSelectedClient(client);
+    setDeleteClientModalOpen(true);
   };
 
   const handleUpdatePlan = async (id: string, newPlan: string) => {
@@ -683,7 +704,34 @@ const AdminDashboard = () => {
             >
               Gaida
             </p>
-            <p className="text-xs text-muted-foreground text-center mt-1">apstiprināšanu</p>
+            <p className="text-xs text-muted-foreground text-center mt-1">meistari</p>
+          </button>
+
+          <button
+            onClick={() => {
+              navigate('/admin?tab=pending-clients');
+              setSelectedTab("pending-clients");
+            }}
+            className={`p-5 rounded-2xl border-2 transition-all tap-feedback relative ${
+              selectedTab === "pending-clients"
+                ? "border-primary bg-primary/10 shadow-card"
+                : "border-border bg-card hover:border-primary/30 hover:shadow-soft"
+            }`}
+          >
+            {stats.pendingClients > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">
+                {stats.pendingClients}
+              </span>
+            )}
+            <Users
+              className={`w-8 h-8 mx-auto mb-2 ${selectedTab === "pending-clients" ? "text-primary" : "text-muted-foreground"}`}
+            />
+            <p
+              className={`text-sm font-semibold text-center ${selectedTab === "pending-clients" ? "text-primary" : "text-foreground"}`}
+            >
+              Gaida
+            </p>
+            <p className="text-xs text-muted-foreground text-center mt-1">klienti</p>
           </button>
 
           <button
@@ -879,6 +927,79 @@ const AdminDashboard = () => {
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => handleRejectProfessional(prof)}
+                                className="flex-1 text-[10px] sm:text-sm h-7 sm:h-9 px-2"
+                              >
+                                <XCircle className="w-2.5 h-2.5 sm:w-4 sm:h-4 mr-1" />
+                                <span className="truncate">Noraidīt</span>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          </div>
+        )}
+
+        {selectedTab === "pending-clients" && (
+          <div id="section-pending-clients">
+          <Card className="shadow-card border">
+            <CardHeader className="border-b bg-muted/20">
+              <CardTitle className="text-lg">Klienti, kas gaida apstiprināšanu</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {clients.filter((c) => !c.approved).length === 0 ? (
+                <p className="text-center text-muted-foreground py-12 text-base">Nav klientu, kas gaida apstiprināšanu</p>
+              ) : (
+                <div className="space-y-4">
+                  {clients
+                    .filter((c) => !c.approved)
+                    .map((client) => (
+                      <Card key={client.id} className="border-2 border-amber-300 bg-amber-50 overflow-hidden shadow-soft">
+                        <CardContent className="p-4 sm:p-5">
+                          <div className="space-y-2.5">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="h-14 w-14 sm:h-16 sm:w-16 flex-shrink-0">
+                                <AvatarImage src={client.avatar || ""} />
+                                <AvatarFallback className="text-base sm:text-lg bg-primary/10 text-primary">
+                                  {client.email?.[0]?.toUpperCase() || client.name?.[0]?.toUpperCase() || "K"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0 overflow-hidden">
+                                <h4 className="font-semibold text-sm sm:text-base truncate">{client.name}</h4>
+                                {client.email && (
+                                  <p className="text-xs text-muted-foreground truncate">{client.email}</p>
+                                )}
+                                {client.phone && (
+                                  <p className="text-xs text-muted-foreground truncate">{client.phone}</p>
+                                )}
+                                <div className="flex gap-1 mt-1.5 flex-wrap">
+                                  <Badge
+                                    variant="outline"
+                                    className="border-amber-500 text-amber-600 text-[10px] sm:text-xs px-1.5 py-0"
+                                  >
+                                    Gaida apstiprināšanu
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 border-t pt-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveClient(client.id)}
+                                className="flex-1 text-[10px] sm:text-sm h-7 sm:h-9 px-2"
+                              >
+                                <CheckCircle className="w-2.5 h-2.5 sm:w-4 sm:h-4 mr-1" />
+                                <span className="truncate">Apstiprināt</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleRejectClient(client)}
                                 className="flex-1 text-[10px] sm:text-sm h-7 sm:h-9 px-2"
                               >
                                 <XCircle className="w-2.5 h-2.5 sm:w-4 sm:h-4 mr-1" />
