@@ -914,7 +914,7 @@ const AdminDashboard = () => {
                     }
                   >
                     <CardContent className="p-5">
-                      {/* Avatar + Vārds + Mobilais nr */}
+                      {/* Avatar + Vārds + E-pasts + Tālrunis */}
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar className="h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0">
                           <AvatarImage src={prof.profiles?.avatar || ""} />
@@ -924,8 +924,13 @@ const AdminDashboard = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-base sm:text-lg truncate">{prof.profiles?.name}</h3>
-                          {prof.profiles?.phone && (
+                          {prof.profiles?.email && (
                             <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5">
+                              {prof.profiles?.email}
+                            </p>
+                          )}
+                          {prof.profiles?.phone && (
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
                               {prof.profiles?.phone}
                             </p>
                           )}
@@ -1119,10 +1124,24 @@ const AdminDashboard = () => {
                   >
                     <CardContent className="p-5">
                       <div className="space-y-3">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-lg">{client.name}</h4>
-                            <p className="text-sm text-muted-foreground">{client.phone || "Nav telefona"}</p>
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-14 w-14 sm:h-16 sm:w-16 flex-shrink-0">
+                            <AvatarImage src={client.avatar || ""} />
+                            <AvatarFallback className="text-base sm:text-lg bg-primary/10 text-primary">
+                              {client.email?.[0]?.toUpperCase() || client.name?.[0]?.toUpperCase() || "K"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-base sm:text-lg truncate">{client.name}</h4>
+                            {client.email && (
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">{client.email}</p>
+                            )}
+                            {client.phone && (
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">{client.phone}</p>
+                            )}
+                            {!client.phone && !client.email && (
+                              <p className="text-xs sm:text-sm text-muted-foreground">Nav kontaktinformācijas</p>
+                            )}
                             <div className="flex gap-2 mt-2">
                               <StatusBadge status={client.status} />
                             </div>
