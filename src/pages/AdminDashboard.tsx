@@ -155,7 +155,7 @@ const AdminDashboard = () => {
       supabase.from("profiles").select("*", { count: "exact" }),
       supabase.from("professional_profiles").select(`
         *,
-        profiles!professional_profiles_user_id_fkey(name, phone, status)
+        profiles!professional_profiles_user_id_fkey(name, phone, status, avatar)
       `),
       supabase.from("profiles").select("*").eq("role", "CLIENT"),
       supabase
