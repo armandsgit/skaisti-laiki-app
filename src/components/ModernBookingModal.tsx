@@ -453,9 +453,26 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
 
             if (serviceFits) {
               // Check if slot is in the past (Latvia timezone)
-              const slotDateTime = new Date(`${dateStr}T${timeSlot}:00`);
-              const nowLatvia = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Riga' }));
-              const isPastSlot = slotDateTime < nowLatvia;
+              // Get current date/time in Latvia timezone
+              const nowUTC = new Date();
+              const nowLatviaStr = nowUTC.toLocaleString('sv-SE', { timeZone: 'Europe/Riga' }); // Format: "YYYY-MM-DD HH:mm:ss"
+              const [datePartLatvia, timePartLatvia] = nowLatviaStr.split(' ');
+              const todayLatvia = datePartLatvia; // "YYYY-MM-DD"
+              const [hourL, minuteL] = timePartLatvia.split(':').map(Number);
+              const nowMinutesLatvia = hourL * 60 + minuteL;
+              
+              let isPastSlot = false;
+              
+              if (dateStr < todayLatvia) {
+                // Past date - all slots are past
+                isPastSlot = true;
+              } else if (dateStr === todayLatvia) {
+                // Today - check if time has passed
+                const [slotHour, slotMinute] = timeSlot.split(':').map(Number);
+                const slotMinutes = slotHour * 60 + slotMinute;
+                isPastSlot = slotMinutes < nowMinutesLatvia;
+              }
+              // else: future date - slot is not past
               
               // Slot is unavailable if booked OR in the past
               const isBooked = hasOverlap(timeSlot, slotEndTime) || isPastSlot;
