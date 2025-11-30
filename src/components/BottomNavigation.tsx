@@ -46,7 +46,7 @@ const BottomNavigation = () => {
     loadUserRole();
   }, [user?.id]);
 
-  // Load pending bookings count for clients
+  // Load pending + confirmed bookings count for clients (active bookings)
   useEffect(() => {
     const loadPendingBookingsCount = async () => {
       if (!user?.id || userRole !== 'CLIENT') {
@@ -56,11 +56,12 @@ const BottomNavigation = () => {
       
       const { supabase } = await import('@/integrations/supabase/client');
       
+      // Count both pending and confirmed bookings (active bookings that need attention)
       const { count, error } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
         .eq('client_id', user.id)
-        .eq('status', 'pending');
+        .in('status', ['pending', 'confirmed']);
       
       setPendingBookingsCount(count || 0);
 
@@ -94,7 +95,7 @@ const BottomNavigation = () => {
                 .from('bookings')
                 .select('*', { count: 'exact', head: true })
                 .eq('client_id', user.id)
-                .eq('status', 'pending');
+                .in('status', ['pending', 'confirmed']);
               
               setPendingBookingsCount(newCount || 0);
             }, 300);
