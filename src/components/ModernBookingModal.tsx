@@ -452,7 +452,13 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
             const serviceFits = slotEndTimeMin <= scheduleEndTimeMin;
 
             if (serviceFits) {
-              const isBooked = hasOverlap(timeSlot, slotEndTime);
+              // Check if slot is in the past (Latvia timezone)
+              const slotDateTime = new Date(`${dateStr}T${timeSlot}:00`);
+              const nowLatvia = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Riga' }));
+              const isPastSlot = slotDateTime < nowLatvia;
+              
+              // Slot is unavailable if booked OR in the past
+              const isBooked = hasOverlap(timeSlot, slotEndTime) || isPastSlot;
               
               // Avoid duplicates
               const existingSlot = slots.find(s => s.time === timeSlot);
