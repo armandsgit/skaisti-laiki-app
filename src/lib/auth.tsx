@@ -58,26 +58,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const pendingRole = localStorage.getItem('pendingRole') as 'CLIENT' | 'PROFESSIONAL' | null;
     const pendingCategory = localStorage.getItem('pendingCategory');
     
-    if (pendingRole) {
-      // Defer Supabase calls using setTimeout(0) to avoid deadlocks
-      setTimeout(() => {
-        const updateRole = async () => {
-          try {
-            // Check if user already has ADMIN role - don't override it
-            const { data: existingRoles } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', user.id);
-            
-            const hasAdminRole = existingRoles?.some(r => r.role === 'ADMIN');
-            
-            // Don't update if user is already an admin
-            if (hasAdminRole) {
-              localStorage.removeItem('pendingRole');
-              localStorage.removeItem('pendingCategory');
-              return;
+    // Defer Supabase calls using setTimeout(0) to avoid deadlocks
+    setTimeout(() => {
+      const handleAuthRole = async () => {
+        try {
+          // Check if user already has an existing profile
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          // Check if user has ADMIN role
+          const { data: existingRoles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id);
+          
+          const hasAdminRole = existingRoles?.some(r => r.role === 'ADMIN');
+          
+          // If user is admin, clear pending role and navigate to admin panel
+          if (hasAdminRole) {
+            localStorage.removeItem('pendingRole');
+            localStorage.removeItem('pendingCategory');
+            navigate('/admin');
+            return;
+          }
+
+          // If no pendingRole but user exists, navigate to their dashboard based on existing role
+          if (!pendingRole && existingProfile) {
+            if (existingProfile.role === 'PROFESSIONAL') {
+              navigate('/professional');
+            } else if (existingProfile.role === 'CLIENT') {
+              navigate('/client');
             }
-            
+            return;
+          }
+
+          // If pendingRole exists (new registration via OAuth)
+          if (pendingRole) {
             // Update user metadata
             await supabase.auth.updateUser({
               data: { role: pendingRole }
@@ -101,13 +120,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             // Create professional profile if role is PROFESSIONAL
             if (pendingRole === 'PROFESSIONAL' && pendingCategory) {
-              const { data: existingProfile } = await supabase
+              const { data: existingProfProfile } = await supabase
                 .from('professional_profiles')
                 .select('id')
                 .eq('user_id', user.id)
                 .maybeSingle();
               
-              if (!existingProfile) {
+              if (!existingProfProfile) {
                 await supabase
                   .from('professional_profiles')
                   .insert([{
@@ -132,17 +151,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               // Refresh to update UI with new role
               window.location.href = '/';
             }
-          } catch (error) {
-            console.error('Error updating role:', error);
-            // Clear stored values even on error
-            localStorage.removeItem('pendingRole');
-            localStorage.removeItem('pendingCategory');
           }
-        };
-        
-        updateRole();
-      }, 0);
-    }
+        } catch (error) {
+          console.error('Error handling auth role:', error);
+          // Clear stored values even on error
+          localStorage.removeItem('pendingRole');
+          localStorage.removeItem('pendingCategory');
+        }
+      };
+      
+      handleAuthRole();
+    }, 0);
   }, [user, navigate]);
 
   const signIn = async (email: string, password: string) => {
