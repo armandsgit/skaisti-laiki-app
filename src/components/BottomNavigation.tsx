@@ -152,14 +152,9 @@ const BottomNavigation = () => {
   // Determine navigation based on user role - Admin takes absolute priority
   const isAdminPanel = userRole === 'ADMIN';
   
-  // Only check professional/client logic if NOT admin
-  const isViewingOthersProfile = !isAdminPanel && 
-                                 location.pathname.startsWith('/professional/') && 
-                                 location.pathname !== '/professional' && 
-                                 location.pathname !== '/professional/settings';
-  
-  const isProfessionalUser = !isAdminPanel && userRole === 'PROFESSIONAL' && !isViewingOthersProfile;
-  const isClientUser = !isAdminPanel && (userRole === 'CLIENT' || isViewingOthersProfile);
+  // Professional users ALWAYS see professional navigation, even when viewing other profiles
+  const isProfessionalUser = !isAdminPanel && userRole === 'PROFESSIONAL';
+  const isClientUser = !isAdminPanel && userRole === 'CLIENT';
   
   const tabs = isAdminPanel ? [
     { 
@@ -203,7 +198,7 @@ const BottomNavigation = () => {
     { 
       icon: Calendar, 
       label: 'Rezervācijas', 
-      path: '/professional?tab=bookings', 
+      path: '/professional', 
       isActive: location.pathname === '/professional' && currentTab === 'bookings' 
     },
     { 
