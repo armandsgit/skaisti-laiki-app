@@ -64,13 +64,25 @@ serve(async (req: Request) => {
     console.log(`📋 Found ${bookingsToComplete.length} potential bookings to check`);
 
     // Filter bookings where end time has actually passed (with safety buffer)
+    // Build datetime string in local timezone (Europe/Riga)
     const bookingsToProcess: BookingToComplete[] = [];
     for (const booking of bookingsToComplete) {
+      // Parse as local timezone (should match database timezone - Europe/Riga)
       const bookingEndDateTime = new Date(`${booking.booking_date}T${booking.booking_end_time}`);
       const safetyBufferTime = new Date(now.getTime() - (SAFETY_BUFFER_SECONDS * 1000));
 
+      console.log(`🔍 Checking booking ${booking.id}:`);
+      console.log(`   Booking date: ${booking.booking_date}, end time: ${booking.booking_end_time}`);
+      console.log(`   Parsed end datetime: ${bookingEndDateTime.toISOString()}`);
+      console.log(`   Current time: ${now.toISOString()}`);
+      console.log(`   Safety buffer time: ${safetyBufferTime.toISOString()}`);
+      console.log(`   Comparison: ${bookingEndDateTime.toISOString()} <= ${safetyBufferTime.toISOString()}? ${bookingEndDateTime <= safetyBufferTime}`);
+
       if (bookingEndDateTime <= safetyBufferTime) {
         bookingsToProcess.push(booking);
+        console.log(`   ✅ Booking ${booking.id} will be auto-completed`);
+      } else {
+        console.log(`   ❌ Booking ${booking.id} not yet ready for completion`);
       }
     }
 
