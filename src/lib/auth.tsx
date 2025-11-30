@@ -58,17 +58,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const pendingRole = localStorage.getItem('pendingRole') as 'CLIENT' | 'PROFESSIONAL' | null;
     const pendingCategory = localStorage.getItem('pendingCategory');
     
+    // Only process if there's a pending role (OAuth registration flow)
+    if (!pendingRole) return;
+    
     // Defer Supabase calls using setTimeout(0) to avoid deadlocks
     setTimeout(() => {
       const handleAuthRole = async () => {
         try {
-          // Check if user already has an existing profile
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .maybeSingle();
-
           // Check if user has ADMIN role
           const { data: existingRoles } = await supabase
             .from('user_roles')
@@ -77,80 +73,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           const hasAdminRole = existingRoles?.some(r => r.role === 'ADMIN');
           
-          // If user is admin, clear pending role and navigate to admin panel
+          // If user is admin, clear pending role - don't override
           if (hasAdminRole) {
             localStorage.removeItem('pendingRole');
             localStorage.removeItem('pendingCategory');
-            navigate('/admin');
             return;
           }
 
-          // If no pendingRole but user exists, navigate to their dashboard based on existing role
-          if (!pendingRole && existingProfile) {
-            if (existingProfile.role === 'PROFESSIONAL') {
-              navigate('/professional');
-            } else if (existingProfile.role === 'CLIENT') {
-              navigate('/client');
-            }
-            return;
-          }
-
-          // If pendingRole exists (new registration via OAuth)
-          if (pendingRole) {
-            // Update user metadata
-            await supabase.auth.updateUser({
-              data: { role: pendingRole }
-            });
-            
-            // Update profiles table
+          // Update user metadata
+          await supabase.auth.updateUser({
+            data: { role: pendingRole }
+          });
+          
+          // Update profiles table
+          await supabase
+            .from('profiles')
+            .update({ role: pendingRole })
+            .eq('id', user.id);
+          
+          // Check if user_role already exists
+          const hasRoleEntry = existingRoles && existingRoles.length > 0;
+          
+          if (!hasRoleEntry) {
+            // Only insert if no role exists
             await supabase
-              .from('profiles')
-              .update({ role: pendingRole })
-              .eq('id', user.id);
+              .from('user_roles')
+              .insert({ user_id: user.id, role: pendingRole });
+          }
+          
+          // Create professional profile if role is PROFESSIONAL
+          if (pendingRole === 'PROFESSIONAL' && pendingCategory) {
+            const { data: existingProfProfile } = await supabase
+              .from('professional_profiles')
+              .select('id')
+              .eq('user_id', user.id)
+              .maybeSingle();
             
-            // Check if user_role already exists
-            const hasRoleEntry = existingRoles && existingRoles.length > 0;
-            
-            if (!hasRoleEntry) {
-              // Only insert if no role exists
+            if (!existingProfProfile) {
               await supabase
-                .from('user_roles')
-                .insert({ user_id: user.id, role: pendingRole });
+                .from('professional_profiles')
+                .insert([{
+                  user_id: user.id,
+                  category: pendingCategory as any,
+                  city: '',
+                  approved: false
+                }]);
             }
             
-            // Create professional profile if role is PROFESSIONAL
-            if (pendingRole === 'PROFESSIONAL' && pendingCategory) {
-              const { data: existingProfProfile } = await supabase
-                .from('professional_profiles')
-                .select('id')
-                .eq('user_id', user.id)
-                .maybeSingle();
-              
-              if (!existingProfProfile) {
-                await supabase
-                  .from('professional_profiles')
-                  .insert([{
-                    user_id: user.id,
-                    category: pendingCategory as any,
-                    city: '',
-                    approved: false
-                  }]);
-              }
-              
-              // Clear stored values before navigation
-              localStorage.removeItem('pendingRole');
-              localStorage.removeItem('pendingCategory');
-              
-              // Navigate to onboarding for professionals
-              navigate('/onboarding/profile-photo');
-            } else {
-              // Clear stored values for clients
-              localStorage.removeItem('pendingRole');
-              localStorage.removeItem('pendingCategory');
-              
-              // Refresh to update UI with new role
-              window.location.href = '/';
-            }
+            // Clear stored values before navigation
+            localStorage.removeItem('pendingRole');
+            localStorage.removeItem('pendingCategory');
+            
+            // Navigate to onboarding for professionals
+            navigate('/onboarding/profile-photo');
+          } else {
+            // Clear stored values for clients
+            localStorage.removeItem('pendingRole');
+            localStorage.removeItem('pendingCategory');
+            
+            // Refresh to update UI with new role
+            window.location.href = '/';
           }
         } catch (error) {
           console.error('Error handling auth role:', error);
