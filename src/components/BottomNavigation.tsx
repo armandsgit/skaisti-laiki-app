@@ -64,9 +64,12 @@ const BottomNavigation = () => {
       
       setPendingBookingsCount(count || 0);
 
-      // Subscribe to realtime changes
+      // Debounce timer
+      let bookingTimer: NodeJS.Timeout;
+
+      // Subscribe to realtime changes - only for status changes
       const channel = supabase
-        .channel('client-bookings-count')
+        .channel('client-bookings-count-nav')
         .on(
           'postgres_changes',
           {
@@ -76,19 +79,31 @@ const BottomNavigation = () => {
             filter: `client_id=eq.${user.id}`
           },
           async (payload) => {
-            // Reload count when bookings change
-            const { count: newCount, error: countError } = await supabase
-              .from('bookings')
-              .select('*', { count: 'exact', head: true })
-              .eq('client_id', user.id)
-              .eq('status', 'pending');
+            // Only update if status changed or new booking
+            const isStatusChange = 
+              payload.eventType === 'INSERT' ||
+              (payload.eventType === 'UPDATE' && payload.old?.status !== payload.new?.status) ||
+              payload.eventType === 'DELETE';
             
-            setPendingBookingsCount(newCount || 0);
+            if (!isStatusChange) return;
+
+            // Debounce count reload
+            clearTimeout(bookingTimer);
+            bookingTimer = setTimeout(async () => {
+              const { count: newCount } = await supabase
+                .from('bookings')
+                .select('*', { count: 'exact', head: true })
+                .eq('client_id', user.id)
+                .eq('status', 'pending');
+              
+              setPendingBookingsCount(newCount || 0);
+            }, 300);
           }
         )
         .subscribe();
 
       return () => {
+        clearTimeout(bookingTimer);
         supabase.removeChannel(channel);
       };
     };
@@ -113,9 +128,12 @@ const BottomNavigation = () => {
       
       setPendingApprovalsCount(count || 0);
 
-      // Subscribe to realtime changes
+      // Debounce timer
+      let countTimer: NodeJS.Timeout;
+
+      // Subscribe to realtime changes - only for approval status changes
       const channel = supabase
-        .channel('admin-pending-approvals')
+        .channel('admin-pending-approvals-nav')
         .on(
           'postgres_changes',
           {
@@ -124,18 +142,30 @@ const BottomNavigation = () => {
             table: 'professional_profiles'
           },
           async (payload) => {
-            // Reload count when professional profiles change
-            const { count: newCount } = await supabase
-              .from('professional_profiles')
-              .select('*', { count: 'exact', head: true })
-              .eq('approved', false);
+            // Only update if approved status changed
+            const isApprovalChange = 
+              payload.eventType === 'INSERT' ||
+              (payload.eventType === 'UPDATE' && payload.old?.approved !== payload.new?.approved) ||
+              payload.eventType === 'DELETE';
             
-            setPendingApprovalsCount(newCount || 0);
+            if (!isApprovalChange) return;
+
+            // Debounce count reload
+            clearTimeout(countTimer);
+            countTimer = setTimeout(async () => {
+              const { count: newCount } = await supabase
+                .from('professional_profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('approved', false);
+              
+              setPendingApprovalsCount(newCount || 0);
+            }, 300);
           }
         )
         .subscribe();
 
       return () => {
+        clearTimeout(countTimer);
         supabase.removeChannel(channel);
       };
     };
