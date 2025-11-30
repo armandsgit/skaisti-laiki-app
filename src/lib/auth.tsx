@@ -10,7 +10,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name: string, role: 'CLIENT' | 'PROFESSIONAL') => Promise<{ error: any; data: any }>;
-  signInWithGoogle: (role: 'CLIENT' | 'PROFESSIONAL', category?: string) => Promise<{ error: any }>;
+  signInWithGoogle: (role?: 'CLIENT' | 'PROFESSIONAL', category?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -108,8 +108,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const pendingRole = localStorage.getItem('pendingRole') as 'CLIENT' | 'PROFESSIONAL' | null;
     const pendingCategory = localStorage.getItem('pendingCategory');
     
-    // Only process if there's a pending role (OAuth registration flow)
-    if (!pendingRole) return;
+    // Only process if there's a pending role (OAuth NEW registration flow)
+    // For existing users logging in, Index page handles redirect
+    if (!pendingRole) {
+      console.log('No pending role - existing user login via OAuth');
+      return;
+    }
     
     // Mark this user as processed immediately
     oauthProcessedRef.current.add(user.id);
@@ -247,11 +251,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { error, data };
   };
 
-  const signInWithGoogle = async (role: 'CLIENT' | 'PROFESSIONAL', category?: string) => {
-    // Store role and category in localStorage for retrieval after OAuth redirect
-    localStorage.setItem('pendingRole', role);
-    if (category) {
-      localStorage.setItem('pendingCategory', category);
+  const signInWithGoogle = async (role?: 'CLIENT' | 'PROFESSIONAL', category?: string) => {
+    // Only store role and category for NEW registrations (when role is provided)
+    // For existing user logins, don't set pendingRole
+    if (role) {
+      localStorage.setItem('pendingRole', role);
+      if (category) {
+        localStorage.setItem('pendingCategory', category);
+      }
     }
     
     const { error } = await supabase.auth.signInWithOAuth({
