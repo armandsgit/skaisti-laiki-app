@@ -85,13 +85,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             data: { role: pendingRole }
           });
           
-          // Update profiles table with role and approved status
+          // Check if profile exists and is already approved
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('approved')
+            .eq('id', user.id)
+            .single();
+          
+          // Update profiles table with role - only set approved to false for NEW users
+          const updateData: any = { role: pendingRole };
+          if (!existingProfile || existingProfile.approved === null) {
+            // Only set approved to false if this is a new user or approval status is not set
+            updateData.approved = false;
+          }
+          
           await supabase
             .from('profiles')
-            .update({ 
-              role: pendingRole,
-              approved: false // New users require approval
-            })
+            .update(updateData)
             .eq('id', user.id);
           
           // Check if user_role already exists
