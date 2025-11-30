@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const previousUserRef = useRef<User | null>(null);
 
   useEffect(() => {
     // Set up auth state listener
@@ -38,13 +39,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (event, session) => {
         console.log('Auth state changed:', event, session?.user?.id);
         
-        // Track previous user state
-        const previousUser = user;
+        // Track previous user state using ref
+        const previousUser = previousUserRef.current;
         
         // Update state
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Update ref for next state change
+        previousUserRef.current = session?.user ?? null;
         
         // If user was logged in but now session is null (account deleted/invalidated)
         if (event === 'SIGNED_OUT' && previousUser && !session) {
@@ -67,11 +71,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      previousUserRef.current = session?.user ?? null;
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [user, navigate]);
+  }, [navigate]);
 
   // Handle post-OAuth role update separately
   useEffect(() => {
