@@ -809,19 +809,10 @@ const ProfessionalDashboard = () => {
   };
 
   const handleBookingAction = async (bookingId: string, status: 'pending' | 'confirmed' | 'completed' | 'canceled' | 'cancelled_by_master' | 'cancelled_by_client' | 'cancelled_system') => {
-    console.log(`📋 handleBookingAction called: bookingId=${bookingId}, status=${status}`);
-    
     // Get booking details for email
     const booking = bookings.find(b => b.id === bookingId);
     
-    if (booking) {
-      console.log(`   Current booking status: ${booking.status}`);
-      console.log(`   New status: ${status}`);
-    }
-    
     const updateData: any = { status };
-    
-    console.log(`   Update data:`, updateData);
     
     // Add cancellation tracking for cancellation statuses
     if (status === 'completed') {
@@ -836,15 +827,12 @@ const ProfessionalDashboard = () => {
                                        'Atcelta automātiski';
     }
     
-    console.log(`   Final update data:`, updateData);
-    
     const { error } = await supabase
       .from('bookings')
       .update(updateData)
       .eq('id', bookingId);
     
     if (!error) {
-      console.log(`✅ Booking ${bookingId} updated successfully to status: ${status}`);
       toast.success(
         status === 'confirmed' ? t.bookingConfirmed :
         status === 'completed' ? t.bookingCompleted :
@@ -858,7 +846,6 @@ const ProfessionalDashboard = () => {
 
       loadBookings();
     } else {
-      console.error(`❌ Error updating booking ${bookingId}:`, error);
       toast.error(t.error);
     }
   };
