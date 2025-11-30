@@ -1625,7 +1625,12 @@ const ProfessionalDashboard = () => {
                 )}
 
                 {/* Canceled Bookings Section - Collapsible */}
-                {bookings.filter(b => b.status === 'canceled').length > 0 && (
+                {bookings.filter(b => 
+                  b.status === 'canceled' || 
+                  b.status === 'cancelled_by_master' || 
+                  b.status === 'cancelled_by_client' || 
+                  b.status === 'cancelled_system'
+                ).length > 0 && (
                   <div className="space-y-4 mt-6">
                     <Button
                       variant="ghost"
@@ -1637,7 +1642,12 @@ const ProfessionalDashboard = () => {
                           Atceltās rezervācijas
                         </h3>
                         <Badge variant="secondary" className="text-xs">
-                          {bookings.filter(b => b.status === 'canceled').length}
+                          {bookings.filter(b => 
+                            b.status === 'canceled' || 
+                            b.status === 'cancelled_by_master' || 
+                            b.status === 'cancelled_by_client' || 
+                            b.status === 'cancelled_system'
+                          ).length}
                         </Badge>
                       </div>
                       <ChevronDown 
@@ -1654,7 +1664,12 @@ const ProfessionalDashboard = () => {
                         exit={{ opacity: 0, height: 0 }}
                         className="space-y-3"
                       >
-                        {bookings.filter(b => b.status === 'canceled').map((booking) => (
+                        {bookings.filter(b => 
+                          b.status === 'canceled' || 
+                          b.status === 'cancelled_by_master' || 
+                          b.status === 'cancelled_by_client' || 
+                          b.status === 'cancelled_system'
+                        ).map((booking) => (
                           <Card 
                             key={booking.id}
                             className="opacity-60 hover:opacity-80 transition-all duration-200 border-l-4 bg-muted/30 border-0 shadow-card"

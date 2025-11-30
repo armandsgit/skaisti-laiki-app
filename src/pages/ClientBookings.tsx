@@ -57,7 +57,12 @@ const ClientBookings = () => {
             
             if (oldStatus === 'pending' && newStatus === 'confirmed') {
               toast.success('✅ Jūsu rezervācija ir apstiprināta!');
-            } else if (newStatus === 'canceled') {
+            } else if (
+              newStatus === 'canceled' || 
+              newStatus === 'cancelled_by_master' || 
+              newStatus === 'cancelled_by_client' || 
+              newStatus === 'cancelled_system'
+            ) {
               toast.error('❌ Rezervācija tika atcelta');
             } else if (oldStatus === 'confirmed' && newStatus === 'completed') {
               toast.success('✓ Rezervācija pabeigta');
