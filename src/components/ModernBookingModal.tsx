@@ -204,7 +204,8 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
     setLoadingSlots(true);
     try {
       const dayOfWeek = date.getDay();
-      const dateStr = date.toISOString().split('T')[0];
+      // Format date in Latvia timezone to avoid UTC conversion issues
+      const dateStr = date.toLocaleDateString('sv-SE', { timeZone: 'Europe/Riga' }); // Format: YYYY-MM-DD
 
       console.log('🔵 loadStaffAndTimeSlots called with:', {
         date: dateStr,
