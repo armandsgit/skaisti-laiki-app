@@ -34,70 +34,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
-        // Handle post-OAuth signup with stored role/category
-        if (event === 'SIGNED_IN' && session?.user) {
-          const pendingRole = localStorage.getItem('pendingRole') as 'CLIENT' | 'PROFESSIONAL' | null;
-          const pendingCategory = localStorage.getItem('pendingCategory');
-          
-          if (pendingRole) {
-            setTimeout(async () => {
-              // Update user metadata with role
-              const { error: updateError } = await supabase.auth.updateUser({
-                data: { role: pendingRole }
-              });
-              
-              if (!updateError) {
-                // Update profiles table
-                await supabase
-                  .from('profiles')
-                  .update({ role: pendingRole })
-                  .eq('id', session.user.id);
-                
-                // Update user_roles table
-                await supabase
-                  .from('user_roles')
-                  .delete()
-                  .eq('user_id', session.user.id);
-                
-                await supabase
-                  .from('user_roles')
-                  .insert({ user_id: session.user.id, role: pendingRole });
-                
-                // Create professional profile if role is PROFESSIONAL
-                if (pendingRole === 'PROFESSIONAL' && pendingCategory) {
-                  const { data: existingProfile } = await supabase
-                    .from('professional_profiles')
-                    .select('id')
-                    .eq('user_id', session.user.id)
-                    .maybeSingle();
-                  
-                  if (!existingProfile) {
-                    await supabase
-                      .from('professional_profiles')
-                      .insert([{
-                        user_id: session.user.id,
-                        category: pendingCategory as any,
-                        city: '',
-                        approved: false
-                      }]);
-                  }
-                  
-                  // Navigate to onboarding for professionals
-                  navigate('/onboarding/profile-photo');
-                }
-              }
-              
-              // Clear stored values
-              localStorage.removeItem('pendingRole');
-              localStorage.removeItem('pendingCategory');
-            }, 500);
-          }
-        }
       }
     );
 
@@ -109,7 +49,86 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
+
+  // Handle post-OAuth role update separately
+  useEffect(() => {
+    if (!user) return;
+
+    const pendingRole = localStorage.getItem('pendingRole') as 'CLIENT' | 'PROFESSIONAL' | null;
+    const pendingCategory = localStorage.getItem('pendingCategory');
+    
+    if (pendingRole) {
+      // Defer Supabase calls using setTimeout(0) to avoid deadlocks
+      setTimeout(() => {
+        const updateRole = async () => {
+          try {
+            // Update user metadata
+            await supabase.auth.updateUser({
+              data: { role: pendingRole }
+            });
+            
+            // Update profiles table
+            await supabase
+              .from('profiles')
+              .update({ role: pendingRole })
+              .eq('id', user.id);
+            
+            // Update user_roles table
+            await supabase
+              .from('user_roles')
+              .delete()
+              .eq('user_id', user.id);
+            
+            await supabase
+              .from('user_roles')
+              .insert({ user_id: user.id, role: pendingRole });
+            
+            // Create professional profile if role is PROFESSIONAL
+            if (pendingRole === 'PROFESSIONAL' && pendingCategory) {
+              const { data: existingProfile } = await supabase
+                .from('professional_profiles')
+                .select('id')
+                .eq('user_id', user.id)
+                .maybeSingle();
+              
+              if (!existingProfile) {
+                await supabase
+                  .from('professional_profiles')
+                  .insert([{
+                    user_id: user.id,
+                    category: pendingCategory as any,
+                    city: '',
+                    approved: false
+                  }]);
+              }
+              
+              // Clear stored values before navigation
+              localStorage.removeItem('pendingRole');
+              localStorage.removeItem('pendingCategory');
+              
+              // Navigate to onboarding for professionals
+              navigate('/onboarding/profile-photo');
+            } else {
+              // Clear stored values for clients
+              localStorage.removeItem('pendingRole');
+              localStorage.removeItem('pendingCategory');
+              
+              // Refresh to update UI with new role
+              window.location.href = '/';
+            }
+          } catch (error) {
+            console.error('Error updating role:', error);
+            // Clear stored values even on error
+            localStorage.removeItem('pendingRole');
+            localStorage.removeItem('pendingCategory');
+          }
+        };
+        
+        updateRole();
+      }, 0);
+    }
+  }, [user, navigate]);
 
   const signIn = async (email: string, password: string) => {
     const { error, data } = await supabase.auth.signInWithPassword({
