@@ -64,25 +64,24 @@ serve(async (req: Request) => {
     console.log(`📋 Found ${bookingsToComplete.length} potential bookings to check`);
 
     // Filter bookings where end time has actually passed (with safety buffer)
-    // Build datetime string in local timezone (Europe/Riga)
+    // We work in Latvia timezone (Europe/Riga)
     const bookingsToProcess: BookingToComplete[] = [];
+    
+    // Get current time in Latvia timezone
+    const latviaTimeString = now.toLocaleString('sv-SE', { timeZone: 'Europe/Riga' });
+    const latviaTime = new Date(latviaTimeString);
+    const safetyBufferTime = new Date(latviaTime.getTime() - (SAFETY_BUFFER_SECONDS * 1000));
+    
+    console.log(`⏰ Current Latvia time: ${latviaTimeString}`);
+    
     for (const booking of bookingsToComplete) {
-      // Parse as local timezone (should match database timezone - Europe/Riga)
-      const bookingEndDateTime = new Date(`${booking.booking_date}T${booking.booking_end_time}`);
-      const safetyBufferTime = new Date(now.getTime() - (SAFETY_BUFFER_SECONDS * 1000));
-
-      console.log(`🔍 Checking booking ${booking.id}:`);
-      console.log(`   Booking date: ${booking.booking_date}, end time: ${booking.booking_end_time}`);
-      console.log(`   Parsed end datetime: ${bookingEndDateTime.toISOString()}`);
-      console.log(`   Current time: ${now.toISOString()}`);
-      console.log(`   Safety buffer time: ${safetyBufferTime.toISOString()}`);
-      console.log(`   Comparison: ${bookingEndDateTime.toISOString()} <= ${safetyBufferTime.toISOString()}? ${bookingEndDateTime <= safetyBufferTime}`);
-
+      // Parse booking end time in Latvia timezone
+      const bookingEndLatviaString = `${booking.booking_date} ${booking.booking_end_time}`;
+      const bookingEndDateTime = new Date(bookingEndLatviaString);
+      
       if (bookingEndDateTime <= safetyBufferTime) {
         bookingsToProcess.push(booking);
-        console.log(`   ✅ Booking ${booking.id} will be auto-completed`);
-      } else {
-        console.log(`   ❌ Booking ${booking.id} not yet ready for completion`);
+        console.log(`✅ Booking ${booking.id} ready: ${booking.booking_date} ${booking.booking_end_time}`);
       }
     }
 
