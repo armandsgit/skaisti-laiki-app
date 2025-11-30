@@ -198,7 +198,7 @@ const BottomNavigation = () => {
     { 
       icon: Calendar, 
       label: 'Rezervācijas', 
-      path: '/professional', 
+      path: '/professional?tab=bookings', 
       isActive: location.pathname === '/professional' && currentTab === 'bookings' 
     },
     { 
