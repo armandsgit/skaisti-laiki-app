@@ -32,9 +32,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const previousUserRef = useRef<User | null>(null);
-  const oauthProcessedRef = useRef<boolean>(false);
+  const oauthProcessedRef = useRef<Set<string>>(new Set()); // Track processed user IDs
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple initializations
+    if (isInitializedRef.current) return;
+    isInitializedRef.current = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -59,8 +64,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Clear manual logout flag
           sessionStorage.removeItem('manualLogout');
           
-          // Reset OAuth processed flag on signout
-          oauthProcessedRef.current = false;
+          // Reset OAuth processed set on signout
+          oauthProcessedRef.current.clear();
           
           // Only show error and redirect if not manual logout and not already on auth page
           if (!isManualLogout && currentPath !== '/auth') {
@@ -71,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Check for existing session
+    // Check for existing session ONCE
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -79,19 +84,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      isInitializedRef.current = false;
+    };
   }, [navigate]);
 
   // Handle post-OAuth role update separately
   useEffect(() => {
-    if (!user) {
-      // Reset flag when user logs out
-      oauthProcessedRef.current = false;
+    if (!user?.id) {
       return;
     }
     
-    // Prevent re-processing if already handled for this user
-    if (oauthProcessedRef.current) return;
+    // Check if we've already processed this user
+    if (oauthProcessedRef.current.has(user.id)) {
+      return;
+    }
 
     const pendingRole = localStorage.getItem('pendingRole') as 'CLIENT' | 'PROFESSIONAL' | null;
     const pendingCategory = localStorage.getItem('pendingCategory');
@@ -99,8 +107,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Only process if there's a pending role (OAuth registration flow)
     if (!pendingRole) return;
     
-    // Mark as processed immediately and clear storage
-    oauthProcessedRef.current = true;
+    // Mark this user as processed immediately
+    oauthProcessedRef.current.add(user.id);
+    
+    // Clear storage immediately
     localStorage.removeItem('pendingRole');
     localStorage.removeItem('pendingCategory');
     
@@ -117,7 +127,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // If user is admin, redirect directly
         if (hasAdminRole) {
-          navigate('/admin');
+          navigate('/admin', { replace: true });
           return;
         }
 
@@ -167,24 +177,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               }]);
           }
           
-          navigate('/onboarding/profile-photo');
+          navigate('/onboarding/profile-photo', { replace: true });
         } else {
           // Check if approved before redirecting
           if (existingProfile?.approved === false) {
-            navigate('/waiting-approval');
+            navigate('/waiting-approval', { replace: true });
           } else {
-            navigate('/client');
+            navigate('/client', { replace: true });
           }
         }
       } catch (error) {
         console.error('Error handling auth role:', error);
-        // On error, still prevent infinite loop by keeping flag true
+        // On error, remove from processed set to allow retry
+        oauthProcessedRef.current.delete(user.id);
       }
     };
     
     // Use setTimeout to defer processing
     setTimeout(processOAuthRole, 100);
-  }, [user?.id, navigate]); // Only depend on user.id, not the full user object
+  }, [user?.id, navigate]);
 
   const signIn = async (email: string, password: string) => {
     const { error, data } = await supabase.auth.signInWithPassword({
@@ -258,8 +269,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Clear any pending auth data
     localStorage.removeItem('pendingRole');
     localStorage.removeItem('pendingCategory');
-    // Reset OAuth processed flag
-    oauthProcessedRef.current = false;
+    // Reset OAuth processed set
+    oauthProcessedRef.current.clear();
     await supabase.auth.signOut();
     navigate('/auth');
   };
