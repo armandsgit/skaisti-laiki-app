@@ -32,14 +32,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const previousUserRef = useRef<User | null>(null);
-  const oauthProcessedRef = useRef<Set<string>>(new Set()); // Track processed user IDs
-  const isInitializedRef = useRef(false);
+  const oauthProcessedRef = useRef<Set<string>>(new Set());
+  const navigateRef = useRef(navigate);
 
+  // Keep navigate ref updated
   useEffect(() => {
-    // Prevent multiple initializations
-    if (isInitializedRef.current) return;
-    isInitializedRef.current = true;
+    navigateRef.current = navigate;
+  }, [navigate]);
 
+  // Initialize auth listener ONCE
+  useEffect(() => {
+    console.log('Initializing auth listener ONCE');
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -70,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Only show error and redirect if not manual logout and not already on auth page
           if (!isManualLogout && currentPath !== '/auth') {
             toast.error('Tavs konts ir dzēsts vai sesija beigusies.');
-            navigate('/auth');
+            navigateRef.current('/auth');
           }
         }
       }
@@ -85,10 +89,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => {
+      console.log('Cleaning up auth listener');
       subscription.unsubscribe();
-      isInitializedRef.current = false;
     };
-  }, [navigate]);
+  }, []); // NO dependencies - run only once
 
   // Handle post-OAuth role update separately
   useEffect(() => {
@@ -127,7 +131,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // If user is admin, redirect directly
         if (hasAdminRole) {
-          navigate('/admin', { replace: true });
+          navigateRef.current('/admin', { replace: true });
           return;
         }
 
@@ -177,13 +181,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               }]);
           }
           
-          navigate('/onboarding/profile-photo', { replace: true });
+          navigateRef.current('/onboarding/profile-photo', { replace: true });
         } else {
           // Check if approved before redirecting
           if (existingProfile?.approved === false) {
-            navigate('/waiting-approval', { replace: true });
+            navigateRef.current('/waiting-approval', { replace: true });
           } else {
-            navigate('/client', { replace: true });
+            navigateRef.current('/client', { replace: true });
           }
         }
       } catch (error) {
@@ -195,7 +199,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Use setTimeout to defer processing
     setTimeout(processOAuthRole, 100);
-  }, [user?.id, navigate]);
+  }, [user?.id]);
 
   const signIn = async (email: string, password: string) => {
     const { error, data } = await supabase.auth.signInWithPassword({
