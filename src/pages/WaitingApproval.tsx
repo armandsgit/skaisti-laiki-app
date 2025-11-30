@@ -22,8 +22,8 @@ const WaitingApproval = () => {
         .single();
 
       if (profile?.approved) {
-        // If approved, redirect to home
-        navigate('/');
+        // Force full page reload to ensure all components refresh
+        window.location.href = '/';
       } else {
         setChecking(false);
       }
@@ -33,7 +33,7 @@ const WaitingApproval = () => {
 
     // Set up real-time listener for approval status
     const channel = supabase
-      .channel('approval-status')
+      .channel('waiting-approval-listener')
       .on(
         'postgres_changes',
         {
@@ -44,7 +44,8 @@ const WaitingApproval = () => {
         },
         (payload: any) => {
           if (payload.new.approved === true) {
-            navigate('/');
+            // Force full page reload to ensure all components refresh properly
+            window.location.href = '/';
           }
         }
       )
@@ -53,7 +54,7 @@ const WaitingApproval = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, navigate]);
+  }, [user]);
 
   if (checking) {
     return (

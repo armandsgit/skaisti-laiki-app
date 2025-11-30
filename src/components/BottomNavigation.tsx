@@ -44,39 +44,6 @@ const BottomNavigation = () => {
     };
     
     loadUserRole();
-
-    // Subscribe to real-time profile updates for current user's role changes
-    if (user?.id) {
-      const loadRoleFromSupabase = async () => {
-        const { supabase } = await import('@/integrations/supabase/client');
-        
-        const channel = supabase
-          .channel('user-role-changes-nav')
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'profiles',
-              filter: `id=eq.${user.id}`
-            },
-            (payload) => {
-              // When current user's role or approval changes, reload role
-              if (payload.old?.role !== payload.new?.role || 
-                  payload.old?.approved !== payload.new?.approved) {
-                loadUserRole();
-              }
-            }
-          )
-          .subscribe();
-
-        return () => {
-          supabase.removeChannel(channel);
-        };
-      };
-
-      loadRoleFromSupabase();
-    }
   }, [user?.id]);
 
   // Load pending bookings count for clients
