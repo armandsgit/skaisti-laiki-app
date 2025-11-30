@@ -72,6 +72,7 @@ const AdminDashboard = () => {
     "home",
   );
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   // Function to load pending approvals count
   const loadPendingCount = async () => {
@@ -128,7 +129,7 @@ const AdminDashboard = () => {
           // Reload pending count immediately
           await loadPendingCount();
 
-          // Show toast notification for new pending profiles
+          // Show toast notification for new pending profiles (INSERT only)
           if (payload.eventType === 'INSERT' && payload.new.approved === false) {
             const profileData = payload.new as any;
             toast.info('Jauns meistars gaida apstiprinājumu!', {
@@ -140,8 +141,10 @@ const AdminDashboard = () => {
             });
           }
 
-          // Reload full data to update the UI
-          loadData();
+          // Only reload full data if not already loading
+          if (!isLoadingData) {
+            loadData();
+          }
         }
       )
       .subscribe();
@@ -149,55 +152,62 @@ const AdminDashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [isLoadingData]);
 
   const loadData = async () => {
-    const [usersData, profsData, clientsData, bookingsData] = await Promise.all([
-      supabase.from("profiles").select("*", { count: "exact" }),
-      supabase.from("professional_profiles").select(`
-        *,
-        profiles!professional_profiles_user_id_fkey(name, phone, status, avatar)
-      `).order("created_at", { ascending: false }),
-      supabase.from("profiles").select("*").eq("role", "CLIENT").order("created_at", { ascending: false }),
-      supabase
-        .from("bookings")
-        .select(
-          `
-        *,
-        services(name),
-        profiles!bookings_client_id_fkey(name),
-        professional_profiles(
-          profiles!professional_profiles_user_id_fkey(name)
-        )
-      `,
-        )
-        .order("created_at", { ascending: false }),
-    ]);
+    if (isLoadingData) return; // Prevent concurrent loads
+    
+    setIsLoadingData(true);
+    try {
+      const [usersData, profsData, clientsData, bookingsData] = await Promise.all([
+        supabase.from("profiles").select("*", { count: "exact" }),
+        supabase.from("professional_profiles").select(`
+          *,
+          profiles!professional_profiles_user_id_fkey(name, phone, status, avatar)
+        `).order("created_at", { ascending: false }),
+        supabase.from("profiles").select("*").eq("role", "CLIENT").order("created_at", { ascending: false }),
+        supabase
+          .from("bookings")
+          .select(
+            `
+          *,
+          services(name),
+          profiles!bookings_client_id_fkey(name),
+          professional_profiles(
+            profiles!professional_profiles_user_id_fkey(name)
+          )
+        `,
+          )
+          .order("created_at", { ascending: false }),
+      ]);
 
-    const subscriptionStats = {
-      starteris: profsData.data?.filter((p) => p.plan === "starteris").length || 0,
-      pro: profsData.data?.filter((p) => p.plan === "pro").length || 0,
-      bizness: profsData.data?.filter((p) => p.plan === "bizness").length || 0,
-      active: profsData.data?.filter((p) => p.subscription_status === "active").length || 0,
-    };
+      const subscriptionStats = {
+        starteris: profsData.data?.filter((p) => p.plan === "starteris").length || 0,
+        pro: profsData.data?.filter((p) => p.plan === "pro").length || 0,
+        bizness: profsData.data?.filter((p) => p.plan === "bizness").length || 0,
+        active: profsData.data?.filter((p) => p.subscription_status === "active").length || 0,
+      };
 
-    const pendingClientsCount = clientsData.data?.filter((c) => c.approved === false).length || 0;
+      const pendingClientsCount = clientsData.data?.filter((c) => c.approved === false).length || 0;
 
-    setStats({
-      totalUsers: usersData.count || 0,
-      totalProfessionals: profsData.data?.length || 0,
-      totalBookings: bookingsData.data?.length || 0,
-      starterisPlan: subscriptionStats.starteris,
-      proPlan: subscriptionStats.pro,
-      biznessPlan: subscriptionStats.bizness,
-      activeSubscriptions: subscriptionStats.active,
-      pendingClients: pendingClientsCount,
-    });
+      setStats({
+        totalUsers: usersData.count || 0,
+        totalProfessionals: profsData.data?.length || 0,
+        totalBookings: bookingsData.data?.length || 0,
+        starterisPlan: subscriptionStats.starteris,
+        proPlan: subscriptionStats.pro,
+        biznessPlan: subscriptionStats.bizness,
+        activeSubscriptions: subscriptionStats.active,
+        pendingClients: pendingClientsCount,
+      });
 
-    setProfessionals(profsData.data || []);
-    setClients(clientsData.data || []);
-    setBookings(bookingsData.data || []);
-    setLoading(false);
+      setProfessionals(profsData.data || []);
+      setClients(clientsData.data || []);
+      setBookings(bookingsData.data || []);
+      setLoading(false);
+    } finally {
+      setIsLoadingData(false);
+    }
   };
 
   const handleVerifyProfessional = async (id: string, isVerified: boolean) => {
@@ -229,7 +239,8 @@ const AdminDashboard = () => {
       toast.error(t.error);
     } else {
       toast.success("Meistars apstiprināts!");
-      loadData();
+      // Realtime subscription will handle data reload automatically
+      await loadPendingCount();
     }
   };
 
