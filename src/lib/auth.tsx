@@ -88,6 +88,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Only process if there's a pending role (OAuth registration flow)
     if (!pendingRole) return;
     
+    // Clear immediately to prevent re-processing
+    localStorage.removeItem('pendingRole');
+    localStorage.removeItem('pendingCategory');
+    
     // Defer Supabase calls using setTimeout(0) to avoid deadlocks
     setTimeout(() => {
       const handleAuthRole = async () => {
@@ -100,10 +104,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           const hasAdminRole = existingRoles?.some(r => r.role === 'ADMIN');
           
-          // If user is admin, clear pending role - don't override
+          // If user is admin, don't override
           if (hasAdminRole) {
-            localStorage.removeItem('pendingRole');
-            localStorage.removeItem('pendingCategory');
             navigate('/admin');
             return;
           }
@@ -161,17 +163,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }]);
             }
             
-            // Clear stored values before navigation
-            localStorage.removeItem('pendingRole');
-            localStorage.removeItem('pendingCategory');
-            
             // Navigate to onboarding for professionals
             navigate('/onboarding/profile-photo');
           } else {
-            // Clear stored values for clients
-            localStorage.removeItem('pendingRole');
-            localStorage.removeItem('pendingCategory');
-            
             // Check if approved before redirecting
             if (existingProfile?.approved === false) {
               navigate('/waiting-approval');
@@ -182,9 +176,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         } catch (error) {
           console.error('Error handling auth role:', error);
-          // Clear stored values even on error
-          localStorage.removeItem('pendingRole');
-          localStorage.removeItem('pendingCategory');
         }
       };
       
@@ -261,6 +252,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     // Set flag to prevent "account deleted" message on manual logout
     sessionStorage.setItem('manualLogout', 'true');
+    // Clear any pending auth data
+    localStorage.removeItem('pendingRole');
+    localStorage.removeItem('pendingCategory');
     await supabase.auth.signOut();
     navigate('/auth');
   };
