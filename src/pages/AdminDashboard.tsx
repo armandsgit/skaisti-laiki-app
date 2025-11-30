@@ -157,8 +157,8 @@ const AdminDashboard = () => {
       supabase.from("professional_profiles").select(`
         *,
         profiles!professional_profiles_user_id_fkey(name, phone, status, avatar)
-      `),
-      supabase.from("profiles").select("*").eq("role", "CLIENT"),
+      `).order("created_at", { ascending: false }),
+      supabase.from("profiles").select("*").eq("role", "CLIENT").order("created_at", { ascending: false }),
       supabase
         .from("bookings")
         .select(
