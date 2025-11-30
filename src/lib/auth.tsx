@@ -77,6 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (hasAdminRole) {
             localStorage.removeItem('pendingRole');
             localStorage.removeItem('pendingCategory');
+            navigate('/admin');
             return;
           }
 
@@ -144,8 +145,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.removeItem('pendingRole');
             localStorage.removeItem('pendingCategory');
             
-            // Refresh to update UI with new role
-            window.location.href = '/';
+            // Check if approved before redirecting
+            if (existingProfile?.approved === false) {
+              navigate('/waiting-approval');
+            } else {
+              // Navigate directly to client dashboard
+              navigate('/client');
+            }
           }
         } catch (error) {
           console.error('Error handling auth role:', error);
