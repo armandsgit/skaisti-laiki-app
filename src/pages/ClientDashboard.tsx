@@ -30,9 +30,9 @@ const ClientDashboard = () => {
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
   
   useEffect(() => {
+    initializeData();
+    loadCategories();
     if (user) {
-      initializeData();
-      loadCategories();
       loadProfile();
       loadRecentlyViewedIds();
     }
@@ -149,9 +149,10 @@ const ClientDashboard = () => {
     setRecentlyViewed(sortedMasters);
   };
   const loadProfile = async () => {
+    if (!user) return;
     const {
       data
-    } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
+    } = await supabase.from('profiles').select('*').eq('id', user.id).single();
     if (data) setProfile(data);
   };
   const loadCategories = async () => {

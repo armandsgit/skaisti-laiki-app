@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
@@ -17,6 +17,7 @@ import LoadingAnimation from '@/components/LoadingAnimation';
 import useEmblaCarousel from 'embla-carousel-react';
 import NavigationPicker from '@/components/NavigationPicker';
 import ModernBookingModal, { BookingFormData } from '@/components/ModernBookingModal';
+import AuthModal from '@/components/AuthModal';
 
 const ProfessionalProfile = () => {
   const { id } = useParams();
@@ -33,6 +34,8 @@ const ProfessionalProfile = () => {
   const [loading, setLoading] = useState(true);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [showNavigationPicker, setShowNavigationPicker] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pendingBookingServiceId, setPendingBookingServiceId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -109,9 +112,33 @@ const ProfessionalProfile = () => {
     }
   };
 
+  // Handle opening booking modal - check auth first
+  const handleBookClick = (serviceId: string) => {
+    triggerHaptic('medium');
+    if (!user) {
+      // Store pending booking service and show auth modal
+      setPendingBookingServiceId(serviceId);
+      setAuthModalOpen(true);
+    } else {
+      setSelectedServiceId(serviceId);
+      setBookingDialogOpen(true);
+    }
+  };
+
+  // Handle successful auth - resume booking flow
+  const handleAuthSuccess = useCallback(() => {
+    setAuthModalOpen(false);
+    if (pendingBookingServiceId) {
+      setSelectedServiceId(pendingBookingServiceId);
+      setBookingDialogOpen(true);
+      setPendingBookingServiceId(null);
+    }
+  }, [pendingBookingServiceId]);
+
   const handleBooking = async (formData: BookingFormData) => {
     if (!user) {
-      toast.error('Lūdzu piesakieties');
+      // Show auth modal instead of error
+      setAuthModalOpen(true);
       return;
     }
 
@@ -354,11 +381,7 @@ const ProfessionalProfile = () => {
                     <Button
                       size="lg"
                       className="w-full h-14 rounded-2xl text-base font-semibold shadow-sm hover:shadow-md transition-all"
-                      onClick={() => {
-                        triggerHaptic('medium');
-                        setSelectedServiceId(service.id);
-                        setBookingDialogOpen(true);
-                      }}
+                      onClick={() => handleBookClick(service.id)}
                     >
                       Pieteikties vizītei
                     </Button>
@@ -432,6 +455,17 @@ const ProfessionalProfile = () => {
       <BookingSuccessModal
         open={successModalOpen} 
         onClose={() => setSuccessModalOpen(false)} 
+      />
+
+      {/* Auth Modal for unauthenticated users */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => {
+          setAuthModalOpen(false);
+          setPendingBookingServiceId(null);
+        }}
+        onSuccess={handleAuthSuccess}
+        message="Lai veiktu rezervāciju, lūdzu pieslēdzieties"
       />
 
       {/* Navigation Picker */}

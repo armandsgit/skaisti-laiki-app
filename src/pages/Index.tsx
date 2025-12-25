@@ -11,15 +11,21 @@ const Index = () => {
 
   useEffect(() => {
     const redirectUser = async () => {
-      // Prevent multiple redirects
-      if (hasRedirectedRef.current) return;
-      if (!user || loading) return;
+      // Wait for auth loading to complete
+      if (loading) return;
+      
+      // If not logged in, redirect to client page (public browsing)
+      if (!user) {
+        navigate('/client', { replace: true });
+        return;
+      }
 
-      // Mark as redirecting
+      // Prevent multiple redirects for logged in users
+      if (hasRedirectedRef.current) return;
       hasRedirectedRef.current = true;
 
       try {
-        // Vispirms pārbauda, vai ir ADMIN loma user_roles tabulā
+        // Check if user is ADMIN
         const { data: adminRole } = await supabase
           .from('user_roles')
           .select('role')
@@ -32,7 +38,7 @@ const Index = () => {
           return;
         }
 
-        // Ja nav ADMIN, pārbauda parasto profila lomu
+        // Check regular profile role
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -53,15 +59,19 @@ const Index = () => {
             default:
               navigate('/client', { replace: true });
           }
+        } else {
+          // No profile yet, go to client
+          navigate('/client', { replace: true });
         }
       } catch (error) {
         console.error('Redirect error:', error);
-        hasRedirectedRef.current = false; // Reset on error
+        hasRedirectedRef.current = false;
+        navigate('/client', { replace: true });
       }
     };
 
     redirectUser();
-  }, [user?.id, loading, navigate]); // Only depend on user.id, not full user object
+  }, [user?.id, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">

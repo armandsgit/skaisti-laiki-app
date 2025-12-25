@@ -60,22 +60,8 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
-            <Route 
-              path="/" 
-              element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/client" 
-              element={
-                <ProtectedRoute requiredRole="CLIENT">
-                  <ClientDashboard />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/" element={<Index />} />
+            <Route path="/client" element={<ClientDashboard />} />
             <Route 
               path="/client/settings" 
               element={
@@ -108,14 +94,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/professional/:id" 
-              element={
-                <ProtectedRoute>
-                  <ProfessionalProfile />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/professional/:id" element={<ProfessionalProfile />} />
             <Route 
               path="/admin" 
               element={
@@ -132,14 +111,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/map" 
-              element={
-                <ProtectedRoute>
-                  <MapView />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/map" element={<MapView />} />
             <Route 
               path="/subscription-plans" 
               element={

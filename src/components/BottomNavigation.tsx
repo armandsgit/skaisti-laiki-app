@@ -191,18 +191,19 @@ const BottomNavigation = () => {
     loadPendingApprovalsCount();
   }, [user?.id, userRole]);
 
-  // Don't show on auth page or when not logged in
-  if (location.pathname === '/auth' || !user) return null;
+  // Don't show on auth page
+  if (location.pathname === '/auth') return null;
 
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get('tab');
   
   // Determine navigation based on user role - Admin takes absolute priority
-  const isAdminPanel = userRole === 'ADMIN';
+  const isAdminPanel = user && userRole === 'ADMIN';
   
   // Professional users ALWAYS see professional navigation, even when viewing other profiles
-  const isProfessionalUser = !isAdminPanel && userRole === 'PROFESSIONAL';
-  const isClientUser = !isAdminPanel && userRole === 'CLIENT';
+  const isProfessionalUser = user && !isAdminPanel && userRole === 'PROFESSIONAL';
+  const isClientUser = user && !isAdminPanel && userRole === 'CLIENT';
+  const isGuest = !user;
   
   const tabs = isAdminPanel ? [
     { 
@@ -261,7 +262,28 @@ const BottomNavigation = () => {
       path: '/professional/settings', 
       isActive: location.pathname === '/professional/settings' 
     },
+  ] : isGuest ? [
+    // Guest navigation - limited options
+    { 
+      icon: Home, 
+      label: 'Sākums', 
+      path: '/client', 
+      isActive: location.pathname === '/client' || location.pathname === '/' 
+    },
+    { 
+      icon: Search, 
+      label: 'Meklēt', 
+      path: '/map', 
+      isActive: location.pathname === '/map' 
+    },
+    { 
+      icon: User, 
+      label: 'Ieiet', 
+      path: '/auth', 
+      isActive: location.pathname === '/auth' 
+    },
   ] : [
+    // Client navigation
     { 
       icon: Home, 
       label: 'Sākums', 
