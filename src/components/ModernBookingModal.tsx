@@ -96,11 +96,12 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [availableDays, setAvailableDays] = useState<Set<string>>(new Set());
 
-  // Calculate max date based on professional's plan
+  // Calculate max date based on professional's plan - limit to max 1 month (31 days)
   const planFeatures = getPlanFeatures(professionalPlan);
-  const maxDate = planFeatures.calendarDaysVisible === -1 
-    ? undefined 
-    : addDays(new Date(), planFeatures.calendarDaysVisible);
+  const maxDaysFromPlan = planFeatures.calendarDaysVisible === -1 
+    ? 31 
+    : Math.min(planFeatures.calendarDaysVisible, 31);
+  const maxDate = addDays(new Date(), maxDaysFromPlan);
 
   // Load schedule exceptions and available days when modal opens or month changes
   useEffect(() => {
@@ -318,7 +319,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       // Iterate through each day of the month
       for (let d = new Date(startOfMonth); d <= endOfMonth; d.setDate(d.getDate() + 1)) {
         if (d < today) continue;
-        if (maxDate && d > maxDate) continue;
+        if (d > maxDate) continue;
 
         const year = d.getFullYear();
         const monthNum = String(d.getMonth() + 1).padStart(2, '0');
@@ -855,7 +856,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                       today.setHours(0, 0, 0, 0);
                       
                       if (date < today) return true;
-                      if (maxDate && date > maxDate) return true;
+                      if (date > maxDate) return true;
                       
                       // Check if date is in closed exceptions - normalize to YYYY-MM-DD in local timezone
                       const year = date.getFullYear();
@@ -893,7 +894,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         if (date < today) return false;
-                        if (maxDate && date > maxDate) return false;
+                        if (date > maxDate) return false;
                         
                         const year = date.getFullYear();
                         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -931,11 +932,9 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                   </p>
                 )}
               </div>
-              {maxDate && planFeatures.calendarDaysVisible !== -1 && (
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Pieejama rezervācija {planFeatures.calendarDaysVisible} dienām uz priekšu
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Pieejama rezervācija {maxDaysFromPlan} dienām uz priekšu
+              </p>
               {errors.date && (
                 <p className="text-sm text-destructive mt-2">{errors.date}</p>
               )}
