@@ -19,12 +19,12 @@ const ProfessionalCard = ({ professional: prof, onClick, availableToday, isNew }
       <div className="relative w-full h-[200px] bg-muted overflow-hidden">
         {/* Category Badge with availability indicator */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-          {/* Availability dot */}
+          {/* Availability dot - always visible with white border */}
           <div 
-            className={`w-3 h-3 rounded-full shadow-lg ${
+            className={`w-4 h-4 rounded-full border-2 border-white shadow-md ${
               availableToday 
-                ? 'bg-emerald-500 ring-2 ring-emerald-500/30' 
-                : 'bg-gray-400 ring-2 ring-gray-400/30'
+                ? 'bg-emerald-500' 
+                : 'bg-gray-400'
             }`}
             title={availableToday ? 'Šodien pieejams' : 'Šodien nav pieejams'}
           />
