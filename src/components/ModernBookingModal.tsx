@@ -92,8 +92,9 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableStaff, setAvailableStaff] = useState<any[]>([]);
   const [staffTimeSlots, setStaffTimeSlots] = useState<Record<string, Array<{ time: string; isBooked: boolean; serviceId: string; serviceName: string }>>>({});
-  const [scheduleExceptions, setScheduleExceptions] = useState<Array<{ exception_date: string; is_closed: boolean; time_ranges: any }>>([]);
+  const [scheduleExceptions, setScheduleExceptions] = useState<Array<{ exception_date: string; is_closed: boolean; time_ranges: any; staff_member_id?: string }>>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [availableDays, setAvailableDays] = useState<Set<string>>(new Set());
 
   // Calculate max date based on professional's plan
   const planFeatures = getPlanFeatures(professionalPlan);
@@ -101,12 +102,24 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
     ? undefined 
     : addDays(new Date(), planFeatures.calendarDaysVisible);
 
-  // Load schedule exceptions when modal opens or month changes
+  // Load schedule exceptions and available days when modal opens or month changes
   useEffect(() => {
     if (isOpen && professionalId) {
       loadScheduleExceptions(currentMonth);
+      if (formData.serviceId) {
+        loadAvailableDays(currentMonth, formData.serviceId);
+      }
     }
   }, [isOpen, professionalId, currentMonth]);
+
+  // Reload available days when service changes
+  useEffect(() => {
+    if (isOpen && professionalId && formData.serviceId) {
+      loadAvailableDays(currentMonth, formData.serviceId);
+    } else {
+      setAvailableDays(new Set());
+    }
+  }, [formData.serviceId, isOpen, professionalId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -198,6 +211,117 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       setScheduleExceptions(data || []);
     } catch (error) {
       console.error('❌ Error loading schedule exceptions:', error);
+    }
+  };
+
+  // Load available days for the selected service in the visible month
+  const loadAvailableDays = async (month: Date, serviceId: string) => {
+    try {
+      // Get staff members assigned to this service
+      const { data: masterServices, error: msError } = await supabase
+        .from('master_services')
+        .select('staff_member_id')
+        .eq('service_id', serviceId);
+
+      if (msError) throw msError;
+      const staffIds = masterServices?.map(ms => ms.staff_member_id) || [];
+      
+      if (staffIds.length === 0) {
+        setAvailableDays(new Set());
+        return;
+      }
+
+      // Get active staff members for this professional
+      const { data: staff, error: staffError } = await supabase
+        .from('staff_members')
+        .select('id')
+        .in('id', staffIds)
+        .eq('professional_id', professionalId)
+        .eq('is_active', true);
+
+      if (staffError) throw staffError;
+      const activeStaffIds = staff?.map(s => s.id) || [];
+      
+      if (activeStaffIds.length === 0) {
+        setAvailableDays(new Set());
+        return;
+      }
+
+      // Get all schedules for these staff members that include this service
+      const { data: schedules, error: scheduleError } = await supabase
+        .from('professional_schedules')
+        .select('day_of_week, staff_member_id, available_services')
+        .eq('professional_id', professionalId)
+        .in('staff_member_id', activeStaffIds)
+        .eq('is_active', true);
+
+      if (scheduleError) throw scheduleError;
+
+      // Filter schedules that include this service
+      const relevantSchedules = (schedules || []).filter(s => 
+        (s.available_services || []).includes(serviceId)
+      );
+
+      // Get days of week that have schedules for this service
+      const daysWithSchedule = new Set(relevantSchedules.map(s => s.day_of_week));
+
+      // Get schedule exceptions for the month
+      const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+      const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      const startDateStr = startOfMonth.toISOString().split('T')[0];
+      const endDateStr = endOfMonth.toISOString().split('T')[0];
+
+      const { data: exceptions, error: exError } = await supabase
+        .from('schedule_exceptions')
+        .select('exception_date, is_closed, time_ranges, staff_member_id')
+        .eq('professional_id', professionalId)
+        .gte('exception_date', startDateStr)
+        .lte('exception_date', endDateStr);
+
+      if (exError) throw exError;
+
+      // Build set of available days
+      const available = new Set<string>();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Iterate through each day of the month
+      for (let d = new Date(startOfMonth); d <= endOfMonth; d.setDate(d.getDate() + 1)) {
+        if (d < today) continue; // Skip past days
+        if (maxDate && d > maxDate) continue; // Skip beyond max date
+
+        const year = d.getFullYear();
+        const monthNum = String(d.getMonth() + 1).padStart(2, '0');
+        const dayNum = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${monthNum}-${dayNum}`;
+        const dayOfWeek = d.getDay();
+
+        // Check exceptions for this date
+        const dayExceptions = (exceptions || []).filter(e => e.exception_date === dateStr);
+        
+        // If any staff has a closed exception for this date and no special schedule
+        const allClosed = activeStaffIds.every(staffId => {
+          const staffException = dayExceptions.find(e => e.staff_member_id === staffId);
+          return staffException?.is_closed;
+        });
+
+        if (allClosed && dayExceptions.length > 0) continue;
+
+        // Check if any staff member has special schedule with time_ranges on this date
+        const hasSpecialSchedule = dayExceptions.some(e => !e.is_closed && e.time_ranges);
+        
+        // Check if regular schedule exists for this day of week
+        const hasRegularSchedule = daysWithSchedule.has(dayOfWeek);
+
+        if (hasSpecialSchedule || hasRegularSchedule) {
+          available.add(dateStr);
+        }
+      }
+
+      setAvailableDays(available);
+    } catch (error) {
+      console.error('❌ Error loading available days:', error);
+      setAvailableDays(new Set());
     }
   };
 
@@ -678,17 +802,37 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                         const dateStr = `${year}-${month}-${day}`;
                         const exception = scheduleExceptions.find(e => e.exception_date === dateStr);
                         return !exception?.is_closed && !!exception?.time_ranges;
+                      },
+                      hasAvailability: (date) => {
+                        if (!formData.serviceId) return false;
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (date < today) return false;
+                        if (maxDate && date > maxDate) return false;
+                        
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
+                        return availableDays.has(dateStr);
                       }
                     }}
                     modifiersClassNames={{
                       closed: 'bg-muted/50 text-muted-foreground line-through opacity-40 cursor-not-allowed',
-                      specialSchedule: 'bg-primary/10 border-primary/30 font-semibold'
+                      specialSchedule: 'bg-primary/10 border-primary/30 font-semibold',
+                      hasAvailability: 'bg-emerald-100 text-emerald-700 font-medium hover:bg-emerald-200 border border-emerald-300'
                     }}
                     className={cn("pointer-events-auto")}
                   />
                 </div>
               </div>
               <div className="mt-3 text-xs text-muted-foreground space-y-1">
+                {formData.serviceId && availableDays.size > 0 && (
+                  <p className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-emerald-100 border border-emerald-300"></span>
+                    <span>Pieejams</span>
+                  </p>
+                )}
                 {scheduleExceptions.some(e => e.is_closed) && (
                   <p className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-muted/50 border border-border"></span>
