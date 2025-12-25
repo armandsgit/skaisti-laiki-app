@@ -217,6 +217,14 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
   // Load available days for the selected service in the visible month
   const loadAvailableDays = async (month: Date, serviceId: string) => {
     try {
+      // Get the selected service details for duration
+      const selectedService = services.find(s => s.id === serviceId);
+      if (!selectedService) {
+        setAvailableDays(new Set());
+        return;
+      }
+      const serviceDuration = selectedService.duration || 60;
+
       // Get staff members assigned to this service
       const { data: masterServices, error: msError } = await supabase
         .from('master_services')
@@ -250,7 +258,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       // Get all schedules for these staff members that include this service
       const { data: schedules, error: scheduleError } = await supabase
         .from('professional_schedules')
-        .select('day_of_week, staff_member_id, available_services')
+        .select('day_of_week, staff_member_id, available_services, start_time, end_time')
         .eq('professional_id', professionalId)
         .in('staff_member_id', activeStaffIds)
         .eq('is_active', true);
@@ -261,9 +269,6 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
       const relevantSchedules = (schedules || []).filter(s => 
         (s.available_services || []).includes(serviceId)
       );
-
-      // Get days of week that have schedules for this service
-      const daysWithSchedule = new Set(relevantSchedules.map(s => s.day_of_week));
 
       // Get schedule exceptions for the month
       const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
@@ -280,40 +285,120 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
 
       if (exError) throw exError;
 
+      // Get all bookings for the month
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('booking_date, booking_time, booking_end_time, staff_member_id')
+        .eq('professional_id', professionalId)
+        .in('staff_member_id', activeStaffIds)
+        .gte('booking_date', startDateStr)
+        .lte('booking_date', endDateStr)
+        .in('status', ['pending', 'confirmed', 'completed']);
+
+      if (bookingsError) throw bookingsError;
+
+      // Helper functions
+      const timeToMinutes = (time: string): number => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+      };
+
       // Build set of available days
       const available = new Set<string>();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      
+      // Get current time in Latvia
+      const nowUTC = new Date();
+      const nowLatviaStr = nowUTC.toLocaleString('sv-SE', { timeZone: 'Europe/Riga' });
+      const [, timePartLatvia] = nowLatviaStr.split(' ');
+      const [hourL, minuteL] = timePartLatvia.split(':').map(Number);
+      const nowMinutesLatvia = hourL * 60 + minuteL;
 
       // Iterate through each day of the month
       for (let d = new Date(startOfMonth); d <= endOfMonth; d.setDate(d.getDate() + 1)) {
-        if (d < today) continue; // Skip past days
-        if (maxDate && d > maxDate) continue; // Skip beyond max date
+        if (d < today) continue;
+        if (maxDate && d > maxDate) continue;
 
         const year = d.getFullYear();
         const monthNum = String(d.getMonth() + 1).padStart(2, '0');
         const dayNum = String(d.getDate()).padStart(2, '0');
         const dateStr = `${year}-${monthNum}-${dayNum}`;
         const dayOfWeek = d.getDay();
+        const isToday = d.getTime() === today.getTime();
 
         // Check exceptions for this date
         const dayExceptions = (exceptions || []).filter(e => e.exception_date === dateStr);
         
-        // If any staff has a closed exception for this date and no special schedule
-        const allClosed = activeStaffIds.every(staffId => {
+        // Get bookings for this date
+        const dayBookings = (bookings || []).filter(b => b.booking_date === dateStr);
+
+        // Check each staff member for availability
+        let dayHasAvailability = false;
+
+        for (const staffId of activeStaffIds) {
           const staffException = dayExceptions.find(e => e.staff_member_id === staffId);
-          return staffException?.is_closed;
-        });
+          
+          // If staff is closed, skip
+          if (staffException?.is_closed) continue;
 
-        if (allClosed && dayExceptions.length > 0) continue;
+          // Get time ranges for this staff member on this day
+          let timeRanges: Array<{ start: string; end: string }> = [];
+          
+          if (staffException && !staffException.is_closed && staffException.time_ranges) {
+            // Use exception time ranges
+            timeRanges = (staffException.time_ranges as any[]).map(r => ({
+              start: r.start,
+              end: r.end
+            }));
+          } else {
+            // Use regular schedule
+            const staffSchedules = relevantSchedules.filter(
+              s => s.staff_member_id === staffId && s.day_of_week === dayOfWeek
+            );
+            timeRanges = staffSchedules.map(s => ({
+              start: s.start_time.substring(0, 5),
+              end: s.end_time.substring(0, 5)
+            }));
+          }
 
-        // Check if any staff member has special schedule with time_ranges on this date
-        const hasSpecialSchedule = dayExceptions.some(e => !e.is_closed && e.time_ranges);
-        
-        // Check if regular schedule exists for this day of week
-        const hasRegularSchedule = daysWithSchedule.has(dayOfWeek);
+          if (timeRanges.length === 0) continue;
 
-        if (hasSpecialSchedule || hasRegularSchedule) {
+          // Get bookings for this staff member
+          const staffBookings = dayBookings.filter(b => b.staff_member_id === staffId);
+          const bookedRanges = staffBookings.map(b => ({
+            start: timeToMinutes(b.booking_time.substring(0, 5)),
+            end: timeToMinutes(b.booking_end_time.substring(0, 5))
+          }));
+
+          // Check if there's at least one free slot
+          for (const range of timeRanges) {
+            const rangeStartMin = timeToMinutes(range.start);
+            const rangeEndMin = timeToMinutes(range.end);
+
+            // Generate potential slots and check if any is free
+            for (let slotStart = rangeStartMin; slotStart + serviceDuration <= rangeEndMin; slotStart += 10) {
+              const slotEnd = slotStart + serviceDuration;
+
+              // For today, skip past slots
+              if (isToday && slotStart <= nowMinutesLatvia) continue;
+
+              // Check if slot overlaps with any booking
+              const isBooked = bookedRanges.some(
+                booked => slotStart < booked.end && slotEnd > booked.start
+              );
+
+              if (!isBooked) {
+                dayHasAvailability = true;
+                break;
+              }
+            }
+            if (dayHasAvailability) break;
+          }
+          if (dayHasAvailability) break;
+        }
+
+        if (dayHasAvailability) {
           available.add(dateStr);
         }
       }
@@ -819,8 +904,8 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
                     }}
                     modifiersClassNames={{
                       closed: 'bg-muted/50 text-muted-foreground line-through opacity-40 cursor-not-allowed',
-                      specialSchedule: 'bg-primary/10 border-primary/30 font-semibold',
-                      hasAvailability: 'bg-emerald-100 text-emerald-700 font-medium hover:bg-emerald-200 border border-emerald-300'
+                      specialSchedule: 'bg-primary/10 font-semibold',
+                      hasAvailability: '!bg-emerald-100 !text-emerald-700 font-medium hover:!bg-emerald-200'
                     }}
                     className={cn("pointer-events-auto")}
                   />
@@ -829,7 +914,7 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
               <div className="mt-3 text-xs text-muted-foreground space-y-1">
                 {formData.serviceId && availableDays.size > 0 && (
                   <p className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-emerald-100 border border-emerald-300"></span>
+                    <span className="w-3 h-3 rounded-full bg-emerald-100"></span>
                     <span>Pieejams</span>
                   </p>
                 )}
