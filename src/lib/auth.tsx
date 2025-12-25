@@ -64,17 +64,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === 'SIGNED_OUT' && previousUser && !session) {
           const currentPath = window.location.pathname;
           const isManualLogout = sessionStorage.getItem('manualLogout') === 'true';
-          
+
           // Clear manual logout flag
           sessionStorage.removeItem('manualLogout');
-          
+
           // Reset OAuth processed set on signout
           oauthProcessedRef.current.clear();
-          
-          // Only show error and redirect if not manual logout and not already on auth page
-          if (!isManualLogout && currentPath !== '/auth') {
+
+          // If session expired / account invalidated: keep public browsing public.
+          // Only force auth page when the user is on a protected area.
+          const isPublicPath =
+            currentPath === '/' ||
+            currentPath === '/client' ||
+            currentPath === '/map' ||
+            currentPath === '/waiting-approval' ||
+            (currentPath.startsWith('/professional/') && currentPath !== '/professional/settings');
+
+          if (!isManualLogout) {
             toast.error('Tavs konts ir dzēsts vai sesija beigusies.');
-            navigateRef.current('/auth');
+
+            if (!isPublicPath && currentPath !== '/auth') {
+              navigateRef.current('/auth');
+            }
           }
         }
       }
