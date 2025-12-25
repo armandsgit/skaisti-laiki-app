@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ interface AuthModalProps {
 
 const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
   const t = useTranslation('lv');
+  const navigate = useNavigate();
   const { signIn, signUp, signInWithGoogle, user } = useAuth();
   
   const [loginEmail, setLoginEmail] = useState('');
@@ -38,23 +40,73 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
   const [registerName, setRegisterName] = useState('');
   const [loading, setLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   // Handle visibility animation
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
+      setHasRedirected(false);
     } else {
       setIsVisible(false);
     }
   }, [isOpen]);
 
-  // Watch for user login and trigger success
+  // Watch for user login and redirect based on role
   useEffect(() => {
-    if (user && isOpen) {
+    if (user && isOpen && !hasRedirected) {
+      setHasRedirected(true);
+      redirectBasedOnRole();
+    }
+  }, [user, isOpen, hasRedirected]);
+
+  const redirectBasedOnRole = async () => {
+    if (!user) return;
+    
+    try {
+      // Check if user is ADMIN
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'ADMIN')
+        .maybeSingle();
+
+      if (adminRole) {
+        onClose();
+        navigate('/admin', { replace: true });
+        return;
+      }
+
+      // Check regular profile role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      onClose();
+      
+      if (profile) {
+        switch (profile.role) {
+          case 'PROFESSIONAL':
+            navigate('/professional', { replace: true });
+            break;
+          case 'ADMIN':
+            navigate('/admin', { replace: true });
+            break;
+          default:
+            onSuccess();
+        }
+      } else {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Redirect error:', error);
       onSuccess();
       onClose();
     }
-  }, [user, isOpen, onSuccess, onClose]);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

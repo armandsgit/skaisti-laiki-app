@@ -18,7 +18,7 @@ export const useTodayAvailability = (professionalIds: string[]) => {
       const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
       const currentTime = format(today, 'HH:mm:ss');
 
-      // Get schedules for today
+      // Get schedules for today - include both main professional schedules and staff schedules
       const { data: schedules, error: scheduleError } = await supabase
         .from('professional_schedules')
         .select('professional_id, start_time, end_time')
@@ -69,10 +69,6 @@ export const useTodayAvailability = (professionalIds: string[]) => {
         if (schedule.end_time <= currentTime) return;
 
         // Simple check: if they have a schedule today that hasn't ended, consider them potentially available
-        // A more sophisticated check would compare available slots vs booked slots
-        const profBookings = bookingsByProfessional.get(schedule.professional_id) || [];
-        
-        // Calculate approximate available slots (simplified)
         const scheduleStart = schedule.start_time > currentTime ? schedule.start_time : currentTime;
         const scheduleEnd = schedule.end_time;
         
