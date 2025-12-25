@@ -16,12 +16,15 @@ export const useTodayAvailability = (professionalIds: string[]) => {
       const today = new Date();
       const currentTime = format(today, 'HH:mm:ss');
       
-      // Check next 3 days
-      const datesToCheck = [
-        { date: today, dayOfWeek: today.getDay(), isToday: true },
-        { date: addDays(today, 1), dayOfWeek: addDays(today, 1).getDay(), isToday: false },
-        { date: addDays(today, 2), dayOfWeek: addDays(today, 2).getDay(), isToday: false },
-      ];
+      // Check next 7 days
+      const datesToCheck = Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(today, i);
+        return {
+          date,
+          dayOfWeek: date.getDay(),
+          isToday: i === 0,
+        };
+      });
 
       const dateStrings = datesToCheck.map(d => format(d.date, 'yyyy-MM-dd'));
       const daysOfWeek = [...new Set(datesToCheck.map(d => d.dayOfWeek))];
