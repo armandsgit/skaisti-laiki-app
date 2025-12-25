@@ -1950,6 +1950,44 @@ const ProfessionalDashboard = () => {
                 Pārvaldiet savus meistarus un viņu darba grafikus
               </p>
             </div>
+
+            {/* Booking Window Settings */}
+            <Card className="border-0 shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Rezervācijas periods</CardTitle>
+                <CardDescription>
+                  Cik ilgu laiku uz priekšu klienti var veikt rezervācijas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Select
+                  value={String(profile?.booking_window_days || 31)}
+                  onValueChange={async (value) => {
+                    const { error } = await supabase
+                      .from('professional_profiles')
+                      .update({ booking_window_days: parseInt(value) })
+                      .eq('id', profile.id);
+                    
+                    if (!error) {
+                      setProfile({ ...profile, booking_window_days: parseInt(value) });
+                      toast.success('Rezervācijas periods atjaunināts!');
+                    } else {
+                      toast.error('Kļūda atjauninot iestatījumu');
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">1 nedēļa</SelectItem>
+                    <SelectItem value="14">2 nedēļas</SelectItem>
+                    <SelectItem value="21">3 nedēļas</SelectItem>
+                    <SelectItem value="31">1 mēnesis</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
             
             <StaffMemberManager
               professionalId={profile.id}
