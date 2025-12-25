@@ -121,20 +121,20 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
       
       {/* Modal */}
       <div 
-        className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-md bg-card rounded-3xl shadow-2xl z-[9999] transition-all duration-300 ${
+        className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-md bg-card rounded-3xl shadow-2xl z-[9999] overflow-hidden transition-all duration-300 ${
           isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
       >
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 p-2 rounded-full hover:bg-muted transition-colors z-10"
-        >
-          <X className="w-5 h-5 text-muted-foreground" />
-        </button>
-
         {/* Content */}
-        <div className="p-6 pt-8">
+        <div className="relative p-6 pt-12">
+          {/* Close button - positioned inside the card */}
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 p-2 rounded-full hover:bg-muted transition-colors z-10"
+          >
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
+
           {/* Header */}
           <div className="text-center mb-6">
             <div className="mx-auto w-16 h-16 bg-black rounded-2xl flex items-center justify-center mb-3 shadow-lg">

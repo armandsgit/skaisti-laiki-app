@@ -294,7 +294,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Reset OAuth processed set
     oauthProcessedRef.current.clear();
     await supabase.auth.signOut();
-    navigate('/auth');
+    // Redirect to public home page (client dashboard), not auth page
+    navigate('/client');
   };
 
   return (
