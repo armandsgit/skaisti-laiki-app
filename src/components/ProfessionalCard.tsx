@@ -1,15 +1,22 @@
 import { Card } from '@/components/ui/card';
-import { Star, User, Clock } from 'lucide-react';
+import { Star, User } from 'lucide-react';
 import { type SortedMaster } from '@/lib/master-sorting';
 
 interface ProfessionalCardProps {
   professional: SortedMaster;
   onClick: () => void;
   availableToday?: boolean;
+  hasAvailability?: boolean;
   isNew?: boolean;
 }
 
-const ProfessionalCard = ({ professional: prof, onClick, availableToday, isNew }: ProfessionalCardProps) => {
+const ProfessionalCard = ({
+  professional: prof,
+  onClick,
+  availableToday,
+  hasAvailability,
+  isNew,
+}: ProfessionalCardProps) => {
   return (
     <Card 
       onClick={onClick} 
@@ -17,24 +24,30 @@ const ProfessionalCard = ({ professional: prof, onClick, availableToday, isNew }
     >
       {/* Image */}
       <div className="relative w-full h-[200px] bg-muted overflow-hidden">
-        {/* Availability indicator - only show when available */}
-        {availableToday && (
+        {/* Availability indicator - show if the salon has any active schedule */}
+        {hasAvailability && (
           <div className="absolute top-3 left-3 z-10">
             <div className="relative flex items-center gap-2">
-              {/* Pulsing dot */}
+              {/* Dot (pulsing only when available today) */}
               <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                {availableToday && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 shadow-sm"></span>
               </span>
-              <span className="px-2.5 py-1 text-[11px] font-semibold bg-white/95 backdrop-blur-sm text-emerald-700 rounded-full shadow-sm">
-                Pieejams
-              </span>
+
+              {/* Label only for "today" to keep it clean */}
+              {availableToday && (
+                <span className="px-2.5 py-1 text-[11px] font-semibold bg-white/95 backdrop-blur-sm text-emerald-700 rounded-full shadow-sm">
+                  Pieejams
+                </span>
+              )}
             </div>
           </div>
         )}
 
         {/* New Badge */}
-        {isNew && !availableToday && (
+        {isNew && !hasAvailability && (
           <div className="absolute top-3 left-3 z-10">
             <span className="px-3 py-1 text-xs font-medium bg-emerald-500 text-white rounded-full shadow-lg">
               Jauns
