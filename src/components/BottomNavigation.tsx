@@ -1,7 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Map, Calendar, User, Search, CheckCircle, MessageSquare } from 'lucide-react';
+import { Home, Map, Calendar, User, Search, CheckCircle, MessageSquare, LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import AuthModal from '@/components/AuthModal';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -11,6 +12,13 @@ const BottomNavigation = () => {
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   const [confirmedBookingsCount, setConfirmedBookingsCount] = useState(0);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Handle successful auth from modal
+  const handleAuthSuccess = useCallback(() => {
+    setAuthModalOpen(false);
+    // User will be automatically redirected by auth context based on role
+  }, []);
 
   // Load user role from both user_roles (for ADMIN) and profiles (for other roles)
   useEffect(() => {
@@ -268,19 +276,22 @@ const BottomNavigation = () => {
       icon: Home, 
       label: 'Sākums', 
       path: '/client', 
-      isActive: location.pathname === '/client' || location.pathname === '/' 
+      isActive: location.pathname === '/client' || location.pathname === '/',
+      action: undefined
     },
     { 
       icon: Search, 
       label: 'Meklēt', 
       path: '/map', 
-      isActive: location.pathname === '/map' 
+      isActive: location.pathname === '/map',
+      action: undefined
     },
     { 
-      icon: User, 
+      icon: LogIn, 
       label: 'Ieiet', 
-      path: '/auth', 
-      isActive: location.pathname === '/auth' 
+      path: null, // No path - will trigger modal instead
+      isActive: false,
+      action: () => setAuthModalOpen(true)
     },
   ] : [
     // Client navigation
@@ -324,9 +335,14 @@ const BottomNavigation = () => {
             <button
               key={index}
               onClick={() => {
-                navigate(tab.path);
-                if (isAdminPanel) {
-                  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+                // Use custom action if defined, otherwise navigate
+                if ('action' in tab && typeof tab.action === 'function') {
+                  tab.action();
+                } else if (tab.path) {
+                  navigate(tab.path);
+                  if (isAdminPanel) {
+                    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+                  }
                 }
               }}
               className={`
@@ -352,6 +368,14 @@ const BottomNavigation = () => {
           );
         })}
       </div>
+
+      {/* Auth Modal for guests */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+        message="Lai turpinātu, lūdzu pieslēdzieties vai reģistrējieties"
+      />
     </nav>
   );
 };
