@@ -69,6 +69,7 @@ interface ModernBookingModalProps {
   professionalId: string;
   professionalName: string;
   professionalPlan?: string | null;
+  professionalBookingWindowDays?: number | null;
   onSubmit: (data: BookingFormData) => void;
   initialServiceId?: string | null;
 }
@@ -84,7 +85,7 @@ export interface BookingFormData {
   notes?: string;
 }
 
-const ModernBookingModal = ({ isOpen, onClose, services, professionalId, professionalName, professionalPlan, onSubmit, initialServiceId }: ModernBookingModalProps) => {
+const ModernBookingModal = ({ isOpen, onClose, services, professionalId, professionalName, professionalPlan, professionalBookingWindowDays, onSubmit, initialServiceId }: ModernBookingModalProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState<Partial<BookingFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -96,11 +97,13 @@ const ModernBookingModal = ({ isOpen, onClose, services, professionalId, profess
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [availableDays, setAvailableDays] = useState<Set<string>>(new Set());
 
-  // Calculate max date based on professional's plan - limit to max 1 month (31 days)
+  // Calculate max date based on professional's booking window setting
+  // Default to 31 days if not set, respect plan limits if they're more restrictive
   const planFeatures = getPlanFeatures(professionalPlan);
+  const bookingWindowFromSettings = professionalBookingWindowDays || 31;
   const maxDaysFromPlan = planFeatures.calendarDaysVisible === -1 
-    ? 31 
-    : Math.min(planFeatures.calendarDaysVisible, 31);
+    ? bookingWindowFromSettings 
+    : Math.min(planFeatures.calendarDaysVisible, bookingWindowFromSettings);
   const maxDate = addDays(new Date(), maxDaysFromPlan);
 
   // Load schedule exceptions and available days when modal opens or month changes

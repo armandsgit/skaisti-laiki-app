@@ -448,6 +448,7 @@ const ProfessionalProfile = () => {
         professionalId={id || ''}
         professionalName={professional?.profiles?.name || ''}
         professionalPlan={professional?.plan}
+        professionalBookingWindowDays={professional?.booking_window_days}
         onSubmit={handleBooking}
         initialServiceId={selectedServiceId}
       />

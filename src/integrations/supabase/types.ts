@@ -381,6 +381,7 @@ export type Database = {
           address: string | null
           approved: boolean | null
           bio: string | null
+          booking_window_days: number | null
           category: string
           city: string
           created_at: string
@@ -410,6 +411,7 @@ export type Database = {
           address?: string | null
           approved?: boolean | null
           bio?: string | null
+          booking_window_days?: number | null
           category: string
           city: string
           created_at?: string
@@ -439,6 +441,7 @@ export type Database = {
           address?: string | null
           approved?: boolean | null
           bio?: string | null
+          booking_window_days?: number | null
           category?: string
           city?: string
           created_at?: string
