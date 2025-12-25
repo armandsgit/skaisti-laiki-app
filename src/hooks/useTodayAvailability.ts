@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { format, isAfter, parse } from 'date-fns';
+import { format, addDays } from 'date-fns';
 
 export const useTodayAvailability = (professionalIds: string[]) => {
   const [availableToday, setAvailableToday] = useState<Set<string>>(new Set());
@@ -14,16 +14,24 @@ export const useTodayAvailability = (professionalIds: string[]) => {
 
     const checkAvailability = async () => {
       const today = new Date();
-      const todayStr = format(today, 'yyyy-MM-dd');
-      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
       const currentTime = format(today, 'HH:mm:ss');
+      
+      // Check next 3 days
+      const datesToCheck = [
+        { date: today, dayOfWeek: today.getDay(), isToday: true },
+        { date: addDays(today, 1), dayOfWeek: addDays(today, 1).getDay(), isToday: false },
+        { date: addDays(today, 2), dayOfWeek: addDays(today, 2).getDay(), isToday: false },
+      ];
 
-      // Get schedules for today - include both main professional schedules and staff schedules
+      const dateStrings = datesToCheck.map(d => format(d.date, 'yyyy-MM-dd'));
+      const daysOfWeek = [...new Set(datesToCheck.map(d => d.dayOfWeek))];
+
+      // Get schedules for next 3 days
       const { data: schedules, error: scheduleError } = await supabase
         .from('professional_schedules')
-        .select('professional_id, start_time, end_time')
+        .select('professional_id, day_of_week, start_time, end_time')
         .in('professional_id', professionalIds)
-        .eq('day_of_week', dayOfWeek)
+        .in('day_of_week', daysOfWeek)
         .eq('is_active', true);
 
       if (scheduleError) {
@@ -32,51 +40,59 @@ export const useTodayAvailability = (professionalIds: string[]) => {
         return;
       }
 
-      // Get professionals that have schedule exceptions (closed today)
+      // Get professionals that have schedule exceptions (closed) for next 3 days
       const { data: exceptions } = await supabase
         .from('schedule_exceptions')
-        .select('professional_id')
+        .select('professional_id, exception_date')
         .in('professional_id', professionalIds)
-        .eq('exception_date', todayStr)
+        .in('exception_date', dateStrings)
         .eq('is_closed', true);
 
-      const closedToday = new Set(exceptions?.map(e => e.professional_id) || []);
-
-      // Get today's bookings
-      const { data: bookings } = await supabase
-        .from('bookings')
-        .select('professional_id, booking_time, booking_end_time')
-        .in('professional_id', professionalIds)
-        .eq('booking_date', todayStr)
-        .in('status', ['pending', 'confirmed']);
-
-      // Group bookings by professional
-      const bookingsByProfessional = new Map<string, Array<{ start: string; end: string }>>();
-      bookings?.forEach(booking => {
-        const existing = bookingsByProfessional.get(booking.professional_id) || [];
-        existing.push({ start: booking.booking_time, end: booking.booking_end_time });
-        bookingsByProfessional.set(booking.professional_id, existing);
+      // Map of closures: professionalId -> Set of closed dates
+      const closedDates = new Map<string, Set<string>>();
+      exceptions?.forEach(e => {
+        if (!closedDates.has(e.professional_id)) {
+          closedDates.set(e.professional_id, new Set());
+        }
+        closedDates.get(e.professional_id)!.add(e.exception_date);
       });
 
-      // Determine which professionals have availability
+      // Determine which professionals have availability in next 3 days
       const available = new Set<string>();
 
-      schedules?.forEach(schedule => {
-        // Skip if closed today
-        if (closedToday.has(schedule.professional_id)) return;
+      for (const prof of professionalIds) {
+        // Check each of the next 3 days
+        for (const dayCheck of datesToCheck) {
+          const dateStr = format(dayCheck.date, 'yyyy-MM-dd');
+          
+          // Skip if closed on this day
+          if (closedDates.get(prof)?.has(dateStr)) continue;
 
-        // Check if schedule end time is after current time
-        if (schedule.end_time <= currentTime) return;
+          // Find schedules for this day of week
+          const daySchedules = schedules?.filter(
+            s => s.professional_id === prof && s.day_of_week === dayCheck.dayOfWeek
+          ) || [];
 
-        // Simple check: if they have a schedule today that hasn't ended, consider them potentially available
-        const scheduleStart = schedule.start_time > currentTime ? schedule.start_time : currentTime;
-        const scheduleEnd = schedule.end_time;
-        
-        // If there's any time window, mark as available
-        if (scheduleStart < scheduleEnd) {
-          available.add(schedule.professional_id);
+          for (const schedule of daySchedules) {
+            // For today, check if end time is after current time
+            if (dayCheck.isToday) {
+              if (schedule.end_time <= currentTime) continue;
+              
+              const scheduleStart = schedule.start_time > currentTime ? schedule.start_time : currentTime;
+              if (scheduleStart < schedule.end_time) {
+                available.add(prof);
+                break;
+              }
+            } else {
+              // For future days, any schedule means available
+              available.add(prof);
+              break;
+            }
+          }
+
+          if (available.has(prof)) break;
         }
-      });
+      }
 
       setAvailableToday(available);
       setLoading(false);
