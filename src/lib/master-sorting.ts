@@ -10,6 +10,7 @@ export interface Master {
   rating: number | null;
   total_reviews: number | null;
   last_active: string;
+  created_at: string;
   city: string;
   category: string;
   bio: string | null;

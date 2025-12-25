@@ -1,37 +1,71 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
-import { Star, Briefcase, Map, User } from 'lucide-react';
+import { Star, Map } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import LoadingAnimation from '@/components/LoadingAnimation';
 import BottomNavigation from '@/components/BottomNavigation';
+import ProfessionalCard from '@/components/ProfessionalCard';
+import { useTodayAvailability } from '@/hooks/useTodayAvailability';
+
 const ClientDashboard = () => {
   const t = useTranslation('lv');
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [professionals, setProfessionals] = useState<SortedMaster[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userLocation, setUserLocation] = useState<{
-    lat: number;
-    lon: number;
-  } | null>(null);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<SortedMaster[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
-  
+
+  // Get all professional IDs for availability check
+  const allProfessionalIds = useMemo(() => {
+    const ids = new Set<string>();
+    professionals.forEach(p => ids.add(p.id));
+    recentlyViewed.forEach(p => ids.add(p.id));
+    return Array.from(ids);
+  }, [professionals, recentlyViewed]);
+
+  // Check today's availability
+  const { availableToday } = useTodayAvailability(allProfessionalIds);
+
+  // Derived data: newest professionals (joined in last 30 days)
+  const newestProfessionals = useMemo(() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return professionals.filter(prof => {
+      const createdAt = new Date(prof.created_at);
+      return createdAt >= thirtyDaysAgo;
+    }).slice(0, 10);
+  }, [professionals]);
+
+  // Derived data: top rated professionals
+  const topRatedProfessionals = useMemo(() => {
+    return [...professionals]
+      .filter(prof => (prof.rating || 0) > 0 && (prof.total_reviews || 0) > 0)
+      .sort((a, b) => {
+        // Sort by rating first, then by number of reviews
+        const ratingDiff = (b.rating || 0) - (a.rating || 0);
+        if (ratingDiff !== 0) return ratingDiff;
+        return (b.total_reviews || 0) - (a.total_reviews || 0);
+      })
+      .slice(0, 10);
+  }, [professionals]);
+
+  // Derived data: available today
+  const availableTodayProfessionals = useMemo(() => {
+    return professionals.filter(prof => availableToday.has(prof.id)).slice(0, 10);
+  }, [professionals, availableToday]);
+
   useEffect(() => {
     initializeData();
-    loadCategories();
     if (user) {
       loadProfile();
       loadRecentlyViewedIds();
@@ -55,8 +89,7 @@ const ClientDashboard = () => {
           schema: 'public',
           table: 'professional_profiles'
         },
-        (payload) => {
-          // Reload data when any professional profile changes
+        () => {
           if (userLocation) {
             loadProfessionals(userLocation);
             if (recentlyViewedIds.length > 0) {
@@ -87,9 +120,6 @@ const ClientDashboard = () => {
           filter: `client_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Client booking changed:', payload);
-          
-          // Show toast when booking status changes
           if (payload.eventType === 'UPDATE' && payload.new) {
             const newStatus = (payload.new as any).status;
             const oldStatus = (payload.old as any)?.status;
@@ -114,7 +144,7 @@ const ClientDashboard = () => {
     if (viewed) {
       try {
         const parsedViewed = JSON.parse(viewed);
-        setRecentlyViewedIds(parsedViewed.slice(0, 10)); // Keep last 10
+        setRecentlyViewedIds(parsedViewed.slice(0, 10));
       } catch (e) {
         console.error('Error parsing recently viewed:', e);
       }
@@ -140,7 +170,6 @@ const ClientDashboard = () => {
       return;
     }
 
-    // Sort by the order in recentlyViewedIds
     const sortedData = recentlyViewedIds
       .map(id => data?.find(prof => prof.id === id))
       .filter(Boolean) as any[];
@@ -148,55 +177,42 @@ const ClientDashboard = () => {
     const sortedMasters = getSortedMasters(sortedData, userLocation.lat, userLocation.lon);
     setRecentlyViewed(sortedMasters);
   };
+
   const loadProfile = async () => {
     if (!user) return;
-    const {
-      data
-    } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
     if (data) setProfile(data);
   };
-  const loadCategories = async () => {
-    const {
-      data,
-      error
-    } = await supabase.from('categories').select('*').eq('active', true).order('display_order', {
-      ascending: true
-    });
-    if (!error && data) {
-      setCategories(data);
-    }
-  };
+
   const initializeData = async () => {
     const location = await getUserLocation();
     setUserLocation(location);
     await loadProfessionals(location);
   };
-  const loadProfessionals = async (location: {
-    lat: number;
-    lon: number;
-  }) => {
-    const {
-      data,
-      error
-    } = await supabase.from('professional_profiles').select(`
+
+  const loadProfessionals = async (location: { lat: number; lon: number }) => {
+    const { data, error } = await supabase
+      .from('professional_profiles')
+      .select(`
         *,
         profiles!professional_profiles_user_id_fkey(name, avatar)
-      `).eq('approved', true).eq('active', true).eq('is_blocked', false);
+      `)
+      .eq('approved', true)
+      .eq('active', true)
+      .eq('is_blocked', false);
+
     if (error) {
       toast.error(t.error);
       setLoading(false);
       return;
     }
+
     const sortedMasters = getSortedMasters(data || [], location.lat, location.lon);
     setProfessionals(sortedMasters);
     setLoading(false);
   };
-  const filteredProfessionals = professionals.filter(prof => {
-    const matchesCategory = !selectedCategory || prof.category === selectedCategory;
-    return matchesCategory;
-  });
+
   const handleMasterClick = (master: SortedMaster) => {
-    // Save only ID to recently viewed
     const viewed = localStorage.getItem('recentlyViewedIds');
     let viewedList: string[] = [];
     
@@ -208,17 +224,55 @@ const ClientDashboard = () => {
       }
     }
 
-    // Remove if already exists and add to beginning
     viewedList = viewedList.filter(id => id !== master.id);
     viewedList.unshift(master.id);
-    viewedList = viewedList.slice(0, 10); // Keep only last 10
+    viewedList = viewedList.slice(0, 10);
 
     localStorage.setItem('recentlyViewedIds', JSON.stringify(viewedList));
     setRecentlyViewedIds(viewedList);
     
     navigate(`/professional/${master.id}`);
   };
-  return <div className="min-h-screen bg-[#FAFAFA] pb-20">
+
+  // Check if professional is new (joined in last 14 days)
+  const isNewProfessional = (prof: SortedMaster) => {
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    return new Date(prof.created_at) >= fourteenDaysAgo;
+  };
+
+  const renderCarousel = (
+    title: string, 
+    professionals: SortedMaster[], 
+    showNewBadge = false
+  ) => {
+    if (professionals.length === 0) return null;
+
+    return (
+      <div className="space-y-5">
+        <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
+          {title}
+        </h2>
+        <Carousel opts={{ align: "start", loop: false }} className="w-full">
+          <CarouselContent className="-ml-4 px-5 sm:px-6">
+            {professionals.map(prof => (
+              <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
+                <ProfessionalCard
+                  professional={prof}
+                  onClick={() => handleMasterClick(prof)}
+                  availableToday={availableToday.has(prof.id)}
+                  isNew={showNewBadge && isNewProfessional(prof)}
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FAFAFA] pb-20">
       {/* Header */}
       <header className="bg-white sticky top-0 z-50 border-b border-border/5">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 pt-6 pb-5">
@@ -243,7 +297,6 @@ const ClientDashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto space-y-8 pb-6 pt-6">
-
         {loading ? (
           <div className="min-h-[60vh] flex items-center justify-center">
             <LoadingAnimation size={100} text={t.loading} />
@@ -251,121 +304,27 @@ const ClientDashboard = () => {
         ) : (
           <>
             {/* Recently Viewed */}
-            {recentlyViewed.length > 0 && <div className="space-y-5">
-                <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
-                  Nesen skatītie
-                </h2>
-                <Carousel opts={{
-            align: "start",
-            loop: false
-          }} className="w-full">
-                  <CarouselContent className="-ml-4 px-5 sm:px-6">
-                    {recentlyViewed.map(prof => <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
-                        <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-[24px] shadow-sm">
-                          {/* Image */}
-                          <div className="relative w-full h-[200px] bg-muted overflow-hidden">
-                            {/* Category Badge in Top-Right Corner */}
-                            <div className="absolute top-3 right-3 z-10">
-                              <span className="px-3 py-1 text-xs font-medium bg-black text-white rounded-full shadow-lg backdrop-blur-sm">
-                                {prof.category}
-                              </span>
-                            </div>
-                            {(prof as any).gallery && (prof as any).gallery.length > 0 ? <img src={(prof as any).gallery[0]} alt={prof.profiles?.name || ''} className="w-full h-full object-cover" /> : prof.profiles?.avatar ? <img src={prof.profiles.avatar} alt={prof.profiles.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-muted">
-                                <User className="h-16 w-16 text-muted-foreground stroke-[1.5]" />
-                              </div>}
-                          </div>
+            {renderCarousel('Nesen skatītie', recentlyViewed)}
 
-                          {/* Content */}
-                          <div className="p-4 space-y-2.5">
-                            <h3 className="font-bold text-[20px] text-foreground truncate">
-                              {prof.profiles?.name}
-                            </h3>
-                            
-                            {/* Rating */}
-                            <div className="flex items-center gap-1.5">
-                              <Star className="h-[18px] w-[18px] fill-foreground stroke-foreground" />
-                              <span className="text-[16px] font-semibold text-foreground">
-                                {prof.rating ? prof.rating.toFixed(1) : '0.0'}
-                              </span>
-                              <span className="text-[15px] text-muted-foreground">
-                                ({prof.total_reviews || 0})
-                              </span>
-                            </div>
+            {/* Available Today */}
+            {renderCarousel('Šodien pieejami', availableTodayProfessionals)}
 
-                          {/* Location with Distance */}
-                          <div className="pt-0.5">
-                            <span className="text-[13px] text-[#6A6A6A] leading-tight block">
-                              {prof.address || prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
-                            </span>
-                          </div>
-                          </div>
-                        </Card>
-                      </CarouselItem>)}
-                  </CarouselContent>
-                </Carousel>
-              </div>}
+            {/* Top Rated */}
+            {renderCarousel('Populārākie', topRatedProfessionals)}
 
-            {/* Recommended / Nearby */}
-            <div className="space-y-5">
-              <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
-                Rekomendētie
-              </h2>
-              <Carousel opts={{
-            align: "start",
-            loop: false
-          }} className="w-full">
-                <CarouselContent className="-ml-4 px-5 sm:px-6">
-                  {filteredProfessionals.map(prof => <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
-                      <Card onClick={() => handleMasterClick(prof)} className="cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98] border-0 overflow-hidden bg-white rounded-[24px] shadow-sm">
-                        {/* Image */}
-                        <div className="relative w-full h-[200px] bg-muted overflow-hidden">
-                          {/* Category Badge in Top-Right Corner */}
-                          <div className="absolute top-3 right-3 z-10">
-                            <span className="px-3 py-1 text-xs font-medium bg-black text-white rounded-full shadow-lg backdrop-blur-sm">
-                              {prof.category}
-                            </span>
-                          </div>
-                          {(prof as any).gallery && (prof as any).gallery.length > 0 ? <img src={(prof as any).gallery[0]} alt={prof.profiles?.name || ''} className="w-full h-full object-cover" /> : prof.profiles?.avatar ? <img src={prof.profiles.avatar} alt={prof.profiles.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-muted">
-                              <User className="h-16 w-16 text-muted-foreground stroke-[1.5]" />
-                            </div>}
-                        </div>
+            {/* Newest */}
+            {renderCarousel('Jaunākie saloni', newestProfessionals, true)}
 
-                        {/* Content */}
-                        <div className="p-4 space-y-2.5">
-                          <h3 className="font-bold text-[20px] text-foreground truncate">
-                            {prof.profiles?.name}
-                          </h3>
-                          
-                          {/* Rating */}
-                          <div className="flex items-center gap-1.5">
-                            <Star className="h-[18px] w-[18px] fill-foreground stroke-foreground" />
-                            <span className="text-[16px] font-semibold text-foreground">
-                              {prof.rating ? prof.rating.toFixed(1) : '0.0'}
-                            </span>
-                            <span className="text-[15px] text-muted-foreground">
-                              ({prof.total_reviews || 0})
-                            </span>
-                          </div>
-
-                        {/* Location with Distance */}
-                        <div className="pt-0.5">
-                          <span className="text-[13px] text-[#6A6A6A] leading-tight block">
-                            {prof.address || prof.city || 'Lokācija nav norādīta'} • {prof.distance ? prof.distance.toFixed(1) : '0.0'} km
-                          </span>
-                        </div>
-                        </div>
-                      </Card>
-                    </CarouselItem>)}
-                </CarouselContent>
-              </Carousel>
-            </div>
+            {/* All Recommended */}
+            {renderCarousel('Rekomendētie', professionals)}
           </>
         )}
-
       </main>
 
       {/* Bottom Navigation */}
       <BottomNavigation />
-    </div>;
+    </div>
+  );
 };
+
 export default ClientDashboard;
