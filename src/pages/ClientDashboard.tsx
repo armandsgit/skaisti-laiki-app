@@ -12,6 +12,7 @@ import LoadingAnimation from '@/components/LoadingAnimation';
 import BottomNavigation from '@/components/BottomNavigation';
 import ProfessionalCard from '@/components/ProfessionalCard';
 import { useTodayAvailability } from '@/hooks/useTodayAvailability';
+import { useHasActiveSchedules } from '@/hooks/useHasActiveSchedules';
 
 const ClientDashboard = () => {
   const t = useTranslation('lv');
@@ -34,6 +35,9 @@ const ClientDashboard = () => {
 
   // Check today's availability
   const { availableToday } = useTodayAvailability(allProfessionalIds);
+
+  // Check if a professional has any active schedule at all (shows the dot even if not available today)
+  const { hasActiveSchedule } = useHasActiveSchedules(allProfessionalIds);
 
   // Derived data: newest professionals (joined in last 30 days)
   const newestProfessionals = useMemo(() => {
@@ -261,6 +265,7 @@ const ClientDashboard = () => {
                   professional={prof}
                   onClick={() => handleMasterClick(prof)}
                   availableToday={availableToday.has(prof.id)}
+                  hasAvailability={hasActiveSchedule.has(prof.id)}
                   isNew={showNewBadge && isNewProfessional(prof)}
                 />
               </CarouselItem>
