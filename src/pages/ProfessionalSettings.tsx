@@ -640,50 +640,6 @@ export default function ProfessionalSettings() {
             </Card>
           )}
 
-          {/* Booking Settings Card */}
-          {profile && (
-            <Card className="border-0 shadow-card">
-              <CardHeader>
-                <CardTitle>Rezervācijas iestatījumi</CardTitle>
-                <CardDescription>Konfigurējiet klientu rezervācijas iespējas</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Rezervācijas periods</Label>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Cik ilgu laiku uz priekšu klienti var veikt rezervācijas
-                  </p>
-                  <Select
-                    value={String(profile.booking_window_days || 31)}
-                    onValueChange={async (value) => {
-                      const { error } = await supabase
-                        .from('professional_profiles')
-                        .update({ booking_window_days: parseInt(value) })
-                        .eq('id', profile.id);
-                      
-                      if (!error) {
-                        setProfile({ ...profile, booking_window_days: parseInt(value) });
-                        toast.success('Rezervācijas periods atjaunināts!');
-                      } else {
-                        toast.error('Kļūda atjauninot iestatījumu');
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">1 nedēļa</SelectItem>
-                      <SelectItem value="14">2 nedēļas</SelectItem>
-                      <SelectItem value="21">3 nedēļas</SelectItem>
-                      <SelectItem value="31">1 mēnesis</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Subscription / Payments Card */}
           <Card 
             className="border-0 shadow-card cursor-pointer hover:shadow-lg transition-shadow"
