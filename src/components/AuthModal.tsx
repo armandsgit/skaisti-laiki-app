@@ -44,6 +44,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
   const [loading, setLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   // Load categories
   useEffect(() => {
@@ -78,13 +79,13 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
     }
   }, [isOpen]);
 
-  // Watch for user login and redirect based on role
+  // Watch for user login and redirect based on role (only for login, not during registration)
   useEffect(() => {
-    if (user && isOpen && !hasRedirected) {
+    if (user && isOpen && !hasRedirected && !isRegistering) {
       setHasRedirected(true);
       redirectBasedOnRole();
     }
-  }, [user, isOpen, hasRedirected]);
+  }, [user, isOpen, hasRedirected, isRegistering]);
 
   const redirectBasedOnRole = async () => {
     if (!user) return;
@@ -154,10 +155,12 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setIsRegistering(true); // Prevent auto-redirect during registration
     
     if (registerRole === 'PROFESSIONAL' && !registerCategory) {
       toast.error('Lūdzu izvēlieties kategoriju');
       setLoading(false);
+      setIsRegistering(false);
       return;
     }
     
@@ -166,6 +169,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
     if (error) {
       toast.error(t.registerError);
       setLoading(false);
+      setIsRegistering(false);
       return;
     }
     
