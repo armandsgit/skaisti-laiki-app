@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -10,9 +10,13 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isApproved, setIsApproved] = useState<boolean>(true);
   const [checking, setChecking] = useState(true);
+
+  // Check if current path is an onboarding path
+  const isOnboardingPath = location.pathname.startsWith('/onboarding');
 
   useEffect(() => {
     const checkRole = async () => {
@@ -58,6 +62,15 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Allow onboarding paths even if not approved (for new professionals to add profile photo)
+  if (isOnboardingPath) {
+    // Still check role for onboarding
+    if (requiredRole && userRole !== requiredRole) {
+      return <Navigate to="/" replace />;
+    }
+    return <>{children}</>;
   }
 
   // Check if user is not approved (and not admin)
