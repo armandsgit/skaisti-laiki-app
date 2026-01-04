@@ -38,9 +38,35 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerName, setRegisterName] = useState('');
+  const [registerRole, setRegisterRole] = useState<'CLIENT' | 'PROFESSIONAL'>('CLIENT');
+  const [registerCategory, setRegisterCategory] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
+
+  // Load categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('name')
+        .eq('active', true)
+        .order('display_order', { ascending: true });
+
+      if (!error && data) {
+        const categoryNames = data.map(cat => cat.name);
+        setCategories(categoryNames);
+        if (categoryNames.length > 0 && !registerCategory) {
+          setRegisterCategory(categoryNames[0]);
+        }
+      }
+    };
+    
+    if (isOpen) {
+      loadCategories();
+    }
+  }, [isOpen]);
 
   // Handle visibility animation
   useEffect(() => {
@@ -129,8 +155,13 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
     e.preventDefault();
     setLoading(true);
     
-    // Register as CLIENT by default for booking flow
-    const { error } = await signUp(registerEmail, registerPassword, registerName, 'CLIENT');
+    if (registerRole === 'PROFESSIONAL' && !registerCategory) {
+      toast.error('Lūdzu izvēlieties kategoriju');
+      setLoading(false);
+      return;
+    }
+    
+    const { error, data } = await signUp(registerEmail, registerPassword, registerName, registerRole);
     
     if (error) {
       toast.error(t.registerError);
@@ -138,19 +169,55 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
       return;
     }
     
-    toast.success(t.registerSuccess);
-    setLoading(false);
-    // onSuccess will be triggered by useEffect when user state updates
+    if (registerRole === 'PROFESSIONAL' && data?.user) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const { data: existingProfile } = await supabase
+        .from('professional_profiles')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+      
+      if (existingProfile) {
+        await supabase
+          .from('professional_profiles')
+          .update({
+            category: registerCategory as any,
+            approved: false
+          })
+          .eq('user_id', data.user.id);
+      } else {
+        await supabase
+          .from('professional_profiles')
+          .insert([{
+            user_id: data.user.id,
+            category: registerCategory as any,
+            city: '',
+            approved: false
+          }]);
+      }
+      
+      toast.success(t.registerSuccess);
+      onClose();
+      navigate('/onboarding/profile-photo');
+    } else {
+      toast.success(t.registerSuccess);
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = async () => {
+    if (registerRole === 'PROFESSIONAL' && !registerCategory) {
+      toast.error('Lūdzu izvēlieties kategoriju');
+      return;
+    }
+    
     setLoading(true);
     
     // Store that we're in booking flow to handle OAuth return
     sessionStorage.setItem('pendingBookingAction', 'true');
     
-    // Register as CLIENT for booking flow (no role = existing user login)
-    const { error } = await signInWithGoogle('CLIENT');
+    const { error } = await signInWithGoogle(registerRole, registerCategory);
     
     if (error) {
       toast.error('Neizdevās autorizēties ar Google');
@@ -171,14 +238,14 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
         onClick={onClose}
       />
       
-      {/* Modal */}
+      {/* Modal - fixed positioning with proper mobile scroll */}
       <div 
-        className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-md bg-card rounded-3xl shadow-2xl z-[9999] overflow-hidden transition-all duration-300 ${
+        className={`fixed inset-x-4 top-4 bottom-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[95%] sm:max-w-md sm:max-h-[90vh] bg-card rounded-3xl shadow-2xl z-[9999] flex flex-col transition-all duration-300 ${
           isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
       >
-        {/* Content */}
-        <div className="relative p-6 pt-12">
+        {/* Content - scrollable */}
+        <div className="relative flex-1 overflow-y-auto overscroll-contain p-6 pt-12">
           {/* Close button - positioned inside the card */}
           <button
             onClick={onClose}
@@ -194,7 +261,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
             </div>
             <h2 className="text-2xl font-bold mb-2">Pieslēgties</h2>
             <p className="text-muted-foreground text-sm">
-              {message || 'Lai veiktu rezervāciju, lūdzu pieslēdzieties'}
+              {message || 'Lai turpinātu, lūdzu pieslēdzieties vai reģistrējieties'}
             </p>
           </div>
 
@@ -252,7 +319,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleGoogleLogin}
+                  onClick={() => signInWithGoogle()}
                   disabled={loading}
                   className="w-full h-11 border-2 hover:bg-secondary transition-all font-medium rounded-xl text-sm flex items-center justify-center gap-3"
                 >
@@ -303,9 +370,59 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
                     className="h-11 bg-background border rounded-xl text-sm"
                   />
                 </div>
+
+                {/* Role selection */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Loma</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant={registerRole === 'CLIENT' ? 'default' : 'outline'}
+                      onClick={() => setRegisterRole('CLIENT')}
+                      className={`h-11 rounded-xl text-sm ${registerRole === 'CLIENT' ? 'bg-black text-white' : ''}`}
+                    >
+                      {t.client}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={registerRole === 'PROFESSIONAL' ? 'default' : 'outline'}
+                      onClick={() => setRegisterRole('PROFESSIONAL')}
+                      className={`h-11 rounded-xl text-sm ${registerRole === 'PROFESSIONAL' ? 'bg-black text-white' : ''}`}
+                    >
+                      {t.professional}
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Category selection for professionals */}
+                {registerRole === 'PROFESSIONAL' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-register-category" className="text-sm font-medium">Kategorija *</Label>
+                    <select
+                      id="modal-register-category"
+                      className="w-full h-11 px-4 rounded-xl border bg-background text-foreground text-sm"
+                      value={registerCategory}
+                      onChange={(e) => setRegisterCategory(e.target.value)}
+                      required
+                    >
+                      {categories.length === 0 ? (
+                        <option value="">Ielādē kategorijas...</option>
+                      ) : (
+                        categories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                )}
                 
                 <p className="text-xs text-muted-foreground">
-                  Reģistrējoties jūs izveidosiet klienta kontu
+                  {registerRole === 'PROFESSIONAL' 
+                    ? 'Reģistrējoties jūs izveidosiet meistara kontu'
+                    : 'Reģistrējoties jūs izveidosiet klienta kontu'
+                  }
                 </p>
                 
                 <Button 
