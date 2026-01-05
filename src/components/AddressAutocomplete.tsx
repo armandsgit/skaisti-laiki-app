@@ -31,6 +31,7 @@ export const AddressAutocomplete = ({
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -88,7 +89,12 @@ export const AddressAutocomplete = ({
             return isInCity || placeNameHasCity;
           });
           
-          setSuggestions(filteredFeatures.length > 0 ? filteredFeatures : data.features || []);
+          const results = filteredFeatures.length > 0 ? filteredFeatures : data.features || [];
+          setSuggestions(results);
+          // Auto-open popover when results arrive and input is focused
+          if (results.length > 0 && isFocused) {
+            setOpen(true);
+          }
         } else {
           setSuggestions([]);
         }
@@ -105,7 +111,7 @@ export const AddressAutocomplete = ({
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [value, city]);
+  }, [value, city, isFocused]);
 
   const handleSelect = (suggestion: AddressSuggestion) => {
     const [lng, lat] = suggestion.center;
@@ -140,12 +146,21 @@ export const AddressAutocomplete = ({
             value={value}
             onChange={(e) => {
               onChange(e.target.value);
+              // Open popover if we have suggestions
+              if (suggestions.length > 0) {
+                setOpen(true);
+              }
             }}
             onFocus={() => {
-              // Only show suggestions if we have them and not empty input
+              setIsFocused(true);
+              // Show suggestions if we have them
               if (suggestions.length > 0 && value.length >= 3) {
                 setOpen(true);
               }
+            }}
+            onBlur={() => {
+              // Delay to allow click on suggestion
+              setTimeout(() => setIsFocused(false), 200);
             }}
             onKeyDown={handleKeyDown}
             placeholder={!city ? "Vispirms izvēlieties pilsētu" : "Piemēram: Latgales iela 245"}
