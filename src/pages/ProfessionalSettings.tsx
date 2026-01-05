@@ -14,6 +14,7 @@ import DeleteAccountModal from '@/components/DeleteAccountModal';
 import LocationMap from '@/components/LocationMap';
 import EditableLocationMap from '@/components/EditableLocationMap';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import { toast } from 'sonner';
 import { ArrowLeft, Edit, XCircle, Sparkles, LogOut, CreditCard } from 'lucide-react';
@@ -471,13 +472,22 @@ export default function ProfessionalSettings() {
                         </div>
                         <div>
                           <Label htmlFor="address">Pilna adrese</Label>
-                          <Input
-                            id="address"
-                            value={editedProfInfo.address}
-                            onChange={(e) => setEditedProfInfo({ ...editedProfInfo, address: e.target.value })}
-                            placeholder="Piemēram: Latgales iela 245"
-                            className="mt-2"
-                          />
+                          <div className="mt-2">
+                            <AddressAutocomplete
+                              value={editedProfInfo.address}
+                              onChange={(value) => setEditedProfInfo({ ...editedProfInfo, address: value })}
+                              onSelect={(address, lat, lng) => {
+                                setEditedProfInfo({
+                                  ...editedProfInfo,
+                                  address: address,
+                                  latitude: lat,
+                                  longitude: lng
+                                });
+                              }}
+                              city={editedProfInfo.city}
+                              placeholder="Piemēram: Latgales iela 245"
+                            />
+                          </div>
                         </div>
                         <div>
                           <Label htmlFor="bio">Bio</Label>
