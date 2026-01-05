@@ -91,42 +91,53 @@ const AuthModal = ({ isOpen, onClose, onSuccess, message }: AuthModalProps) => {
     if (!user) return;
     
     try {
-      // Check if user is ADMIN
-      const { data: adminRole } = await supabase
+      // Check user_roles table for the role (more reliable)
+      const { data: userRoles } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'ADMIN')
-        .maybeSingle();
-
-      if (adminRole) {
-        onClose();
-        navigate('/admin', { replace: true });
-        return;
-      }
-
-      // Check regular profile role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
+        .eq('user_id', user.id);
 
       onClose();
-      
-      if (profile) {
-        switch (profile.role) {
-          case 'PROFESSIONAL':
-            navigate('/professional', { replace: true });
-            break;
-          case 'ADMIN':
-            navigate('/admin', { replace: true });
-            break;
-          default:
-            onSuccess();
+
+      if (userRoles && userRoles.length > 0) {
+        // Check for ADMIN first
+        const isAdmin = userRoles.some(r => r.role === 'ADMIN');
+        if (isAdmin) {
+          navigate('/admin', { replace: true });
+          return;
         }
-      } else {
+
+        // Check for PROFESSIONAL
+        const isProfessional = userRoles.some(r => r.role === 'PROFESSIONAL');
+        if (isProfessional) {
+          navigate('/professional', { replace: true });
+          return;
+        }
+
+        // Default to client (onSuccess keeps them on current page or goes to client)
         onSuccess();
+      } else {
+        // Fallback: check profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          switch (profile.role) {
+            case 'PROFESSIONAL':
+              navigate('/professional', { replace: true });
+              break;
+            case 'ADMIN':
+              navigate('/admin', { replace: true });
+              break;
+            default:
+              onSuccess();
+          }
+        } else {
+          onSuccess();
+        }
       }
     } catch (error) {
       console.error('Redirect error:', error);
