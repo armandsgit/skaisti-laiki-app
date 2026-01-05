@@ -66,25 +66,29 @@ export const AddressAutocomplete = ({
 
         const [lng, lat] = cityData.features[0].center;
         
-        // Search for addresses with city context
-        const searchQuery = `${value}, ${city}, Latvija`;
+        // Search for addresses with city context - use multiple types for better results
+        const searchQuery = `${value}, ${city}`;
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=10&language=lv&types=address&proximity=${lng},${lat}`
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=10&language=lv&types=address,poi&proximity=${lng},${lat}&autocomplete=true`
         );
         
         if (response.ok) {
           const data = await response.json();
           
-          // Filter to only include addresses from selected city
+          // Filter to prioritize addresses from selected city but allow nearby
           const filteredFeatures = (data.features || []).filter((feature: any) => {
+            // Check if it's in the selected city or nearby
             const contexts = feature.context || [];
-            return contexts.some((ctx: any) => 
+            const isInCity = contexts.some((ctx: any) => 
               ctx.text_lv?.toLowerCase() === city.toLowerCase() || 
               ctx.text?.toLowerCase() === city.toLowerCase()
             );
+            // Also check if place_name contains the city
+            const placeNameHasCity = feature.place_name?.toLowerCase().includes(city.toLowerCase());
+            return isInCity || placeNameHasCity;
           });
           
-          setSuggestions(filteredFeatures);
+          setSuggestions(filteredFeatures.length > 0 ? filteredFeatures : data.features || []);
         } else {
           setSuggestions([]);
         }
