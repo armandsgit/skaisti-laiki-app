@@ -55,7 +55,8 @@ export const AddressAutocomplete = ({
     debounceTimer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        // Search for addresses with city context using Nominatim
+        // Search for addresses with city context using OpenStreetMap Nominatim
+        // This will have updated street names like Latgales iela instead of Maskavas iela
         const searchQuery = `${value}, ${city}, Latvija`;
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=lv&limit=10&addressdetails=1&accept-language=lv`

@@ -43,7 +43,7 @@ export const CityAutocomplete = ({
     debounceTimer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        // Search for cities in Latvia using Nominatim
+        // Search for cities in Latvia using OpenStreetMap Nominatim
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&countrycodes=lv&limit=10&featuretype=city&accept-language=lv`
         );
