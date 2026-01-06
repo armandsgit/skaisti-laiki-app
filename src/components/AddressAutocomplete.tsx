@@ -3,12 +3,18 @@ import { Input } from '@/components/ui/input';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MapPin } from 'lucide-react';
-import { MAPBOX_TOKEN } from '@/lib/mapbox-config';
-import { toast } from 'sonner';
 
 interface AddressSuggestion {
-  place_name: string;
-  center: [number, number]; // [lng, lat]
+  display_name: string;
+  lat: string;
+  lon: string;
+  address?: {
+    road?: string;
+    house_number?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+  };
 }
 
 interface AddressAutocompleteProps {
@@ -49,47 +55,23 @@ export const AddressAutocomplete = ({
     debounceTimer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        // First get city coordinates to use as proximity
-        const cityResponse = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(city)}.json?access_token=${MAPBOX_TOKEN}&country=LV&types=place&limit=1&language=lv`
-        );
-        
-        if (!cityResponse.ok) {
-          setSuggestions([]);
-          return;
-        }
-
-        const cityData = await cityResponse.json();
-        if (!cityData.features || cityData.features.length === 0) {
-          setSuggestions([]);
-          return;
-        }
-
-        const [lng, lat] = cityData.features[0].center;
-        
-        // Search for addresses with city context - use multiple types for better results
-        const searchQuery = `${value}, ${city}`;
+        // Search for addresses with city context using Nominatim
+        const searchQuery = `${value}, ${city}, Latvija`;
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${MAPBOX_TOKEN}&country=LV&limit=10&language=lv&types=address,poi&proximity=${lng},${lat}&autocomplete=true`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=lv&limit=10&addressdetails=1&accept-language=lv`
         );
         
         if (response.ok) {
           const data = await response.json();
           
-          // Filter to prioritize addresses from selected city but allow nearby
-          const filteredFeatures = (data.features || []).filter((feature: any) => {
-            // Check if it's in the selected city or nearby
-            const contexts = feature.context || [];
-            const isInCity = contexts.some((ctx: any) => 
-              ctx.text_lv?.toLowerCase() === city.toLowerCase() || 
-              ctx.text?.toLowerCase() === city.toLowerCase()
-            );
-            // Also check if place_name contains the city
-            const placeNameHasCity = feature.place_name?.toLowerCase().includes(city.toLowerCase());
-            return isInCity || placeNameHasCity;
+          // Filter to prioritize addresses from selected city
+          const filteredResults = (data || []).filter((item: AddressSuggestion) => {
+            const itemCity = item.address?.city || item.address?.town || item.address?.village || '';
+            return itemCity.toLowerCase() === city.toLowerCase() || 
+                   item.display_name.toLowerCase().includes(city.toLowerCase());
           });
           
-          const results = filteredFeatures.length > 0 ? filteredFeatures : data.features || [];
+          const results = filteredResults.length > 0 ? filteredResults : data || [];
           setSuggestions(results);
           // Auto-open popover when results arrive and input is focused
           if (results.length > 0 && isFocused) {
@@ -114,13 +96,20 @@ export const AddressAutocomplete = ({
   }, [value, city, isFocused]);
 
   const handleSelect = (suggestion: AddressSuggestion) => {
-    const [lng, lat] = suggestion.center;
-    // Extract just street name without postcode
-    const fullName = suggestion.place_name;
-    // Remove postcode if present
-    const nameWithoutPostcode = fullName.replace(/,\s*\d{4}\s*,/, ',');
-    // Get just the street part (before first comma)
-    const streetName = nameWithoutPostcode.split(',')[0].trim();
+    const lat = parseFloat(suggestion.lat);
+    const lng = parseFloat(suggestion.lon);
+    
+    // Build street address from address components
+    let streetName = '';
+    if (suggestion.address?.road) {
+      streetName = suggestion.address.road;
+      if (suggestion.address?.house_number) {
+        streetName += ' ' + suggestion.address.house_number;
+      }
+    } else {
+      // Fallback to first part of display name
+      streetName = suggestion.display_name.split(',')[0].trim();
+    }
     
     onChange(streetName);
     setOpen(false);
@@ -184,12 +173,12 @@ export const AddressAutocomplete = ({
                   {suggestions.map((suggestion, index) => (
                     <CommandItem
                       key={index}
-                      value={suggestion.place_name}
+                      value={suggestion.display_name}
                       onSelect={() => handleSelect(suggestion)}
                       className="cursor-pointer"
                     >
                       <MapPin className="mr-2 h-4 w-4" />
-                      <span>{suggestion.place_name}</span>
+                      <span>{suggestion.display_name}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

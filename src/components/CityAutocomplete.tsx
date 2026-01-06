@@ -3,12 +3,12 @@ import { Input } from '@/components/ui/input';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MapPin } from 'lucide-react';
-import { MAPBOX_TOKEN } from '@/lib/mapbox-config';
 
 interface CitySuggestion {
-  place_name: string;
-  text: string;
-  center: [number, number]; // [lng, lat]
+  display_name: string;
+  name: string;
+  lat: string;
+  lon: string;
 }
 
 interface CityAutocompleteProps {
@@ -43,13 +43,25 @@ export const CityAutocomplete = ({
     debounceTimer.current = setTimeout(async () => {
       setLoading(true);
       try {
+        // Search for cities in Latvia using Nominatim
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&country=LV&types=place&limit=10&language=lv`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&countrycodes=lv&limit=10&featuretype=city&accept-language=lv`
         );
         
         if (response.ok) {
           const data = await response.json();
-          setSuggestions(data.features || []);
+          // Filter to only show places that look like cities/towns
+          const filteredData = (data || []).filter((item: any) => 
+            item.type === 'city' || 
+            item.type === 'town' || 
+            item.type === 'village' ||
+            item.type === 'administrative' ||
+            item.class === 'place'
+          );
+          setSuggestions(filteredData);
+          if (filteredData.length > 0) {
+            setOpen(true);
+          }
         }
       } catch (error) {
         console.error('City search error:', error);
@@ -66,7 +78,9 @@ export const CityAutocomplete = ({
   }, [value]);
 
   const handleSelect = (suggestion: CitySuggestion) => {
-    onChange(suggestion.text);
+    // Extract just the city name from display_name
+    const cityName = suggestion.display_name.split(',')[0].trim();
+    onChange(cityName);
     setOpen(false);
     setSuggestions([]);
   };
@@ -115,12 +129,12 @@ export const CityAutocomplete = ({
                   {suggestions.map((suggestion, index) => (
                     <CommandItem
                       key={index}
-                      value={suggestion.text}
+                      value={suggestion.display_name}
                       onSelect={() => handleSelect(suggestion)}
                       className="cursor-pointer"
                     >
                       <MapPin className="mr-2 h-4 w-4" />
-                      <span>{suggestion.place_name}</span>
+                      <span>{suggestion.display_name}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
