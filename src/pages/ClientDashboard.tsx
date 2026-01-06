@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
-import { Star, Map } from 'lucide-react';
+import { Star, Map, MapPin, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -21,6 +21,7 @@ const ClientDashboard = () => {
   const [professionals, setProfessionals] = useState<SortedMaster[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [userLocationName, setUserLocationName] = useState<string>('Ielādē...');
   const [profile, setProfile] = useState<any>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<SortedMaster[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
@@ -192,6 +193,38 @@ const ClientDashboard = () => {
     const location = await getUserLocation();
     setUserLocation(location);
     await loadProfessionals(location);
+    
+    // Get location name using reverse geocoding
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lon}&addressdetails=1&accept-language=lv`
+      );
+      const data = await response.json();
+      
+      if (data && data.address) {
+        const addr = data.address;
+        // Build location name - prefer neighborhood, suburb, or city district
+        const locationParts: string[] = [];
+        
+        if (addr.road) {
+          locationParts.push(addr.road);
+        } else if (addr.neighbourhood || addr.suburb || addr.city_district) {
+          locationParts.push(addr.neighbourhood || addr.suburb || addr.city_district);
+        }
+        
+        const city = addr.city || addr.town || addr.village || '';
+        if (city && !locationParts.includes(city)) {
+          locationParts.push(city);
+        }
+        
+        setUserLocationName(locationParts.join(', ') || 'Latvija');
+      } else {
+        setUserLocationName('Latvija');
+      }
+    } catch (error) {
+      console.error('Error getting location name:', error);
+      setUserLocationName('Latvija');
+    }
   };
 
   const loadProfessionals = async (location: { lat: number; lon: number }) => {
@@ -286,9 +319,14 @@ const ClientDashboard = () => {
               <h1 className="text-[32px] sm:text-[36px] font-bold text-foreground leading-none tracking-tight mb-1.5">
                 Tieši tev
               </h1>
-              <p className="text-[15px] sm:text-base text-muted-foreground font-normal">
-                Sveiki, {profile?.name || 'Viesis'}
-              </p>
+              <button 
+                onClick={() => navigate('/map')}
+                className="flex items-center gap-1.5 text-[15px] sm:text-base text-muted-foreground font-normal hover:text-foreground transition-colors tap-feedback"
+              >
+                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate max-w-[200px] sm:max-w-[300px]">{userLocationName}</span>
+                <ChevronDown className="h-4 w-4 flex-shrink-0" />
+              </button>
             </div>
             <button 
               onClick={() => navigate('/map')} 
