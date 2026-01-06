@@ -436,11 +436,59 @@
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
   
-  /* Exclude Mapbox markers from global transitions */
+  /* Exclude map markers from global transitions */
   .mapboxgl-marker,
   .mapboxgl-marker *,
-  .custom-map-marker {
+  .custom-map-marker,
+  .custom-leaflet-marker,
+  .leaflet-marker-icon,
+  .leaflet-marker-icon * {
     transition: none !important;
+  }
+  
+  /* Leaflet marker styles */
+  .custom-leaflet-marker {
+    background: transparent !important;
+    border: none !important;
+  }
+  
+  .custom-leaflet-marker .marker-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .custom-leaflet-marker.clickable-marker {
+    cursor: pointer !important;
+  }
+  
+  .custom-leaflet-marker.draggable-marker {
+    cursor: grab !important;
+  }
+  
+  .custom-leaflet-marker.draggable-marker:active {
+    cursor: grabbing !important;
+  }
+  
+  /* Leaflet container styles */
+  .leaflet-container {
+    font-family: inherit !important;
+    z-index: 1;
+  }
+  
+  .leaflet-control-zoom {
+    border: none !important;
+    box-shadow: var(--shadow-card) !important;
+  }
+  
+  .leaflet-control-zoom a {
+    background: white !important;
+    color: black !important;
+    border: none !important;
+  }
+  
+  .leaflet-control-zoom a:hover {
+    background: #f5f5f5 !important;
   }
   
   /* Mobile Responsive Grid Fix */
@@ -536,6 +584,14 @@
     .mapboxgl-ctrl-zoom-in,
     .mapboxgl-ctrl-zoom-out,
     .mapboxgl-ctrl-compass {
+      display: none !important;
+    }
+    
+    /* Hide Leaflet Controls on Mobile */
+    .leaflet-control-zoom,
+    .leaflet-control-attribution,
+    .leaflet-control-container .leaflet-top,
+    .leaflet-control-container .leaflet-bottom {
       display: none !important;
     }
   }

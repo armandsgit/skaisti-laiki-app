@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import { MAPBOX_TOKEN } from '@/lib/mapbox-config';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { getUserLocation } from '@/lib/distance-utils';
@@ -9,8 +9,6 @@ import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
 import { Button } from '@/components/ui/button';
 import MasterBottomSheet from '@/components/MasterBottomSheet';
 import LoadingAnimation from '@/components/LoadingAnimation';
-
-// Izmanto SortedMaster no master-sorting.ts
 
 interface AllMastersMapProps {
   selectedMasterId?: string;
@@ -24,17 +22,105 @@ interface Category {
   active: boolean;
 }
 
+// Create custom rating marker icon
+const createRatingIcon = (rating: number) => {
+  const displayRating = rating.toFixed(1);
+  
+  return L.divIcon({
+    className: 'custom-leaflet-marker clickable-marker',
+    html: `
+      <div class="marker-container" style="cursor: pointer;">
+        <div class="marker-badge" style="background: #000000; border: 2px solid #FFFFFF; border-radius: 100px; padding: 5px 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; min-width: 48px;">
+          <span class="marker-rating" style="font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #FFFFFF; line-height: 1;">${displayRating}</span>
+        </div>
+        <div class="marker-pointer" style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #000000; margin-top: -2px; margin-left: auto; margin-right: auto;"></div>
+      </div>
+    `,
+    iconSize: [48, 40],
+    iconAnchor: [24, 40],
+  });
+};
+
+// Map events handler for closing bottom sheet on drag
+interface MapDragHandlerProps {
+  onDragStart: () => void;
+}
+
+const MapDragHandler = ({ onDragStart }: MapDragHandlerProps) => {
+  useMapEvents({
+    dragstart: () => {
+      onDragStart();
+    },
+  });
+  return null;
+};
+
+// Component to fly to a master's location
+interface FlyToMasterProps {
+  master: SortedMaster | null;
+  onComplete: () => void;
+}
+
+const FlyToMaster = ({ master, onComplete }: FlyToMasterProps) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (master) {
+      map.flyTo([master.latitude, master.longitude], 15, { duration: 1 });
+      setTimeout(onComplete, 800);
+    }
+  }, [master, map, onComplete]);
+  
+  return null;
+};
+
+// Component to handle map resizing
+const MapResizer = () => {
+  const map = useMap();
+  
+  useEffect(() => {
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    setTimeout(() => map.invalidateSize(), 100);
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, [map]);
+  
+  return null;
+};
+
+// Master marker component
+interface MasterMarkerProps {
+  master: SortedMaster;
+  onClick: (master: SortedMaster) => void;
+}
+
+const MasterMarker = ({ master, onClick }: MasterMarkerProps) => {
+  const icon = createRatingIcon(master.rating || 0);
+  
+  return (
+    <Marker
+      position={[master.latitude, master.longitude]}
+      icon={icon}
+      eventHandlers={{
+        click: () => onClick(master),
+      }}
+    />
+  );
+};
+
 const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
   const [masters, setMasters] = useState<SortedMaster[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
-  const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedMaster, setSelectedMaster] = useState<SortedMaster | null>(null);
+  const [flyToMasterData, setFlyToMasterData] = useState<SortedMaster | null>(null);
 
   useEffect(() => {
     initializeMap();
@@ -84,12 +170,6 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       // Filter out suspended/deleted masters
       const activeMasters = (data || []).filter(m => m.profiles?.status === 'active');
 
-      if (error) {
-        console.error('Error loading masters:', error);
-        setLoading(false);
-        return;
-      }
-
       // Sort masters by priority
       const sortedMasters = getSortedMasters(activeMasters, location.lat, location.lon);
       setMasters(sortedMasters);
@@ -100,147 +180,30 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
     }
   };
 
+  // Handle selected master from URL
   useEffect(() => {
-    if (!mapContainer.current || loading) return;
-
-    // Cleanup previous map
-    if (map.current) {
-      map.current.remove();
-      map.current = null;
-    }
-
-    // Clear previous markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current.clear();
-
-    // Filter masters by category
-    const filteredMasters = selectedCategory === 'all' 
-      ? masters 
-      : masters.filter(m => m.category === selectedCategory);
-
-    // Set access token
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-
-    // Calculate center and zoom based on filtered masters
-    let center: [number, number] = [24.1052, 56.9496]; // Rīga default
-    let zoom = 12.5; // Closer zoom on Riga
-
-    if (filteredMasters.length > 0) {
-      // Calculate bounds for all markers
-      const bounds = new mapboxgl.LngLatBounds();
-      filteredMasters.forEach(master => {
-        bounds.extend([master.longitude, master.latitude]);
-      });
-      
-      // If filtering by category, fit to filtered bounds
-      if (selectedCategory !== 'all' && filteredMasters.length > 0) {
-        const boundsCenter = bounds.getCenter();
-        center = [boundsCenter.lng, boundsCenter.lat];
-        zoom = filteredMasters.length === 1 ? 14 : 12;
+    if (selectedMasterId && masters.length > 0 && !loading) {
+      const master = masters.find(m => m.id === selectedMasterId);
+      if (master) {
+        setFlyToMasterData(master);
       }
     }
+  }, [selectedMasterId, masters, loading]);
 
-    // Create map
-    try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: center,
-        zoom: zoom,
-      });
+  const handleMarkerClick = useCallback((master: SortedMaster) => {
+    setFlyToMasterData(master);
+  }, []);
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-      // Add markers for filtered masters
-      filteredMasters.forEach((master) => {
-
-        // Create custom marker - minimalist black circle
-        const markerEl = document.createElement('div');
-        markerEl.className = 'custom-map-marker clickable-marker';
-        
-        const rating = master.rating || 0;
-        const displayRating = rating.toFixed(1);
-        
-        markerEl.innerHTML = `
-          <div class="marker-container">
-            <div class="marker-badge" style="background: #000000; border: 2px solid #FFFFFF; border-radius: 100px; padding: 5px 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; min-width: 48px;">
-              <span class="marker-rating" style="font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #FFFFFF; line-height: 1;">${displayRating}</span>
-            </div>
-            <div class="marker-pointer" style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #000000; margin-top: -2px;"></div>
-          </div>
-        `;
-        markerEl.dataset.masterId = master.id;
-
-        const marker = new mapboxgl.Marker({ 
-          element: markerEl,
-          anchor: 'bottom'
-        })
-          .setLngLat([master.longitude, master.latitude])
-          .addTo(map.current);
-
-        // Store marker reference for selected master handling
-        (marker as any).masterData = master;
-        markersRef.current.set(master.id, marker);
-
-        // Click/Tap event
-        markerEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-          
-          if (!map.current) return;
-
-          // Fly to marker with animation
-          map.current.flyTo({
-            center: [master.longitude, master.latitude],
-            zoom: 15,
-            duration: 1000,
-            essential: true
-          });
-
-          // Show bottom sheet after brief animation
-          setTimeout(() => {
-            setSelectedMaster(master);
-          }, 800);
-        });
-      });
-
-      // Close bottom sheet when user starts dragging the map
-      map.current.on('dragstart', () => {
-        setSelectedMaster(null);
-      });
-
-      // Handle selected master from URL
-      if (selectedMasterId && masters.length > 0) {
-        const master = masters.find(m => m.id === selectedMasterId);
-        if (master && map.current) {
-          setTimeout(() => {
-            if (!map.current) return;
-            
-            map.current.flyTo({
-              center: [master.longitude, master.latitude],
-              zoom: 15,
-              duration: 1500,
-              essential: true
-            });
-
-            setTimeout(() => {
-              setSelectedMaster(master);
-            }, 1200);
-          }, 100);
-        }
-      }
-    } catch (error) {
-      console.error('Error creating map:', error);
+  const handleFlyComplete = useCallback(() => {
+    if (flyToMasterData) {
+      setSelectedMaster(flyToMasterData);
+      setFlyToMasterData(null);
     }
+  }, [flyToMasterData]);
 
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-      markersRef.current.clear();
-    };
-  }, [masters, loading, navigate, selectedMasterId, selectedCategory]);
+  const handleDragStart = useCallback(() => {
+    setSelectedMaster(null);
+  }, []);
 
   if (loading) {
     return (
@@ -254,11 +217,15 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
     ? masters 
     : masters.filter(m => m.category === selectedCategory);
 
+  // Default center is Riga
+  const defaultCenter: [number, number] = [56.9496, 24.1052];
+
   return (
     <div className="relative w-full h-screen">
       {/* Full-screen map container */}
-      <div 
-        ref={mapContainer} 
+      <MapContainer
+        center={defaultCenter}
+        zoom={12.5}
         className="map-container absolute inset-0"
         style={{ 
           width: '100%',
@@ -266,7 +233,25 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
           touchAction: 'pan-x pan-y',
           overflow: 'visible'
         }}
-      />
+        zoomControl={true}
+        attributionControl={false}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+        <MapDragHandler onDragStart={handleDragStart} />
+        <FlyToMaster master={flyToMasterData} onComplete={handleFlyComplete} />
+        <MapResizer />
+        
+        {filteredMasters.map((master) => (
+          <MasterMarker
+            key={master.id}
+            master={master}
+            onClick={handleMarkerClick}
+          />
+        ))}
+      </MapContainer>
       
       {/* Category filter - floating at top */}
       <div 
