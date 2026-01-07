@@ -197,7 +197,7 @@ const ClientDashboard = () => {
     // Get location name using reverse geocoding
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lon}&addressdetails=1&accept-language=lv`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lon}&zoom=18&addressdetails=1&accept-language=lv`
       );
       const data = await response.json();
       
