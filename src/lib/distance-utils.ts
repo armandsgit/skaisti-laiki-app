@@ -53,8 +53,9 @@ export async function getUserLocation(): Promise<{ lat: number; lon: number }> {
         resolve(defaultLocation);
       },
       {
-        timeout: 5000,
-        maximumAge: 300000, // 5 minūtes
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0, // Always get fresh location
       }
     );
   });
