@@ -261,7 +261,8 @@ const ClientDashboard = () => {
       .from('professional_profiles')
       .select(`
         *,
-        profiles!professional_profiles_user_id_fkey(name, avatar)
+        profiles!professional_profiles_user_id_fkey(name, avatar),
+        services(price)
       `)
       .eq('approved', true)
       .eq('active', true)
@@ -273,7 +274,17 @@ const ClientDashboard = () => {
       return;
     }
 
-    const sortedMasters = getSortedMasters(data || [], location.lat, location.lon);
+    // Add price range to each professional
+    const dataWithPrices = (data || []).map(prof => {
+      const services = (prof as any).services || [];
+      const prices = services.map((s: any) => s.price).filter((p: number) => p > 0);
+      const priceRange = prices.length > 0 
+        ? { min: Math.min(...prices), max: Math.max(...prices) }
+        : undefined;
+      return { ...prof, priceRange };
+    });
+
+    const sortedMasters = getSortedMasters(dataWithPrices, location.lat, location.lon);
     setProfessionals(sortedMasters);
     setLoading(false);
   };

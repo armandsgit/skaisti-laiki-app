@@ -25,6 +25,10 @@ export interface Master {
 export interface SortedMaster extends Master {
   distance: number;
   planPriority: number;
+  priceRange?: {
+    min: number;
+    max: number;
+  };
 }
 
 /**

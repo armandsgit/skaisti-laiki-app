@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { Star, User } from 'lucide-react';
+import { Star, User, Euro } from 'lucide-react';
 import { type SortedMaster } from '@/lib/master-sorting';
 
 interface ProfessionalCardProps {
@@ -97,6 +97,19 @@ const ProfessionalCard = ({
             ({prof.total_reviews || 0})
           </span>
         </div>
+
+        {/* Price Range */}
+        {(prof as any).priceRange && (
+          <div className="flex items-center gap-1.5">
+            <Euro className="h-[14px] w-[14px] text-muted-foreground" />
+            <span className="text-[14px] font-medium text-foreground">
+              {(prof as any).priceRange.min === (prof as any).priceRange.max 
+                ? `${(prof as any).priceRange.min}€`
+                : `${(prof as any).priceRange.min}€ - ${(prof as any).priceRange.max}€`
+              }
+            </span>
+          </div>
+        )}
 
         {/* Location with Distance */}
         <div className="pt-0.5">
