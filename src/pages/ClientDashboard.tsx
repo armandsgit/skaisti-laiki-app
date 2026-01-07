@@ -203,11 +203,15 @@ const ClientDashboard = () => {
       
       if (data && data.address) {
         const addr = data.address;
-        // Build location name - prefer neighborhood, suburb, or city district
+        // Build location name with street and house number
         const locationParts: string[] = [];
         
         if (addr.road) {
-          locationParts.push(addr.road);
+          let street = addr.road;
+          if (addr.house_number) {
+            street += ' ' + addr.house_number;
+          }
+          locationParts.push(street);
         } else if (addr.neighbourhood || addr.suburb || addr.city_district) {
           locationParts.push(addr.neighbourhood || addr.suburb || addr.city_district);
         }
