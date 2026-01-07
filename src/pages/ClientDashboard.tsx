@@ -13,6 +13,14 @@ import BottomNavigation from '@/components/BottomNavigation';
 import ProfessionalCard from '@/components/ProfessionalCard';
 import { useTodayAvailability } from '@/hooks/useTodayAvailability';
 import { useHasActiveSchedules } from '@/hooks/useHasActiveSchedules';
+import { LocationPickerModal } from '@/components/LocationPickerModal';
+
+interface SavedLocation {
+  name: string;
+  lat: number;
+  lon: number;
+  isManual: boolean;
+}
 
 const ClientDashboard = () => {
   const t = useTranslation('lv');
@@ -22,6 +30,8 @@ const ClientDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [userLocationName, setUserLocationName] = useState<string>('Ielādē...');
+  const [savedLocation, setSavedLocation] = useState<SavedLocation | null>(null);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<SortedMaster[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
@@ -70,7 +80,22 @@ const ClientDashboard = () => {
   }, [professionals, availableToday]);
 
   useEffect(() => {
-    initializeData();
+    // Check for saved location in localStorage
+    const saved = localStorage.getItem('userSavedLocation');
+    if (saved) {
+      try {
+        const parsedLocation = JSON.parse(saved) as SavedLocation;
+        setSavedLocation(parsedLocation);
+        setUserLocationName(parsedLocation.name);
+        setUserLocation({ lat: parsedLocation.lat, lon: parsedLocation.lon });
+        loadProfessionals({ lat: parsedLocation.lat, lon: parsedLocation.lon });
+      } catch (e) {
+        console.error('Error parsing saved location:', e);
+        initializeData();
+      }
+    } else {
+      initializeData();
+    }
     if (user) {
       loadProfile();
       loadRecentlyViewedIds();
@@ -324,7 +349,7 @@ const ClientDashboard = () => {
                 Tieši tev
               </h1>
               <button 
-                onClick={() => navigate('/map')}
+                onClick={() => setLocationModalOpen(true)}
                 className="flex items-center gap-1.5 text-[15px] sm:text-base text-muted-foreground font-normal hover:text-foreground transition-colors tap-feedback"
               >
                 <MapPin className="h-4 w-4 flex-shrink-0" />
@@ -370,6 +395,20 @@ const ClientDashboard = () => {
 
       {/* Bottom Navigation */}
       <BottomNavigation />
+
+      {/* Location Picker Modal */}
+      <LocationPickerModal
+        open={locationModalOpen}
+        onOpenChange={setLocationModalOpen}
+        onLocationSelect={(location) => {
+          setSavedLocation(location);
+          setUserLocationName(location.name);
+          setUserLocation({ lat: location.lat, lon: location.lon });
+          localStorage.setItem('userSavedLocation', JSON.stringify(location));
+          loadProfessionals({ lat: location.lat, lon: location.lon });
+        }}
+        currentLocation={savedLocation}
+      />
     </div>
   );
 };
