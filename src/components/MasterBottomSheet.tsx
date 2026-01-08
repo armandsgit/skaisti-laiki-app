@@ -181,12 +181,22 @@ const MasterBottomSheet = ({ master, onClose }: MasterBottomSheetProps) => {
             </button>
           </div>
 
-          {/* Address */}
+          {/* Address with Distance */}
           <div className="flex items-start gap-2.5 mb-5 p-3.5 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-200/50">
             <span className="text-xl mt-0.5">📍</span>
-            <span className="text-sm text-gray-700 font-medium leading-relaxed">
-              {master.address && master.city ? `${master.address}, ${master.city}` : master.address || master.city}
-            </span>
+            <div className="flex-1">
+              <span className="text-sm text-gray-700 font-medium leading-relaxed block">
+                {master.address && master.city ? `${master.address}, ${master.city}` : master.address || master.city}
+              </span>
+              {master.distance !== undefined && master.distance !== null && (
+                <span className="text-xs text-primary font-semibold mt-1 block">
+                  {master.distance < 1 
+                    ? `${Math.round(master.distance * 1000)} m no tevis` 
+                    : `${master.distance.toFixed(1)} km no tevis`
+                  }
+                </span>
+              )}
+            </div>
           </div>
 
           {/* View Profile Button */}
