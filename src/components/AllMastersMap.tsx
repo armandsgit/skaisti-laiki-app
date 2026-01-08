@@ -152,6 +152,69 @@ const AllMastersMap = ({ selectedMasterId }: AllMastersMapProps) => {
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
+      // Add pulsing user location marker
+      if (userLocation) {
+        const userMarkerEl = document.createElement('div');
+        userMarkerEl.className = 'user-location-marker';
+        userMarkerEl.innerHTML = `
+          <div class="user-location-pulse"></div>
+          <div class="user-location-dot"></div>
+        `;
+        
+        // Add CSS for pulsing animation
+        const style = document.createElement('style');
+        style.textContent = `
+          .user-location-marker {
+            position: relative;
+            width: 24px;
+            height: 24px;
+          }
+          .user-location-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 14px;
+            height: 14px;
+            background: #007AFF;
+            border: 2.5px solid #FFFFFF;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.4);
+            z-index: 2;
+          }
+          .user-location-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 122, 255, 0.2);
+            border-radius: 50%;
+            animation: pulse-ring 2s ease-out infinite;
+            z-index: 1;
+          }
+          @keyframes pulse-ring {
+            0% {
+              transform: translate(-50%, -50%) scale(0.5);
+              opacity: 1;
+            }
+            100% {
+              transform: translate(-50%, -50%) scale(1.5);
+              opacity: 0;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+
+        new mapboxgl.Marker({ 
+          element: userMarkerEl,
+          anchor: 'center'
+        })
+          .setLngLat([userLocation.lon, userLocation.lat])
+          .addTo(map.current);
+      }
+
       // Add markers for filtered masters
       filteredMasters.forEach((master) => {
 
