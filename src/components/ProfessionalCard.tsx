@@ -60,19 +60,23 @@ const ProfessionalCard = ({
           </div>
         )}
 
-        {/* Category Badge and Favorite Button - right side */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-          {onToggleFavorite && (
-            <FavoriteButton
-              isFavorite={isFavorite}
-              onToggle={onToggleFavorite}
-              size="sm"
-            />
-          )}
+        {/* Category Badge - right side */}
+        <div className="absolute top-3 right-3 z-10">
           <span className="px-3 py-1 text-xs font-medium bg-black/80 backdrop-blur-sm text-white rounded-full shadow-lg">
             {prof.category}
           </span>
         </div>
+
+        {/* Favorite Button - bottom right corner of image */}
+        {onToggleFavorite && (
+          <div className="absolute bottom-3 right-3 z-10">
+            <FavoriteButton
+              isFavorite={isFavorite}
+              onToggle={onToggleFavorite}
+              size="md"
+            />
+          </div>
+        )}
 
         {(prof as any).gallery && (prof as any).gallery.length > 0 ? (
           <img 
