@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
-import { Star, Map, MapPin, ChevronDown } from 'lucide-react';
+import { Star, Map, MapPin, ChevronDown, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserLocation } from '@/lib/distance-utils';
 import { getSortedMasters, type SortedMaster } from '@/lib/master-sorting';
@@ -14,6 +14,7 @@ import ProfessionalCard from '@/components/ProfessionalCard';
 import { useTodayAvailability } from '@/hooks/useTodayAvailability';
 import { useHasActiveSchedules } from '@/hooks/useHasActiveSchedules';
 import { LocationPickerModal } from '@/components/LocationPickerModal';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface SavedLocation {
   name: string;
@@ -35,14 +36,19 @@ const ClientDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<SortedMaster[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
+  const [favoriteProfessionals, setFavoriteProfessionals] = useState<SortedMaster[]>([]);
+  
+  // Favorites hook
+  const { favorites, isFavorite, toggleFavorite, loading: favoritesLoading } = useFavorites();
 
   // Get all professional IDs for availability check
   const allProfessionalIds = useMemo(() => {
     const ids = new Set<string>();
     professionals.forEach(p => ids.add(p.id));
     recentlyViewed.forEach(p => ids.add(p.id));
+    favoriteProfessionals.forEach(p => ids.add(p.id));
     return Array.from(ids);
-  }, [professionals, recentlyViewed]);
+  }, [professionals, recentlyViewed, favoriteProfessionals]);
 
   // Check today's availability
   const { availableToday } = useTodayAvailability(allProfessionalIds);
@@ -107,6 +113,52 @@ const ClientDashboard = () => {
       loadRecentlyViewedData();
     }
   }, [recentlyViewedIds, userLocation]);
+
+  // Load favorite professionals when favorites change
+  useEffect(() => {
+    if (favorites.length > 0 && userLocation) {
+      loadFavoriteProfessionals();
+    } else {
+      setFavoriteProfessionals([]);
+    }
+  }, [favorites, userLocation]);
+
+  const loadFavoriteProfessionals = async () => {
+    if (!userLocation || favorites.length === 0) {
+      setFavoriteProfessionals([]);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('professional_profiles')
+      .select(`
+        *,
+        profiles!professional_profiles_user_id_fkey(name, avatar),
+        services(price)
+      `)
+      .in('id', favorites)
+      .eq('approved', true)
+      .eq('active', true)
+      .eq('is_blocked', false);
+
+    if (error) {
+      console.error('Error loading favorite professionals:', error);
+      return;
+    }
+
+    // Add price range to each professional
+    const dataWithPrices = (data || []).map(prof => {
+      const services = (prof as any).services || [];
+      const prices = services.map((s: any) => s.price).filter((p: number) => p > 0);
+      const priceRange = prices.length > 0 
+        ? { min: Math.min(...prices), max: Math.max(...prices) }
+        : undefined;
+      return { ...prof, priceRange };
+    });
+
+    const sortedMasters = getSortedMasters(dataWithPrices, userLocation.lat, userLocation.lon);
+    setFavoriteProfessionals(sortedMasters);
+  };
 
   // Real-time subscription for professional profile updates
   useEffect(() => {
@@ -320,19 +372,24 @@ const ClientDashboard = () => {
 
   const renderCarousel = (
     title: string, 
-    professionals: SortedMaster[], 
-    showNewBadge = false
+    professionalsToShow: SortedMaster[], 
+    showNewBadge = false,
+    showFavorites = false,
+    icon?: React.ReactNode
   ) => {
-    if (professionals.length === 0) return null;
+    if (professionalsToShow.length === 0) return null;
 
     return (
       <div className="space-y-5">
-        <h2 className="text-[26px] font-bold text-foreground px-5 sm:px-6 tracking-tight">
-          {title}
-        </h2>
+        <div className="flex items-center gap-2 px-5 sm:px-6">
+          {icon}
+          <h2 className="text-[26px] font-bold text-foreground tracking-tight">
+            {title}
+          </h2>
+        </div>
         <Carousel opts={{ align: "start", loop: false }} className="w-full">
           <CarouselContent className="-ml-4 px-5 sm:px-6">
-            {professionals.map(prof => (
+            {professionalsToShow.map(prof => (
               <CarouselItem key={prof.id} className="pl-4 basis-[280px]">
                 <ProfessionalCard
                   professional={prof}
@@ -340,6 +397,8 @@ const ClientDashboard = () => {
                   availableToday={availableToday.has(prof.id)}
                   hasAvailability={hasActiveSchedule.has(prof.id)}
                   isNew={showNewBadge && isNewProfessional(prof)}
+                  isFavorite={isFavorite(prof.id)}
+                  onToggleFavorite={user ? () => toggleFavorite(prof.id) : undefined}
                 />
               </CarouselItem>
             ))}
@@ -386,6 +445,15 @@ const ClientDashboard = () => {
           </div>
         ) : (
           <>
+            {/* Favorites - show first if user has favorites */}
+            {user && favoriteProfessionals.length > 0 && renderCarousel(
+              'Iecienītākie', 
+              favoriteProfessionals, 
+              false, 
+              true,
+              <Heart className="h-6 w-6 fill-red-500 text-red-500" />
+            )}
+
             {/* Recently Viewed */}
             {renderCarousel('Nesen skatītie', recentlyViewed)}
 
