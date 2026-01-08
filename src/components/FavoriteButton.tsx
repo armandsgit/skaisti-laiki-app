@@ -19,16 +19,10 @@ const FavoriteButton = ({
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12'
-  };
-
   const iconSizes = {
-    sm: 16,
-    md: 20,
-    lg: 24
+    sm: 18,
+    md: 22,
+    lg: 26
   };
 
   const handleClick = async (e: React.MouseEvent) => {
@@ -52,10 +46,8 @@ const FavoriteButton = ({
       onClick={handleClick}
       disabled={isLoading}
       className={cn(
-        'flex items-center justify-center rounded-full transition-all duration-200',
-        'bg-white/90 backdrop-blur-sm shadow-md border border-gray-100',
-        'hover:scale-110 active:scale-95',
-        sizeClasses[size],
+        'flex items-center justify-center transition-all duration-200',
+        'hover:scale-110 active:scale-90',
         isAnimating && 'animate-[pulse_0.3s_ease-in-out]',
         className
       )}
@@ -64,10 +56,10 @@ const FavoriteButton = ({
       <Heart
         size={iconSizes[size]}
         className={cn(
-          'transition-all duration-200',
+          'transition-all duration-200 drop-shadow-md',
           isFavorite 
             ? 'fill-red-500 text-red-500' 
-            : 'fill-transparent text-gray-400 hover:text-red-400'
+            : 'fill-white/80 text-white stroke-[2.5]'
         )}
       />
     </button>
