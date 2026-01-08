@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Star, User, Euro } from 'lucide-react';
 import { type SortedMaster } from '@/lib/master-sorting';
+import FavoriteButton from './FavoriteButton';
 
 interface ProfessionalCardProps {
   professional: SortedMaster;
@@ -8,6 +9,8 @@ interface ProfessionalCardProps {
   availableToday?: boolean;
   hasAvailability?: boolean;
   isNew?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => Promise<boolean>;
 }
 
 const ProfessionalCard = ({
@@ -16,6 +19,8 @@ const ProfessionalCard = ({
   availableToday,
   hasAvailability,
   isNew,
+  isFavorite = false,
+  onToggleFavorite,
 }: ProfessionalCardProps) => {
   return (
     <Card 
@@ -55,8 +60,15 @@ const ProfessionalCard = ({
           </div>
         )}
 
-        {/* Category Badge - right side */}
-        <div className="absolute top-3 right-3 z-10">
+        {/* Category Badge and Favorite Button - right side */}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+          {onToggleFavorite && (
+            <FavoriteButton
+              isFavorite={isFavorite}
+              onToggle={onToggleFavorite}
+              size="sm"
+            />
+          )}
           <span className="px-3 py-1 text-xs font-medium bg-black/80 backdrop-blur-sm text-white rounded-full shadow-lg">
             {prof.category}
           </span>
