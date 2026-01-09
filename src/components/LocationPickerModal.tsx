@@ -118,10 +118,10 @@ export const LocationPickerModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-sm:!p-0 max-sm:!inset-x-4 max-sm:!inset-y-auto max-sm:!top-1/2 max-sm:!-translate-y-1/2 max-sm:!h-auto max-sm:!w-[calc(100%-2rem)] max-sm:!rounded-xl sm:max-w-md">
-        <div className="p-5 pt-6">
-          <DialogHeader className="pb-4">
-            <DialogTitle className="text-lg sm:text-xl font-semibold text-center">
+      <DialogContent className="max-sm:!inset-x-4 max-sm:!inset-y-auto max-sm:!top-1/2 max-sm:!-translate-y-1/2 max-sm:!h-auto max-sm:!w-[calc(100%-2rem)] max-sm:!rounded-2xl sm:max-w-md">
+        <div className="p-5 sm:p-0">
+          <DialogHeader className="pb-5">
+            <DialogTitle className="text-lg font-semibold text-center pr-6">
               Izvēlieties atrašanās vietu
             </DialogTitle>
           </DialogHeader>
@@ -150,7 +150,7 @@ export const LocationPickerModal = ({
             </div>
 
             {/* City selection */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label className="text-sm font-medium">Pilsēta</label>
               <CityAutocomplete
                 value={city}
@@ -160,7 +160,7 @@ export const LocationPickerModal = ({
             </div>
 
             {/* Address input */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label className="text-sm font-medium">Adrese</label>
               <AddressAutocomplete
                 value={address}
