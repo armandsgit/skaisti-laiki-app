@@ -131,7 +131,7 @@ export const AddressAutocomplete = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             value={value}
             onChange={(e) => {
@@ -155,13 +155,13 @@ export const AddressAutocomplete = ({
             onKeyDown={handleKeyDown}
             placeholder={!city ? "Vispirms izvēlieties pilsētu" : "Piemēram: Latgales iela 245"}
             disabled={disabled || !city}
-            className="pl-9"
+            className="pl-10"
           />
         </div>
       </PopoverTrigger>
       {suggestions.length > 0 && (
         <PopoverContent 
-          className="p-0 w-[400px]" 
+          className="p-0 w-[calc(100vw-2.5rem)] max-w-[400px]" 
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
@@ -178,8 +178,8 @@ export const AddressAutocomplete = ({
                       onSelect={() => handleSelect(suggestion)}
                       className="cursor-pointer"
                     >
-                      <MapPin className="mr-2 h-4 w-4" />
-                      <span>{suggestion.display_name}</span>
+                      <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{suggestion.display_name}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
