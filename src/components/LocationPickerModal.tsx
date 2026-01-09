@@ -118,34 +118,38 @@ export const LocationPickerModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Izvēlieties atrašanās vietu</DialogTitle>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto rounded-xl p-4 sm:p-6">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg sm:text-xl font-semibold text-center">
+            Izvēlieties atrašanās vietu
+          </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 pt-2">
+        <div className="space-y-4">
           {/* Use current location button */}
           <Button
             variant="outline"
-            className="w-full justify-start gap-3 h-12"
+            className="w-full justify-start gap-3 h-12 text-sm"
             onClick={handleUseCurrentLocation}
             disabled={isLoadingGPS}
           >
-            <Navigation className="h-5 w-5 text-primary" />
-            <span>{isLoadingGPS ? 'Nosaka atrašanās vietu...' : 'Izmantot pašreizējo atrašanās vietu'}</span>
+            <Navigation className="h-5 w-5 text-primary flex-shrink-0" />
+            <span className="truncate">
+              {isLoadingGPS ? 'Nosaka atrašanās vietu...' : 'Izmantot pašreizējo atrašanās vietu'}
+            </span>
           </Button>
 
-          <div className="relative">
+          <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">vai ievadiet manuāli</span>
+              <span className="bg-background px-3 text-muted-foreground">vai ievadiet manuāli</span>
             </div>
           </div>
 
           {/* City selection */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-sm font-medium">Pilsēta</label>
             <CityAutocomplete
               value={city}
@@ -155,7 +159,7 @@ export const LocationPickerModal = ({
           </div>
 
           {/* Address input */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-sm font-medium">Adrese</label>
             <AddressAutocomplete
               value={address}
@@ -169,7 +173,7 @@ export const LocationPickerModal = ({
 
           {/* Save button */}
           <Button
-            className="w-full h-12"
+            className="w-full h-12 mt-2"
             onClick={handleSave}
             disabled={!city || !address || !selectedCoords}
           >
@@ -181,7 +185,7 @@ export const LocationPickerModal = ({
           {currentLocation?.isManual && (
             <Button
               variant="ghost"
-              className="w-full text-muted-foreground"
+              className="w-full text-muted-foreground h-10"
               onClick={handleClearSavedLocation}
             >
               <X className="h-4 w-4 mr-2" />
