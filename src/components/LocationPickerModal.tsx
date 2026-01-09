@@ -1,10 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MapPin, Navigation, X } from 'lucide-react';
 import { CityAutocomplete } from './CityAutocomplete';
 import { AddressAutocomplete } from './AddressAutocomplete';
 import { getUserLocation } from '@/lib/distance-utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface SavedLocation {
   name: string;
@@ -30,10 +42,10 @@ export const LocationPickerModal = ({
   const [address, setAddress] = useState('');
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [isLoadingGPS, setIsLoadingGPS] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (open) {
-      // Reset form when opening
       setCity('');
       setAddress('');
       setSelectedCoords(null);
@@ -42,7 +54,6 @@ export const LocationPickerModal = ({
 
   const handleCityChange = (value: string) => {
     setCity(value);
-    // Reset address when city changes
     setAddress('');
     setSelectedCoords(null);
   };
@@ -70,7 +81,6 @@ export const LocationPickerModal = ({
     try {
       const location = await getUserLocation();
       
-      // Get location name using reverse geocoding
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lon}&zoom=18&addressdetails=1&accept-language=lv`
       );
@@ -116,85 +126,96 @@ export const LocationPickerModal = ({
     handleUseCurrentLocation();
   };
 
+  const content = (
+    <div className="space-y-4">
+      <Button
+        variant="outline"
+        className="w-full justify-start gap-3 h-12 text-sm"
+        onClick={handleUseCurrentLocation}
+        disabled={isLoadingGPS}
+      >
+        <Navigation className="h-5 w-5 text-primary flex-shrink-0" />
+        <span className="truncate">
+          {isLoadingGPS ? 'Nosaka atrašanās vietu...' : 'Izmantot pašreizējo atrašanās vietu'}
+        </span>
+      </Button>
+
+      <div className="relative py-2">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-3 text-muted-foreground">vai ievadiet manuāli</span>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Pilsēta</label>
+        <CityAutocomplete
+          value={city}
+          onChange={handleCityChange}
+          placeholder="Izvēlieties pilsētu"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Adrese</label>
+        <AddressAutocomplete
+          value={address}
+          onChange={setAddress}
+          onSelect={handleAddressSelect}
+          city={city}
+          placeholder={city ? "Ievadiet adresi" : "Vispirms izvēlieties pilsētu"}
+          disabled={!city}
+        />
+      </div>
+
+      <Button
+        className="w-full h-12 mt-2"
+        onClick={handleSave}
+        disabled={!city || !address || !selectedCoords}
+      >
+        <MapPin className="h-4 w-4 mr-2" />
+        Saglabāt atrašanās vietu
+      </Button>
+
+      {currentLocation?.isManual && (
+        <Button
+          variant="ghost"
+          className="w-full text-muted-foreground h-10"
+          onClick={handleClearSavedLocation}
+        >
+          <X className="h-4 w-4 mr-2" />
+          Noņemt saglabāto adresi
+        </Button>
+      )}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="px-4 pb-8">
+          <DrawerHeader className="text-center pb-4">
+            <DrawerTitle className="text-lg font-semibold">
+              Izvēlieties atrašanās vietu
+            </DrawerTitle>
+          </DrawerHeader>
+          {content}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-sm:!inset-x-4 max-sm:!inset-y-auto max-sm:!top-1/2 max-sm:!-translate-y-1/2 max-sm:!h-auto max-sm:!w-[calc(100%-2rem)] max-sm:!rounded-2xl sm:max-w-md">
-        <div className="p-5 sm:p-0">
-          <DialogHeader className="pb-5">
-            <DialogTitle className="text-lg font-semibold text-center pr-6">
-              Izvēlieties atrašanās vietu
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {/* Use current location button */}
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3 h-12 text-sm"
-              onClick={handleUseCurrentLocation}
-              disabled={isLoadingGPS}
-            >
-              <Navigation className="h-5 w-5 text-primary flex-shrink-0" />
-              <span className="truncate">
-                {isLoadingGPS ? 'Nosaka atrašanās vietu...' : 'Izmantot pašreizējo atrašanās vietu'}
-              </span>
-            </Button>
-
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-3 text-muted-foreground">vai ievadiet manuāli</span>
-              </div>
-            </div>
-
-            {/* City selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Pilsēta</label>
-              <CityAutocomplete
-                value={city}
-                onChange={handleCityChange}
-                placeholder="Izvēlieties pilsētu"
-              />
-            </div>
-
-            {/* Address input */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Adrese</label>
-              <AddressAutocomplete
-                value={address}
-                onChange={setAddress}
-                onSelect={handleAddressSelect}
-                city={city}
-                placeholder={city ? "Ievadiet adresi" : "Vispirms izvēlieties pilsētu"}
-                disabled={!city}
-              />
-            </div>
-
-            {/* Save button */}
-            <Button
-              className="w-full h-12 mt-2"
-              onClick={handleSave}
-              disabled={!city || !address || !selectedCoords}
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              Saglabāt atrašanās vietu
-            </Button>
-
-            {/* Clear saved location if exists */}
-            {currentLocation?.isManual && (
-              <Button
-                variant="ghost"
-                className="w-full text-muted-foreground h-10"
-                onClick={handleClearSavedLocation}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Noņemt saglabāto adresi
-              </Button>
-            )}
-          </div>
-        </div>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-lg font-semibold">
+            Izvēlieties atrašanās vietu
+          </DialogTitle>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );
